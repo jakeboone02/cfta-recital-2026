@@ -1,0 +1,431 @@
+dance_id,recital_group,class_time,dance_style,dance,choreography,dancer,first_name,last_name
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Shelby Bow",Shelby,Bow
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Julie Burnham",Julie,Burnham
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Amelia Coates",Amelia,Coates
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Emma Elgin",Emma,Elgin
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Mackenzie Flandrau",Mackenzie,Flandrau
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Olivia Flandrau",Olivia,Flandrau
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Hadley Mae Lichter","Hadley Mae",Lichter
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Akshara Madana",Akshara,Madana
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Gia McBride",Gia,McBride
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Shay Patterson",Shay,Patterson
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Lilli Rosinbum",Lilli,Rosinbum
+1,1,"Tue 4:15",Acro,"Acro 1","Ms. Emilee","Alice Stonham",Alice,Stonham
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Hanna Abney",Hanna,Abney
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Isla Abuhmaiden",Isla,Abuhmaiden
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Charlotte Ardelean",Charlotte,Ardelean
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Kylie Davis",Kylie,Davis
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Brielle Farcas",Brielle,Farcas
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Abbey Foley",Abbey,Foley
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Zoe Griffin",Zoe,Griffin
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Grace Hayslett",Grace,Hayslett
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Jillian Hester",Jillian,Hester
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Josslyn Hester",Josslyn,Hester
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Makenna Reeves",Makenna,Reeves
+12,2,"Tue 5:15",Acro,"Acro 2","Ms. Emilee","Isabelle Stonham",Isabelle,Stonham
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Alaina Akert",Alaina,Akert
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Madi Akert",Madi,Akert
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Lucy Albert",Lucy,Albert
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Larsyn Callanan-Attebery",Larsyn,Callanan-Attebery
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Grace Miller",Grace,Miller
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Vivian Rawlings",Vivian,Rawlings
+21,3,"Wed 6:15",Acro,"Acro 3","Ms. Emilee","Lennon Taylor",Lennon,Taylor
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Rebecca Arnold",Rebecca,Arnold
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Cora Bervig",Cora,Bervig
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Hollyn Kinch",Hollyn,Kinch
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Makena Kirara",Makena,Kirara
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Claira Kundla",Claira,Kundla
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Kate Mather",Kate,Mather
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Sadie Mather",Sadie,Mather
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Everly Mauldin",Everly,Mauldin
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Rylie Persons",Rylie,Persons
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Noemi Richardson",Noemi,Richardson
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Madison Schroff",Madison,Schroff
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Isa Segura",Isa,Segura
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Sofia Shearer",Sofia,Shearer
+2,1,"Wed 5:15",Acro,"Acro Jr.","Ms. Emilee","Elli Wetmore",Elli,Wetmore
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Dawn Ellis",Dawn,Ellis
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Tosha Focht",Tosha,Focht
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Jade Franks",Jade,Franks
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Kristi Hunter",Kristi,Hunter
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Emilee Machowski",Emilee,Machowski
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Holly Sheppard",Holly,Sheppard
+13,2,"Tue 7:15",Ballet,"Adult Ballet/Contemporary","Ms. Emilee","Gina Sorrentino",Gina,Sorrentino
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Moustafa Banna",Moustafa,Banna
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Nisha Bhatia",Nisha,Bhatia
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Christina Callanan-Attebery",Christina,Callanan-Attebery
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Lindsay Davis",Lindsay,Davis
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Dawn Ellis",Dawn,Ellis
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Stephanie Hansen",Stephanie,Hansen
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","ReAnn Loose",ReAnn,Loose
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Eric Lynch",Eric,Lynch
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Ami Meng",Ami,Meng
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Marina Permiakova",Marina,Permiakova
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Natallya Shkarayeva",Natallya,Shkarayeva
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Elissa Uhl",Elissa,Uhl
+22,3,"Mon 7:15",Tap,"Adult Tap 1","Ms. Angie","Marien de la Torre",Marien,"de la Torre"
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Angie Boone",Angie,Boone
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Jake Boone",Jake,Boone
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Marissa Calderone",Marissa,Calderone
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Amanda Meyerhofer",Amanda,Meyerhofer
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Heidi Moore",Heidi,Moore
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Justine Persons",Justine,Persons
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Kelsey Puckett",Kelsey,Puckett
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Megan Riewold",Megan,Riewold
+3,1,"Wed 7:15",Tap,"Adult Tap 2","Ms. Angie","Amy Schroff",Amy,Schroff
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Jane Armenta",Jane,Armenta
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Juliana Conner",Juliana,Conner
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Annie Cox",Annie,Cox
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Kate Mather",Kate,Mather
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Kira Shkarayeva",Kira,Shkarayeva
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Avyakta Shloka Balla",Avyakta,"Shloka Balla"
+14,2,"Mon 5:15",Ballet,"Ballet 1","Ms. Marissa","Hadley Taylor",Hadley,Taylor
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Nora Ardelean",Nora,Ardelean
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Shweta (Ryna) Arora","Shweta (Ryna)",Arora
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Sierra Bohannan",Sierra,Bohannan
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Teanna Brawley",Teanna,Brawley
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Mavis Henry",Mavis,Henry
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Elli Moore",Elli,Moore
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Ishika Musani",Ishika,Musani
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Sophia Ortega",Sophia,Ortega
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Keshavi Patel",Keshavi,Patel
+4,3,"Tue 5:15",Ballet,"Ballet 1","Ms. Jillian","Saisha Sethi",Saisha,Sethi
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Brooke Balzarini",Brooke,Balzarini
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Addilyn Bichsel",Addilyn,Bichsel
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Jane Fuss",Jane,Fuss
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Amelia Haro",Amelia,Haro
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Joelle Murphy",Joelle,Murphy
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Madeline Nguyen",Madeline,Nguyen
+23,3,"Tue 6:15",Ballet,"Ballet 2","Ms. Jillian","Anneliese Wells",Anneliese,Wells
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Sophia Andersen",Sophia,Andersen
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Clara Boone",Clara,Boone
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Abigail Clark",Abigail,Clark
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Ryleigh Gower",Ryleigh,Gower
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Maia Hunter",Maia,Hunter
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Olivia Lenhart",Olivia,Lenhart
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Maddie Massaro",Maddie,Massaro
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Bailey Meyer",Bailey,Meyer
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Brynlie Murphy",Brynlie,Murphy
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Eden Rawlings",Eden,Rawlings
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Vivian Rawlings",Vivian,Rawlings
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Emily Ritter",Emily,Ritter
+5,1,"Tue 6:15",Ballet,Ballet/Contemporary,"Ms. Emilee","Mikaela Wells",Mikaela,Wells
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Sophie Aja",Sophie,Aja
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Hayden Bragg",Hayden,Bragg
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Skylar Lizama",Skylar,Lizama
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Sadie Mather",Sadie,Mather
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Charley Moncrieff",Charley,Moncrieff
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Charlotte Reaney",Charlotte,Reaney
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Alita Van Poppelen",Alita,"Van Poppelen"
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Addie Vetter",Addie,Vetter
+15,2,"Mon 4:15",Ballet,"Ballet/Tap Combo (Mon 4:15) Ballet","Ms. Marissa","Finnley Vossler",Finnley,Vossler
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Sophie Aja",Sophie,Aja
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Hayden Bragg",Hayden,Bragg
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Skylar Lizama",Skylar,Lizama
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Sadie Mather",Sadie,Mather
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Charley Moncrieff",Charley,Moncrieff
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Charlotte Reaney",Charlotte,Reaney
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Alita Van Poppelen",Alita,"Van Poppelen"
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Addie Vetter",Addie,Vetter
+16,2,"Mon 4:15",Tap,"Ballet/Tap Combo (Mon 4:15) Tap","Ms. Marissa","Finnley Vossler",Finnley,Vossler
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Kinney Chen",Kinney,Chen
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Parker Lemanski",Parker,Lemanski
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Ruby Rasch",Ruby,Rasch
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Hailey Ratiu",Hailey,Ratiu
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Kendall Rudzki",Kendall,Rudzki
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Leelah Taylor",Leelah,Taylor
+24,3,"Tue 4:15",Ballet,"Ballet/Tap Combo (Tue 4:15) Ballet","Ms. Jillian","Hanna Tsai",Hanna,Tsai
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Kinney Chen",Kinney,Chen
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Parker Lemanski",Parker,Lemanski
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Ruby Rasch",Ruby,Rasch
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Hailey Ratiu",Hailey,Ratiu
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Kendall Rudzki",Kendall,Rudzki
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Leelah Taylor",Leelah,Taylor
+25,3,"Tue 4:15",Tap,"Ballet/Tap Combo (Tue 4:15) Tap","Ms. Jillian","Hanna Tsai",Hanna,Tsai
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Ivy Aleo",Ivy,Aleo
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Cora Bervig",Cora,Bervig
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Evie Carioto",Evie,Carioto
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Lillian Denney",Lillian,Denney
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Marlowe Drown",Marlowe,Drown
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Sedona Flumbaugh",Sedona,Flumbaugh
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Kylie Gonzales",Kylie,Gonzales
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Reese Goodman",Reese,Goodman
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Lucy Goodson",Lucy,Goodson
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Emily Lewis",Emily,Lewis
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Ella Martin",Ella,Martin
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Piper McGuire",Piper,McGuire
+6,1,"Wed 2:30",Ballet,"Ballet/Tap Combo (Wed 2:30) Ballet","Ms. Angie","Blakely Moreno",Blakely,Moreno
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Ivy Aleo",Ivy,Aleo
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Cora Bervig",Cora,Bervig
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Evie Carioto",Evie,Carioto
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Lillian Denney",Lillian,Denney
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Marlowe Drown",Marlowe,Drown
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Sedona Flumbaugh",Sedona,Flumbaugh
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Kylie Gonzales",Kylie,Gonzales
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Reese Goodman",Reese,Goodman
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Lucy Goodson",Lucy,Goodson
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Emily Lewis",Emily,Lewis
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Ella Martin",Ella,Martin
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Piper McGuire",Piper,McGuire
+7,1,"Wed 2:30",Tap,"Ballet/Tap Combo (Wed 2:30) Tap","Ms. Angie","Blakely Moreno",Blakely,Moreno
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Ali Arce",Ali,Arce
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Luci Arce",Luci,Arce
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Emily Brunk",Emily,Brunk
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Juliana Conner",Juliana,Conner
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Lucy Goodson",Lucy,Goodson
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Jenna Meyerhofer",Jenna,Meyerhofer
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Joelle Murphy",Joelle,Murphy
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Zari Nicely",Zari,Nicely
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Ivan Shkarayev",Ivan,Shkarayev
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Kira Shkarayeva",Kira,Shkarayeva
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Mae Simmers",Mae,Simmers
+17,3,"Thu 6:15",Jazz,"Jazz 1","Ms. Marissa","Manya Thakur",Manya,Thakur
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Gianna Arce",Gianna,Arce
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Julie Burnham",Julie,Burnham
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Anysia Chandiramani",Anysia,Chandiramani
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Zyah Chandiramani",Zyah,Chandiramani
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Peyton Grayson",Peyton,Grayson
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Charlie Hansen",Charlie,Hansen
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Emma Hoelzen",Emma,Hoelzen
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Kate Hoelzen",Kate,Hoelzen
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Carson Hunter",Carson,Hunter
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Charis Morkunas",Charis,Morkunas
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Brynlie Murphy",Brynlie,Murphy
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Eden Rawlings",Eden,Rawlings
+26,2,"Mon 6:15",Jazz,"Jazz 2","Ms. Angie","Alex Sims",Alex,Sims
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Abigail Clark",Abigail,Clark
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Quinn Dollman",Quinn,Dollman
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Mackenzie Flandrau",Mackenzie,Flandrau
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Zoe Griffin",Zoe,Griffin
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Callie Hayslett",Callie,Hayslett
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Addison Mills",Addison,Mills
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Arianna Reddy Kambham",Arianna,"Reddy Kambham"
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Alex Vetter",Alex,Vetter
+8,1,"Mon 6:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Marissa","Presleigh Wilson",Presleigh,Wilson
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Hanna Abney",Hanna,Abney
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Harper Addler",Harper,Addler
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Juliette Boone",Juliette,Boone
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Emily Brunk",Emily,Brunk
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Emma Elgin",Emma,Elgin
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Delaney Hernaez",Delaney,Hernaez
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Jillian Hester",Jillian,Hester
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Josslyn Hester",Josslyn,Hester
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Kate Hoelzen",Kate,Hoelzen
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Amelia Hurtado",Amelia,Hurtado
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Aubree Laavazo",Aubree,Laavazo
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Calista Linger",Calista,Linger
+18,2,"Thu 4:15",Lyrical/Modern,"Lyrical/Modern 1","Ms. Angie","Emma Vilorio",Emma,Vilorio
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Lucy Albert",Lucy,Albert
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Tessa Block",Tessa,Block
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Clara Boone",Clara,Boone
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Larsyn Callanan-Attebery",Larsyn,Callanan-Attebery
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Ryleigh Gower",Ryleigh,Gower
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Emma Hoelzen",Emma,Hoelzen
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Kalina Korito",Kalina,Korito
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Olivia Lenhart",Olivia,Lenhart
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Eden Rawlings",Eden,Rawlings
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Vivian Rawlings",Vivian,Rawlings
+27,3,"Thu 5:15",Lyrical/Modern,"Lyrical/Modern 2","Ms. Angie","Alex Sims",Alex,Sims
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Rylie Brown",Rylie,Brown
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Amy Burnham",Amy,Burnham
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Ellie Coffee",Ellie,Coffee
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Charlotte Delatorre",Charlotte,Delatorre
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Rylee Eklund",Rylee,Eklund
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Beckham Kidd",Beckham,Kidd
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Rylie Persons",Rylie,Persons
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Madison Puckett",Madison,Puckett
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Grace Rawlings",Grace,Rawlings
+10,1,"Thu 5:15","Musical Theater","Musical Theater 1","Ms. Marissa","Madison Schroff",Madison,Schroff
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Audree Addler",Audree,Addler
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Lizzy Bala Bala",Lizzy,"Bala Bala"
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Ava Bervig",Ava,Bervig
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Isla Bervig",Isla,Bervig
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Kenley Block",Kenley,Block
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Juliette Boone",Juliette,Boone
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Amelia Coates",Amelia,Coates
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Olivia Flandrau",Olivia,Flandrau
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Carson Hunter",Carson,Hunter
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Emery Kinch",Emery,Kinch
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Eden Rawlings",Eden,Rawlings
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Emily Ritter",Emily,Ritter
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Janelle Stayton",Janelle,Stayton
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Kate Widney",Kate,Widney
+9,1,"Wed 4:15","Musical Theater","Musical Theater 2","Ms. Emilee","Madison Widney",Madison,Widney
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Madi Akert",Madi,Akert
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Olivia Bervig",Olivia,Bervig
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Tessa Block",Tessa,Block
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Briddian Demas",Briddian,Demas
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Megan Henze",Megan,Henze
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Olivia Lenhart",Olivia,Lenhart
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Caitlin O'Connor",Caitlin,"O'Connor"
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Vivian Rawlings",Vivian,Rawlings
+19,2,"Wed 7:15","Musical Theater","Musical Theater 3","Ms. Emilee","Alex Sims",Alex,Sims
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Clara Boone",Clara,Boone
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Wae Callanan-Attebery",Wae,Callanan-Attebery
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Maia Hunter",Maia,Hunter
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Maddie Massaro",Maddie,Massaro
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Bailey Meyer",Bailey,Meyer
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Kekoalakakapono Morkunas",Kekoalakakapono,Morkunas
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Phoenix-Dawn Morkunas",Phoenix-Dawn,Morkunas
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Maleah Poku",Maleah,Poku
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Rebekah Poku",Rebekah,Poku
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Jillian Stefanski",Jillian,Stefanski
+28,3,"Tue 7:15","Musical Theater","Musical Theater: HS","Ms. Jillian","Mikaela Wells",Mikaela,Wells
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Ariah Baxter",Ariah,Baxter
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Audrey Bland",Audrey,Bland
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Emilia Erickson",Emilia,Erickson
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Eliana Macrides",Eliana,Macrides
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Adalynn Malcolm",Adalynn,Malcolm
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Jamieson Migliorino",Jamieson,Migliorino
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Grace Molina",Grace,Molina
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Zoey Moore",Zoey,Moore
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Hallie Riewold",Hallie,Riewold
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Brooksie Schuitema",Brooksie,Schuitema
+36,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00)","Ms. Angie","Alexandra Stonham",Alexandra,Stonham
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Ariah Baxter",Ariah,Baxter
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Audrey Bland",Audrey,Bland
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Emilia Erickson",Emilia,Erickson
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Eliana Macrides",Eliana,Macrides
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Adalynn Malcolm",Adalynn,Malcolm
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Jamieson Migliorino",Jamieson,Migliorino
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Grace Molina",Grace,Molina
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Zoey Moore",Zoey,Moore
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Hallie Riewold",Hallie,Riewold
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Brooksie Schuitema",Brooksie,Schuitema
+37,,"Thu 11:00","BABY DANCE","Pre-Ballet/Acro (Thu 11:00) Sweethearts","Ms. Angie","Alexandra Stonham",Alexandra,Stonham
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Violet Aleo",Violet,Aleo
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Ryann Bragg",Ryann,Bragg
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Maisie Cantieni",Maisie,Cantieni
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Jacqueline Humbles",Jacqueline,Humbles
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Rory Krueger",Rory,Krueger
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Addison Mattingly",Addison,Mattingly
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Brooklyn Miller",Brooklyn,Miller
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Chloe Minani",Chloe,Minani
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Elora Tacheny",Elora,Tacheny
+34,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00)","Ms. Marissa","Maezlyn Wiese",Maezlyn,Wiese
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Violet Aleo",Violet,Aleo
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Ryann Bragg",Ryann,Bragg
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Maisie Cantieni",Maisie,Cantieni
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Jacqueline Humbles",Jacqueline,Humbles
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Rory Krueger",Rory,Krueger
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Addison Mattingly",Addison,Mattingly
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Brooklyn Miller",Brooklyn,Miller
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Chloe Minani",Chloe,Minani
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Elora Tacheny",Elora,Tacheny
+35,,"Wed 10:00","BABY DANCE","Pre-Ballet/Acro (Wed 10:00) Sweethearts","Ms. Marissa","Maezlyn Wiese",Maezlyn,Wiese
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Winnie Ady",Winnie,Ady
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Margot Denney",Margot,Denney
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Ava Elgin",Ava,Elgin
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Quinn Fo",Quinn,Fo
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Lo Holloway",Lo,Holloway
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Charlotte Hughes",Charlotte,Hughes
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Keturah Lynch",Keturah,Lynch
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Sadie McCrite",Sadie,McCrite
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Eden Rosinbum",Eden,Rosinbum
+31,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15)","Ms. Marissa","Elyssa Weidman",Elyssa,Weidman
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Winnie Ady",Winnie,Ady
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Margot Denney",Margot,Denney
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Ava Elgin",Ava,Elgin
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Quinn Fo",Quinn,Fo
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Lo Holloway",Lo,Holloway
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Charlotte Hughes",Charlotte,Hughes
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Keturah Lynch",Keturah,Lynch
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Sadie McCrite",Sadie,McCrite
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Eden Rosinbum",Eden,Rosinbum
+30,,"Thu 4:15","BABY DANCE","Pre-Ballet/Tap (Thu 4:15) Sweethearts","Ms. Marissa","Elyssa Weidman",Elyssa,Weidman
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Ariella Burdette",Ariella,Burdette
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Amelia Clark",Amelia,Clark
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Noelle Gunnell",Noelle,Gunnell
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Chloe Hale-Banks",Chloe,Hale-Banks
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Eve Laun",Eve,Laun
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Delaney Ogden",Delaney,Ogden
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Juliette Ogden",Juliette,Ogden
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Amelia Ratkovich",Amelia,Ratkovich
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Riley Ratkovich",Riley,Ratkovich
+38,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00)","Ms. Jillian","Ella Stan",Ella,Stan
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Ariella Burdette",Ariella,Burdette
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Amelia Clark",Amelia,Clark
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Noelle Gunnell",Noelle,Gunnell
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Chloe Hale-Banks",Chloe,Hale-Banks
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Eve Laun",Eve,Laun
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Delaney Ogden",Delaney,Ogden
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Juliette Ogden",Juliette,Ogden
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Amelia Ratkovich",Amelia,Ratkovich
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Riley Ratkovich",Riley,Ratkovich
+39,,"Wed 10:00","BABY DANCE","Pre-Ballet/Tap (Wed 10:00) Sweethearts","Ms. Jillian","Ella Stan",Ella,Stan
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Emmaline Ashton",Emmaline,Ashton
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Hannah DeSpain",Hannah,DeSpain
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Presley Grubor",Presley,Grubor
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Aria Musarra",Aria,Musarra
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Lilah Norris",Lilah,Norris
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Jessica Scorzetti",Jessica,Scorzetti
+40,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00)","Ms. Jillian","Teagan Turley",Teagan,Turley
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Emmaline Ashton",Emmaline,Ashton
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Hannah DeSpain",Hannah,DeSpain
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Presley Grubor",Presley,Grubor
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Aria Musarra",Aria,Musarra
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Lilah Norris",Lilah,Norris
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Jessica Scorzetti",Jessica,Scorzetti
+41,,"Wed 11:00","BABY DANCE","Pre-Ballet/Tap (Wed 11:00) Sweethearts","Ms. Jillian","Teagan Turley",Teagan,Turley
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Angelica Catuna",Angelica,Catuna
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Sophie Catuna",Sophie,Catuna
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Jane Hicks",Jane,Hicks
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Penelope Hicks",Penelope,Hicks
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Mixon Jakubos",Mixon,Jakubos
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Addie Knisley",Addie,Knisley
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Isabella Ma",Isabella,Ma
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Sofia Nava",Sofia,Nava
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Pearl Nielsen",Pearl,Nielsen
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Hannah Ratiu",Hannah,Ratiu
+42,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00)","Ms. Marissa","Mia Segura",Mia,Segura
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Angelica Catuna",Angelica,Catuna
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Sophie Catuna",Sophie,Catuna
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Jane Hicks",Jane,Hicks
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Penelope Hicks",Penelope,Hicks
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Mixon Jakubos",Mixon,Jakubos
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Addie Knisley",Addie,Knisley
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Isabella Ma",Isabella,Ma
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Sofia Nava",Sofia,Nava
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Pearl Nielsen",Pearl,Nielsen
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Hannah Ratiu",Hannah,Ratiu
+43,,"Wed/Thu 11:00","BABY DANCE","Pre-Ballet/Tap (Wed/Thu 11:00) Sweethearts","Ms. Marissa","Mia Segura",Mia,Segura
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Eloise Arena",Eloise,Arena
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Rylie Brown",Rylie,Brown
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Juliana Conner",Juliana,Conner
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Ellie Garibaldi",Ellie,Garibaldi
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Gracen Kantaras",Gracen,Kantaras
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Summer Lynch",Summer,Lynch
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Eleanor Mann",Eleanor,Mann
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Madeline O'Connor",Madeline,"O'Connor"
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Gabriela Ortiz",Gabriela,Ortiz
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Rylie Persons",Rylie,Persons
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Madison Puckett",Madison,Puckett
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Makenna Reeves",Makenna,Reeves
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Madison Schroff",Madison,Schroff
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Kira Shkarayeva",Kira,Shkarayeva
+20,2,"Wed 4:15",Tap,"Tap 1","Ms. Angie","Ava Wolter",Ava,Wolter
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Isla Bervig",Isla,Bervig
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Kenley Block",Kenley,Block
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Juliette Boone",Juliette,Boone
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Anysia Chandiramani",Anysia,Chandiramani
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Zyah Chandiramani",Zyah,Chandiramani
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Ellie Coffee",Ellie,Coffee
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Carson Hunter",Carson,Hunter
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Avery Kidd",Avery,Kidd
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Charis Morkunas",Charis,Morkunas
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Ali Nava",Ali,Nava
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Grace Rawlings",Grace,Rawlings
+29,3,"Wed 5:15",Tap,"Tap 2","Ms. Angie","Ivan Shkarayev",Ivan,Shkarayev
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Ava Bervig",Ava,Bervig
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Olivia Bervig",Olivia,Bervig
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Tessa Block",Tessa,Block
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Asher Boone",Asher,Boone
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Clara Boone",Clara,Boone
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Emmanuelle Carnahan",Emmanuelle,Carnahan
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Jodi DeLaTorre",Jodi,DeLaTorre
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Maia Hunter",Maia,Hunter
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Addison Meng",Addison,Meng
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Phoenix-Dawn Morkunas",Phoenix-Dawn,Morkunas
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Eden Rawlings",Eden,Rawlings
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Anneliese Wells",Anneliese,Wells
+11,1,"Wed 6:15",Tap,"Tap 3","Ms. Angie","Jonah Wells",Jonah,Wells

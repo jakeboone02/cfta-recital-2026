@@ -1,0 +1,66 @@
+html,
+body {
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  margin: 1rem;
+  background-color: #fcfcfc;
+}
+
+th {
+  white-space: nowrap;
+}
+
+code {
+  font-family: monospace;
+}
+
+.gray {
+  color: gray;
+  font-weight: bold;
+}
+
+.red {
+  color: red;
+  font-weight: bold;
+}
+
+.orange {
+  color: orange;
+  font-weight: bold;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid gray;
+}
+
+th,
+td {
+  padding: 0.3rem;
+  border: 1px solid gray;
+}
+
+.dance {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.dance .dance-and-song {
+  display: flex;
+  gap: 0.2rem;
+  flex-direction: column;
+}
+
+.song-and-artist {
+  display: flex;
+  gap: 0.5rem;
+  /* text-wrap: nowrap; */
+  font-size: small;
+  opacity: 0.8;
+}
+
+.song-and-artist .song {
+  font-weight: bold;
+}
