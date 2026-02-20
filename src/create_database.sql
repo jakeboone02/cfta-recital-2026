@@ -11,7 +11,8 @@ CREATE TABLE dances (
 CREATE TABLE dancers (
   dancer_name text GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
   first_name text not null,
-  last_name text not null
+  last_name text not null,
+  is_teacher int check (is_teacher IN (0, 1)) not null
 );
 
 CREATE UNIQUE INDEX dancers_name ON dancers (dancer_name);
@@ -56,16 +57,19 @@ CREATE TABLE recitals (
 -- Views
 --------------------------------------------------------------------------------
 
--- CREATE VIEW IF NOT EXISTS participants AS
---  SELECT
---    d.dance_id,
---    d.recital_group,
---    d.class_time,
---    d.dance_style,
---    d.dance_name,
---    d.choreography,
---    dd.dancer,
---    p.first_name,
---    p.last_name
---   FROM dances d JOIN dancer_classes dd ON d.dance_id = dd.dance_id JOIN dancers p ON p.name = dd.dancer
---  ORDER BY dance_name, class_time, last_name, first_name;
+CREATE VIEW IF NOT EXISTS participants AS
+ SELECT
+   d.dance_id,
+   d.recital_group,
+   c.class_time,
+   d.dance_style,
+   d.dance_name,
+   d.choreography,
+   p.dancer_name
+  FROM dances d
+       INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
+       INNER JOIN classes c ON cd.class_id = c.class_id
+       INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
+       INNER JOIN dancers p ON dc.dancer_name = p.dancer_name
+ WHERE NOT (d.recital_group = 'SpecTAPular' AND p.is_teacher = 1)
+ ORDER BY dance_name, last_name, first_name;
