@@ -81,7 +81,7 @@ SELECT recital
 ) all_dance_instances
  LEFT OUTER JOIN (SELECT d.id
                    ,COUNT(*) dancer_count
-                   ,json_group_array(dd.dancer) AS dancers
+                   ,json_group_array(dd.dancer ORDER BY UPPER(last_name), UPPER(first_name)) AS dancers
                 FROM dances d
                      INNER JOIN (SELECT * FROM dance_dancers INNER JOIN dancers ON name = dancer ORDER BY last_name, first_name) dd ON d.id = dd.dance_id
                GROUP BY d.id) dc ON dc.id = all_dance_instances.dance_id
@@ -94,7 +94,7 @@ SELECT recital
               ORDER BY start_id, level) do ON do.dance_id = all_dance_instances.dance_id
  LEFT OUTER JOIN (SELECT -1 AS ds_id
                    ,COUNT(*) tap_dancer_count
-                   ,json_group_array(dd.dancer) AS tap_dancers
+                   ,json_group_array(dd.dancer ORDER BY UPPER(last_name), UPPER(first_name)) AS tap_dancers
                 FROM dances d
                      INNER JOIN (SELECT * FROM dance_dancers INNER JOIN dancers ON name = dancer ORDER BY last_name, first_name) dd ON d.id = dd.dance_id
                WHERE spectapular = 1) ds ON ds.ds_id = all_dance_instances.dance_id

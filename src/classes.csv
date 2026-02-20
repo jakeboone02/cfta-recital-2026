@@ -1,0 +1,36 @@
+class_id,teacher,class_time,class_name
+1,Ms. Angie,Mon 4:15pm,Ballet & Tap Combo A
+2,Ms. Marissa,Tue 5:15pm,Ballet & Tap Combo B
+3,Ms. Marissa,Wed 11:00am,Ballet & Tap Combo C
+4,Ms. Angie,Wed 2:30pm,Ballet & Tap Combo D
+5,Ms. Molly,Mon 6:15pm,Ballet 1
+6,Ms. Molly,Mon 7:15pm,Ballet 1
+7,Ms. Angie,Thu 5:15pm,Ballet 1
+8,Ms. Jillian,Tue 4:15pm,Ballet 1
+9,Ms. Marissa,Tue 6:15pm,Ballet 1
+10,Ms. Marissa,Wed 5:15pm,Ballet 1
+11,Ms. Angie,Thu 7:15pm,Ballet 2
+12,Ms. Jillian,Tue 7:15pm,Ballet High School & Adult
+13,Mr. Noble,Thu 7:15pm,Hip Hop 1A
+14,Mr. Noble,Thu 6:15pm,Hip Hop 1B
+15,Mr. Noble,Thu 8:15pm,Hip Hop Adults
+16,Ms. Angie,Mon 6:15pm,Jazz 1
+17,Ms. Marissa,Wed 7:15pm,Jazz 2
+18,Ms. Angie,Thu 4:15pm,Modern/Lyrical 1
+19,Ms. Angie,Thu 6:15pm,Modern/Lyrical 2
+20,Ms. Marissa,Wed 6:15pm,Musical Theater 1
+21,Ms. Jillian,Tue 5:15pm,Musical Theater 2
+22,Ms. Angie,Mon 5:15pm,Musical Theater 3
+23,Ms. Jillian,Tue 6:15pm,Musical Theater: HS
+24,Ms. Jillian,Wed 10:00am,Pre-dance A: Ballet & Tap (Jillian)
+25,Ms. Marissa,Wed 10:00am,Pre-dance A: Ballet & Tap (Marissa)
+26,Ms. Jillian,Wed 11:00am,Pre-dance B: Ballet & Tap
+27,Ms. Marissa,Wed 2:30pm,Pre-dance C: Ballet & Tap
+28,Ms. Marissa,Wed 4:15pm,Pre-dance D: Ballet & Tap
+29,Ms. Haley,Thu 11:00am,Pre-dance F: Ballet & Tap
+30,Ms. Angie,Wed 4:15pm,Tap 1
+31,Ms. Marissa,Tue 7:15pm,Tap 2a
+32,Ms. Angie,Wed 5:15pm,Tap 2b
+33,Ms. Angie,Wed 6:15pm,Tap 3
+34,Ms. Angie,Mon 7:15pm,Tap Adult 1
+35,Ms. Angie,Wed 7:15pm,Tap Adult 2
