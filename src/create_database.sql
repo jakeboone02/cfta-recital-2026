@@ -60,9 +60,10 @@ CREATE TABLE recitals (
 CREATE VIEW IF NOT EXISTS participants AS
 SELECT d.dance_id,
        d.recital_group,
-       c.class_time,
        d.dance_style,
        d.dance_name,
+       c.class_name,
+       c.class_time,
        d.choreography,
        p.dancer_name,
        p.last_name,
@@ -99,9 +100,22 @@ SELECT c.teacher AS "Teacher",
           first_name;
 
 CREATE VIEW IF NOT EXISTS parent_and_child_dancers AS
-SELECT DISTINCT parents.dancer_name parent, participants.dancer_name child
-  FROM participants
-       INNER JOIN (SELECT * FROM participants WHERE dance_name LIKE '%Adult%') parents
-       ON parents.last_name = participants.last_name
- WHERE parents.dancer_name <> participants.dancer_name
+WITH parents AS (
+  SELECT dancer_name, last_name, GROUP_CONCAT(dance_name, ', ') AS dances
+    FROM participants
+   WHERE class_name LIKE '%Adult%'
+     AND dance_name <> 'SpecTAPular'
+     AND last_name <> 'Boone'
+     AND last_name <> 'Wells'
+   GROUP BY dancer_name, last_name
+), children AS (
+  SELECT dancer_name, last_name, GROUP_CONCAT(dance_name, ', ') AS dances
+    FROM participants
+   WHERE class_name NOT LIKE '%Adult%'
+     AND dance_name <> 'SpecTAPular'
+   GROUP BY dancer_name, last_name
+)
+SELECT parents.dancer_name parent, children.dancer_name child, parents.dances parent_dances, children.dances child_dances
+  FROM children INNER JOIN parents ON parents.last_name = children.last_name
+ WHERE parents.dancer_name <> children.dancer_name
  ORDER BY parent, child;
