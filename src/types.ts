@@ -1,6 +1,6 @@
 export interface Dance {
   id: number;
-  recital_group: 1 | 2 | 3 | 'T' | 'B' | null;
+  recital_group: 'A' | 'B' | 'C' | 'T' | 'B' | null;
   class_time: string;
   dance: string;
   choreography: string;
@@ -19,35 +19,35 @@ export interface DanceDancer {
 }
 
 export interface RecitalGroupOrder {
-  recital_id: 'A' | 'B' | 'C' | null;
+  recital_id: 1 | 2 | 3 | null;
   dance_id: number;
   follows_dance_id: number | null;
 }
 
 export interface Recital {
-  id: 'A' | 'B' | 'C';
-  recital_group_part_1: 1 | 2 | 3 | null;
-  recital_group_part_2: 1 | 2 | 3 | null;
+  id: 1 | 2 | 3;
+  recital_group_part_1: 'A' | 'B' | 'C' | null;
+  recital_group_part_2: 'A' | 'B' | 'C' | null;
 }
 
 export interface RecitalDanceInstance {
-  recital: 'A' | 'B' | 'C' | null;
+  recital: 1 | 2 | 3 | null;
   recital_description: string;
   part: 1 | 2 | null;
-  recital_group: 1 | 2 | 3 | 'T' | 'B' | null;
+  recital_group: 'A' | 'B' | 'C' | null;
   dance_style:
-    | 'Acro'
     | 'Ballet'
-    | 'Lyrical/Modern'
+    | 'Hip Hop'
     | 'Jazz'
+    | 'Modern/Lyrical'
     | 'Musical Theater'
     | 'Tap'
-    | 'BABY DANCE';
+    | 'PREDANCE';
   dance: string;
   song: string;
   artist: string;
   dancers: string[];
-  choreography: `Ms. ${string}`;
+  choreography: `M${'r' | 's'}. ${string}`;
   id: number | null;
   follows_dance_id: number | null;
   dancer_count: number | null;

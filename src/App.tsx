@@ -41,13 +41,13 @@ const toCsv = (jsonArray: RecitalDanceInstance[]) => {
 };
 
 const styleColors = {
-  Acro: 'firebrick',
   Ballet: 'lightskyblue',
-  'Lyrical/Modern': 'hotpink',
+  'Hip Hop': 'firebrick',
   Jazz: 'orange',
+  'Modern/Lyrical': 'hotpink',
   'Musical Theater': 'rebeccapurple',
   Tap: 'green',
-  'BABY DANCE': 'gray',
+  PREDANCE: 'gray',
 };
 
 export const DanceRow = ({
@@ -61,9 +61,9 @@ export const DanceRow = ({
   highlight,
 }: DanceRowProps) => {
   const md_up = () =>
-    moveDance(dance.id, dance.recital_group === 'B' ? prev_prev_dance?.id ?? null : 'up');
+    moveDance(dance.id, dance.recital_group === 'B' ? (prev_prev_dance?.id ?? null) : 'up');
   const md_down = () =>
-    moveDance(dance.id, dance.recital_group === 'B' ? next_dance?.id ?? null : 'down');
+    moveDance(dance.id, dance.recital_group === 'B' ? (next_dance?.id ?? null) : 'down');
   const disableUp =
     dance.follows_dance_id === null ||
     (dance.recital_group === 'B' &&
