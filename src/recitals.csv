@@ -1,4 +1,4 @@
-recital_id,recital_group_part_1,recital_group_part_2,recital_description
-1,A,B,April 24 PM - Friday Evening Recital
-2,B,C,April 25 AM - Saturday Morning Recital
-3,C,A,April 25 PM - Saturday Afternoon Recital
+recital_id,recital_group_part_1,recital_group_part_2,recital_description,recital_time
+1,A,B,Friday Evening Recital,2026-04-24 18:00:00
+2,C,A,Saturday Morning Recital,2026-04-25 10:00:00
+3,B,C,Saturday Afternoon Recital,2026-04-25 13:00:00

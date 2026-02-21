@@ -13,7 +13,15 @@ const db = new Database(db_file_path);
 const sql = await Bun.file(`${import.meta.dir}/create_database.sql`).text();
 db.transaction(() => db.run(sql))();
 
-const csvTables = ['class_dances', 'classes', 'dancer_classes', 'dancers', 'dances', 'recitals'];
+const csvTables = [
+  'class_dances',
+  'classes',
+  'dancer_classes',
+  'dancers',
+  'dances',
+  'recitals',
+  'recital_groups',
+];
 
 for (const table of csvTables) {
   const data = Papa.parse(await Bun.file(`${import.meta.dir}/${table}.csv`).text(), {

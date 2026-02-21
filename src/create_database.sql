@@ -40,22 +40,39 @@ CREATE TABLE class_dances (
 
 CREATE UNIQUE INDEX class_dance ON class_dances (class_id, dance_id);
 
--- CREATE TABLE recital_group_orders (
---   recital_id text check (recital_id IN ('A', 'B', 'C')) null,
---   dance_id int not null,
---   follows_dance_id int
--- );
+CREATE TABLE recital_groups (
+  recital_group text check (recital_group IN ('A', 'B', 'C')) not null,
+  show_order text not null
+);
 
 CREATE TABLE recitals (
   recital_id int PRIMARY KEY check (recital_id IN (1, 2, 3)),
   recital_group_part_1 int check (recital_group_part_1 IN ('A', 'B', 'C')) null,
   recital_group_part_2 int check (recital_group_part_2 IN ('A', 'B', 'C')) null,
-  recital_description text not null
+  recital_description text not null,
+  recital_time text not null
 );
 
 --------------------------------------------------------------------------------
 -- Views
 --------------------------------------------------------------------------------
+
+CREATE VIEW IF NOT EXISTS recital_group_orders AS
+SELECT recital_group,
+       ROW_NUMBER() OVER (PARTITION BY recital_group ORDER BY json_each.key) AS order_in_group,
+       json_each.value AS dance_id
+  FROM recital_groups, json_each(show_order);
+
+CREATE VIEW IF NOT EXISTS recital_group_dances AS
+SELECT d.recital_group,
+       rgo.order_in_group,
+       d.dance_id,
+       d.dance_style,
+       d.dance_name,
+       d.choreography
+  FROM recital_group_orders rgo
+       INNER JOIN dances d ON rgo.dance_id = d.dance_id
+ ORDER BY d.recital_group, order_in_group;
 
 CREATE VIEW IF NOT EXISTS participants AS
 SELECT d.dance_id,
@@ -109,7 +126,7 @@ SELECT c.teacher AS "Teacher",
 
 CREATE VIEW IF NOT EXISTS parent_and_child_dancers AS
 WITH parents AS (
-  SELECT dancer_name, last_name, GROUP_CONCAT(dance_name, ', ') AS dances
+  SELECT dancer_name, last_name, GROUP_CONCAT(recital_group, ', ') AS groups, GROUP_CONCAT(dance_name, ', ') AS dances
     FROM participants
    WHERE class_name LIKE '%Adult%'
      AND dance_name <> 'SpecTAPular'
@@ -117,13 +134,18 @@ WITH parents AS (
      AND last_name <> 'Wells'
    GROUP BY dancer_name, last_name
 ), children AS (
-  SELECT dancer_name, last_name, GROUP_CONCAT(dance_name, ', ') AS dances
+  SELECT dancer_name, last_name, GROUP_CONCAT(recital_group, ', ') AS groups, GROUP_CONCAT(dance_name, ', ') AS dances
     FROM participants
    WHERE class_name NOT LIKE '%Adult%'
      AND dance_name <> 'SpecTAPular'
    GROUP BY dancer_name, last_name
 )
-SELECT parents.dancer_name parent, children.dancer_name child, parents.dances parent_dances, children.dances child_dances
+SELECT parents.dancer_name parent,
+       parents.groups parent_groups,
+       children.groups child_groups,
+       children.dancer_name child,
+       parents.dances parent_dances,
+       children.dances child_dances
   FROM children INNER JOIN parents ON parents.last_name = children.last_name
  WHERE parents.dancer_name <> children.dancer_name
  ORDER BY parent, child;
