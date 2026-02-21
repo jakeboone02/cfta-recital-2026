@@ -1,6 +1,6 @@
 CREATE TABLE dances (
   dance_id int PRIMARY KEY,
-  recital_group text check (recital_group IN ('SpecTAPular', 'Hip Hop', 'X', 'PREDANCE')) null,
+  recital_group text check (recital_group IN ('SpecTAPular', 'Hip Hop', 'A', 'B', 'C', 'PREDANCE')) null,
   dance_style text check (dance_style IN ('Ballet', 'Hip Hop', 'Modern/Lyrical', 'Jazz', 'Musical Theater', 'Tap')) not null,
   dance_name text,
   choreography text,
@@ -75,6 +75,14 @@ SELECT d.dance_id,
        INNER JOIN dancers p ON dc.dancer_name = p.dancer_name
  WHERE NOT (d.recital_group = 'SpecTAPular' AND p.is_teacher = 1)
  ORDER BY dance_name, last_name, first_name;
+
+CREATE VIEW IF NOT EXISTS dance_dancers AS
+SELECT d.*, p.*
+  FROM dances d
+     INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
+     INNER JOIN classes c ON cd.class_id = c.class_id
+     INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
+     INNER JOIN dancers p ON dc.dancer_name = p.dancer_name;
 
 CREATE VIEW IF NOT EXISTS teacher_checklist AS
 SELECT c.teacher AS "Teacher",
