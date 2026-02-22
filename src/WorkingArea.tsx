@@ -213,7 +213,7 @@ export const WorkingArea = ({ groups, danceMap, onChange }: Props) => {
             );
           })}
         </SortableContext>
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activeDanceId != null ? <OverlayItem danceId={activeDanceId} danceMap={danceMap} /> : null}
         </DragOverlay>
       </DndContext>

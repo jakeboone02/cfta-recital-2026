@@ -17,7 +17,7 @@ export const App = () => {
   const [dances, setDances] = useState<DanceRow[]>([]);
   const [reportData, setReportData] = useState<RecitalDanceInstance[]>([]);
   const [groups, setGroups] = useState<GroupOrders | null>(null);
-  const [showSQL, setShowSQL] = useState(false);
+  const [sqlCopied, setSqlCopied] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -75,6 +75,14 @@ export const App = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleCopySQL = () => {
+    if (!groups) return;
+    navigator.clipboard.writeText(exportSQL(groups)).then(() => {
+      setSqlCopied(true);
+      setTimeout(() => setSqlCopied(false), 1500);
+    });
+  };
+
   const handleReset = () => {
     localStorage.removeItem('cfta-recital-2026-group-orders');
     location.reload();
@@ -82,23 +90,18 @@ export const App = () => {
 
   if (!groups) return <div>Loading…</div>;
 
-  const sqlText = exportSQL(groups);
-
   return (
     <div className="app-layout">
+      <div className="toolbar">
+        <button onClick={handleExportCSV} title="Download show order as CSV file">💾 CSV</button>
+        <button onClick={handleExportSQL} title="Download SQL UPDATE statements to sync database">💾 SQL</button>
+        <button onClick={handleCopySQL} title="Copy SQL UPDATE statements to clipboard">
+          {sqlCopied ? '✓ Copied' : '📋 SQL'}
+        </button>
+        <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">↺ Reset</button>
+      </div>
       <div className="left-panel">
         <WorkingArea groups={groups} danceMap={danceMap} onChange={handleGroupChange} />
-        <div className="export-bar">
-          <button onClick={handleExportCSV}>⬇ CSV</button>
-          <button onClick={handleExportSQL}>⬇ SQL</button>
-          <button onClick={() => setShowSQL(s => !s)}>📋 SQL</button>
-          <button onClick={handleReset} className="btn-reset">↺ Reset</button>
-        </div>
-        {showSQL && (
-          <div className="sql-modal">
-            <textarea readOnly value={sqlText} rows={6} onClick={e => (e.target as HTMLTextAreaElement).select()} />
-          </div>
-        )}
       </div>
       <div className="right-panel">
         <ReportArea shows={shows} />
