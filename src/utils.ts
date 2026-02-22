@@ -146,10 +146,10 @@ export const exportSQL = (groups: GroupOrders): string => {
 
 /** Style colors — chosen for maximum contrast on white, easy to distinguish */
 export const styleColors: Record<string, string> = {
-  Ballet: '#2e86de',
+  Ballet: '#e056a0',
   'Hip Hop': '#e74c3c',
   Jazz: '#f39c12',
-  'Modern/Lyrical': '#e056a0',
+  'Modern/Lyrical': '#2e86de',
   'Musical Theater': '#8854d0',
   Tap: '#20bf6b',
   PREDANCE: '#999',

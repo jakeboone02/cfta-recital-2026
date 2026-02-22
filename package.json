@@ -9,9 +9,7 @@
     "rebuild:db": "bun ./src/create_database.ts && cp ./src/database.db ./build"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
+    "@hello-pangea/dnd": "^18.0.1",
     "papaparse": "^5.5.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

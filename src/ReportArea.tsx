@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import type { ShowData, ShowDance } from './utils';
 import { styleColors } from './utils';
 import type { GroupName } from './types';
 
 interface Props {
   shows: ShowData[];
+  actions?: React.ReactNode;
 }
 
 const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
@@ -15,11 +17,13 @@ const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
         <span className="report-group-badge">{dance.group}</span>
       </td>
       <td>
-        <div style={{ color, fontWeight: 'bold' }}>{dance.dance_name}</div>
+        <div className="report-dance-title">
+          <span style={{ color, fontWeight: 'bold' }}>{dance.dance_name}</span>
+          <span className="report-choreo">{dance.choreography}</span>
+        </div>
         <div className="report-song">
           {dance.song} — {dance.artist}
         </div>
-        <div className="report-choreo">{dance.choreography}</div>
       </td>
       <td className="report-count">{dance.dancers.length || ''}</td>
       <td className="report-overlap">
@@ -71,7 +75,7 @@ const ChoreoCount = ({ dances }: { dances: ShowDance[] }) => {
         .sort((a, b) => b[1] - a[1])
         .map(([choreo, count]) => (
           <span key={choreo}>
-            {count} {choreo}
+            <strong>{count}</strong> {choreo}
           </span>
         ))}
     </div>
@@ -86,60 +90,95 @@ const FamilyCount = ({ dances }: { dances: ShowDance[] }) => {
       if (parts.length > 1) lastNames.add(parts[parts.length - 1]);
     }
   }
-  return <span>{lastNames.size} families</span>;
+  return (
+    <span>
+      <strong>{lastNames.size}</strong> families
+    </span>
+  );
 };
 
-export const ReportArea = ({ shows }: Props) => (
-  <div className="report-area">
-    <h2>Show Order Report</h2>
-    {shows.map(show => {
-      // Group the dances by their group name for style counts
-      const groupDances: Record<string, ShowDance[]> = {};
-      for (const d of show.dances) {
-        if (['A', 'B', 'C'].includes(d.group)) {
-          (groupDances[d.group] ??= []).push(d);
-        }
-      }
+export const ReportArea = ({ shows, actions }: Props) => {
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const toggle = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
-      return (
-        <div key={show.recital_id} className="show-section">
-          <div className="show-header">
-            <h3>
-              Show {show.recital_id}: {show.label}
-            </h3>
-            <div className="show-metrics">
-              <FamilyCount dances={show.dances} />
-              <ChoreoCount dances={show.dances} />
-            </div>
-          </div>
+  const allCollapsed = shows.every(s => collapsed[s.recital_id]);
+  const collapseExpandAll = () => {
+    const val = !allCollapsed;
+    setCollapsed(Object.fromEntries(shows.map(s => [s.recital_id, val])));
+  };
 
-          {/* Group style counts */}
-          <div className="group-style-counts">
-            {Object.entries(groupDances).map(([g, dances]) => (
-              <div key={g}>
-                <strong>Group {g}:</strong> <StyleCounts dances={dances} />
-              </div>
-            ))}
-          </div>
-
-          <table className="report-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Group</th>
-                <th>Dance</th>
-                <th>Ct</th>
-                <th>Dancer Overlap</th>
-              </tr>
-            </thead>
-            <tbody>
-              {show.dances.map((dance, idx) => (
-                <DanceRow key={`${show.recital_id}-${idx}`} dance={dance} idx={idx} />
-              ))}
-            </tbody>
-          </table>
+  return (
+    <div className="report-area">
+      <div className="panel-header">
+        <h2>Show Order</h2>
+        <div className="header-actions">
+          <button className="btn-collapse-all" onClick={collapseExpandAll} title={allCollapsed ? 'Expand all' : 'Collapse all'}>
+            <span style={{ display: 'inline-block', transform: allCollapsed ? undefined : 'rotate(90deg)' }}>»</span>
+          </button>
+          {actions}
         </div>
-      );
-    })}
-  </div>
-);
+      </div>
+      {shows.map(show => {
+        // Group the dances by their group name for style counts
+        const groupDances: Record<string, ShowDance[]> = {};
+        for (const d of show.dances) {
+          if (['A', 'B', 'C'].includes(d.group)) {
+            (groupDances[d.group] ??= []).push(d);
+          }
+        }
+        const isCollapsed = collapsed[show.recital_id] ?? false;
+
+        return (
+          <div key={show.recital_id} className="show-section">
+            <div
+              className="show-header"
+              onClick={() => toggle(show.recital_id)}
+              style={{ cursor: 'pointer' }}>
+              <h3>
+                {/* {isCollapsed ? (
+                  <span className={`collapse-icon collapsed`}>▶</span>
+                ) : (
+                  <span className={`collapse-icon`}>▼</span>
+                )} */}
+                <span className={`collapse-icon ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
+                Show {show.recital_id}: {show.label}
+              </h3>
+              <div className="show-metrics">
+                <FamilyCount dances={show.dances} />
+                <ChoreoCount dances={show.dances} />
+              </div>
+            </div>
+
+            {/* Group style counts */}
+            <div className="group-style-counts">
+              {Object.entries(groupDances).map(([g, dances]) => (
+                <div key={g}>
+                  <strong>Group {g}:</strong> <StyleCounts dances={dances} />
+                </div>
+              ))}
+            </div>
+
+            {!isCollapsed && (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Group</th>
+                    <th>Dance</th>
+                    <th># Dancers</th>
+                    <th>Dancer Overlap</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {show.dances.map((dance, idx) => (
+                    <DanceRow key={`${show.recital_id}-${idx}`} dance={dance} idx={idx} />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};

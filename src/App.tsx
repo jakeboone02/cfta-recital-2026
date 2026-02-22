@@ -92,19 +92,29 @@ export const App = () => {
 
   return (
     <div className="app-layout">
-      <div className="toolbar">
-        <button onClick={handleExportCSV} title="Download show order as CSV file">💾 CSV</button>
-        <button onClick={handleExportSQL} title="Download SQL UPDATE statements to sync database">💾 SQL</button>
-        <button onClick={handleCopySQL} title="Copy SQL UPDATE statements to clipboard">
-          {sqlCopied ? '✓ Copied' : '📋 SQL'}
-        </button>
-        <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">↺ Reset</button>
-      </div>
       <div className="left-panel">
-        <WorkingArea groups={groups} danceMap={danceMap} onChange={handleGroupChange} />
+        <WorkingArea
+          groups={groups}
+          danceMap={danceMap}
+          onChange={handleGroupChange}
+          actions={
+            <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">↺ Reset</button>
+          }
+        />
       </div>
       <div className="right-panel">
-        <ReportArea shows={shows} />
+        <ReportArea
+          shows={shows}
+          actions={
+            <div className="header-actions">
+              <button onClick={handleExportCSV} title="Download show order as CSV file">💾 CSV</button>
+              <button onClick={handleExportSQL} title="Download SQL UPDATE statements to sync database">💾 SQL</button>
+              <button onClick={handleCopySQL} title="Copy SQL UPDATE statements to clipboard">
+                {sqlCopied ? '✓ Copied' : '📋 SQL'}
+              </button>
+            </div>
+          }
+        />
       </div>
     </div>
   );
