@@ -109,11 +109,11 @@ CREATE VIEW IF NOT EXISTS consecutive_dances_tracker AS
 SELECT
   o.*,
   -- 1) all dancers in this dance
-  (SELECT json_group_array(dancer_name) FROM dance_dancers WHERE dance_id = o.dance_id) AS dancer_list,
+  (SELECT json_group_array(dancer_name ORDER BY UPPER(last_name), UPPER(first_name)) FROM dance_dancers WHERE dance_id = o.dance_id) AS dancer_list,
   -- 2) dancers in the next dance
-  (SELECT json_group_array(dancer_name) FROM dance_dancers WHERE dance_id = o.dance_id AND dancer_name IN (SELECT dancer_name FROM dance_dancers WHERE dance_id = o.next_dance_id)) AS common_with_next,
+  (SELECT json_group_array(dancer_name ORDER BY UPPER(last_name), UPPER(first_name)) FROM dance_dancers WHERE dance_id = o.dance_id AND dancer_name IN (SELECT dancer_name FROM dance_dancers WHERE dance_id = o.next_dance_id)) AS common_with_next,
   -- 3) dancers in the dance after next
-  (SELECT json_group_array(dancer_name) FROM dance_dancers WHERE dance_id = o.dance_id AND dancer_name IN (SELECT dancer_name FROM dance_dancers WHERE dance_id = o.next2_dance_id)) AS common_with_next2
+  (SELECT json_group_array(dancer_name ORDER BY UPPER(last_name), UPPER(first_name)) FROM dance_dancers WHERE dance_id = o.dance_id AND dancer_name IN (SELECT dancer_name FROM dance_dancers WHERE dance_id = o.next2_dance_id)) AS common_with_next2
 FROM (SELECT rso.*,
              LEAD(dance_id, 1) OVER (ORDER BY overall_show_order) AS next_dance_id,
              LEAD(dance_id, 2) OVER (ORDER BY overall_show_order) AS next2_dance_id
