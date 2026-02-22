@@ -1,59 +1,55 @@
-export interface Dance {
-  id: number;
-  recital_group: 'A' | 'B' | 'C' | 'T' | 'B' | null;
-  class_time: string;
-  dance: string;
+export type DanceStyle = 'All' | 'Ballet' | 'Hip Hop' | 'Jazz' | 'Modern/Lyrical' | 'Musical Theater' | 'Tap' | 'PREDANCE';
+export type GroupName = 'A' | 'B' | 'C';
+
+export interface DanceRow {
+  dance_id: number;
+  dance_style: DanceStyle;
+  dance_name: string;
   choreography: string;
   song: string;
   artist: string;
-  spectapular: 0 | 1;
 }
 
-export interface Dancer {
-  name: string;
-}
-
-export interface DanceDancer {
-  dance_id: number;
-  dancer: string;
-}
-
-export interface RecitalGroupOrder {
-  recital_id: 1 | 2 | 3 | null;
-  dance_id: number;
-  follows_dance_id: number | null;
-}
-
-export interface Recital {
-  id: 1 | 2 | 3;
-  recital_group_part_1: 'A' | 'B' | 'C' | null;
-  recital_group_part_2: 'A' | 'B' | 'C' | null;
+export interface RecitalGroupRow {
+  recital_group: GroupName;
+  show_order: (number | 'PRE')[];
 }
 
 export interface RecitalDanceInstance {
   overall_show_order: number;
   recital_id: 1 | 2 | 3;
-  recital_description: string;
   recital_part: 1 | 2;
-  recital_group: 'A' | 'B' | 'C' | 'Finale' | 'Hip Hop' | 'SpecTAPular';
-  dacne_id: number;
-  dance_style:
-    | 'All'
-    | 'Ballet'
-    | 'Hip Hop'
-    | 'Jazz'
-    | 'Modern/Lyrical'
-    | 'Musical Theater'
-    | 'Tap'
-    | 'PREDANCE';
+  recital_group: GroupName | 'Finale' | 'Hip Hop' | 'SpecTAPular';
+  order_in_group: number;
+  dance_id: number | null;
+  dance_style: DanceStyle;
   dance_name: string;
-  choreography: `M${'r' | 's'}. ${string}`;
+  choreography: string;
   song: string;
   artist: string;
+  next_dance_id: number | null;
+  next2_dance_id: number | null;
   dancer_list: string[];
   common_with_next: string[];
   common_with_next2: string[];
-  next_dance_id: number | 'PRE' | null;
-  next2_dance_id: number | 'PRE' | null;
-  dancer_count: number | null;
 }
+
+export type DanceMap = Record<number, DanceRow>;
+
+export interface GroupOrders {
+  A: (number | 'PRE')[];
+  B: (number | 'PRE')[];
+  C: (number | 'PRE')[];
+}
+
+// Show structure: which groups are in each show
+export const SHOW_STRUCTURE: { recital_id: number; label: string; parts: [GroupName, GroupName] }[] = [
+  { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] },
+  { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] },
+  { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] },
+];
+
+// Fixed dance IDs
+export const SPECTAPULAR_ID = 1;
+export const HIPHOP_ID = 2;
+export const FINALE_ID = 41;
