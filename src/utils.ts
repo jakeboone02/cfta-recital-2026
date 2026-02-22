@@ -144,14 +144,14 @@ export const exportSQL = (groups: GroupOrders): string => {
     .join('\n');
 };
 
-/** Style colors for dance types */
+/** Style colors — chosen for maximum contrast on white, easy to distinguish */
 export const styleColors: Record<string, string> = {
-  Ballet: 'lightskyblue',
-  'Hip Hop': 'firebrick',
-  Jazz: 'orange',
-  'Modern/Lyrical': 'hotpink',
-  'Musical Theater': 'rebeccapurple',
-  Tap: 'green',
-  PREDANCE: 'gray',
-  All: '#888',
+  Ballet: '#2e86de',
+  'Hip Hop': '#e74c3c',
+  Jazz: '#f39c12',
+  'Modern/Lyrical': '#e056a0',
+  'Musical Theater': '#8854d0',
+  Tap: '#20bf6b',
+  PREDANCE: '#999',
+  All: '#666',
 };

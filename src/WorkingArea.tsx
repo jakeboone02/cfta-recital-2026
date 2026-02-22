@@ -65,7 +65,7 @@ const SortableItem = ({ id, danceId, danceMap, isOverlay }: SortableItemProps) =
       className={`dance-card ${isOverlay ? 'dragging' : ''}`}>
       <div className="dance-card-color" style={{ backgroundColor: color }} />
       <div className="dance-card-content">
-        <div className="dance-card-name">{name}</div>
+        <div className="dance-card-name" style={{ color }}>{name}</div>
         {dance && (
           <div className="dance-card-details">
             <span>{dance.choreography}</span>
@@ -87,7 +87,7 @@ const OverlayItem = ({ danceId, danceMap }: { danceId: number | 'PRE'; danceMap:
     <div className="dance-card dragging">
       <div className="dance-card-color" style={{ backgroundColor: color }} />
       <div className="dance-card-content">
-        <div className="dance-card-name">{name}</div>
+        <div className="dance-card-name" style={{ color }}>{name}</div>
         {dance && (
           <div className="dance-card-details">
             <span>{dance.choreography}</span>
@@ -101,10 +101,13 @@ const OverlayItem = ({ danceId, danceMap }: { danceId: number | 'PRE'; danceMap:
 
 export const WorkingArea = ({ groups, danceMap, onChange }: Props) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<GroupName, boolean>>({ A: false, B: false, C: false });
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  const toggleCollapse = (g: GroupName) => setCollapsed(prev => ({ ...prev, [g]: !prev[g] }));
 
   // Build flat list of all items with group info
   const allGroups: GroupName[] = ['A', 'B', 'C'];
@@ -181,24 +184,31 @@ export const WorkingArea = ({ groups, danceMap, onChange }: Props) => {
         onDragEnd={handleDragEnd}>
         <SortableContext items={allKeys} strategy={verticalListSortingStrategy}>
           {allGroups.map(g => {
-            const count = groups[g].filter(d => d !== 'PRE').length;
+            const count = groups[g].length;
             const warn = count < 10 || count > 11;
+            const isCollapsed = collapsed[g];
             return (
               <div key={g} className="group-section">
-                <div className={`group-header ${warn ? 'group-warn' : ''}`}>
-                  Group {g}
+                <div
+                  className={`group-header ${warn ? 'group-warn' : ''}`}
+                  onClick={() => toggleCollapse(g)}>
+                  <span>
+                    <span className={`collapse-icon ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
+                    Group {g}
+                  </span>
                   <span className="group-count">
                     {count} dances{warn ? ' ⚠' : ''}
                   </span>
                 </div>
-                {groups[g].map((danceId, idx) => (
-                  <SortableItem
-                    key={itemKey(g, idx)}
-                    id={itemKey(g, idx)}
-                    danceId={danceId}
-                    danceMap={danceMap}
-                  />
-                ))}
+                {!isCollapsed &&
+                  groups[g].map((danceId, idx) => (
+                    <SortableItem
+                      key={itemKey(g, idx)}
+                      id={itemKey(g, idx)}
+                      danceId={danceId}
+                      danceMap={danceMap}
+                    />
+                  ))}
               </div>
             );
           })}
