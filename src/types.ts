@@ -31,11 +31,14 @@ export interface Recital {
 }
 
 export interface RecitalDanceInstance {
-  recital: 1 | 2 | 3 | null;
+  overall_show_order: number;
+  recital_id: 1 | 2 | 3;
   recital_description: string;
-  part: 1 | 2 | null;
-  recital_group: 'A' | 'B' | 'C' | null;
+  recital_part: 1 | 2;
+  recital_group: 'A' | 'B' | 'C' | 'Finale' | 'Hip Hop' | 'SpecTAPular';
+  dacne_id: number;
   dance_style:
+    | 'All'
     | 'Ballet'
     | 'Hip Hop'
     | 'Jazz'
@@ -43,13 +46,14 @@ export interface RecitalDanceInstance {
     | 'Musical Theater'
     | 'Tap'
     | 'PREDANCE';
-  dance: string;
+  dance_name: string;
+  choreography: `M${'r' | 's'}. ${string}`;
   song: string;
   artist: string;
-  dancers: string[];
-  choreography: `M${'r' | 's'}. ${string}`;
-  id: number | null;
-  follows_dance_id: number | null;
+  dancer_list: string[];
+  common_with_next: string[];
+  common_with_next2: string[];
+  next_dance_id: number | 'PRE' | null;
+  next2_dance_id: number | 'PRE' | null;
   dancer_count: number | null;
-  level: number;
 }
