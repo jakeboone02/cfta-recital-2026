@@ -76,7 +76,7 @@ export const FIXED_GROUP: Partial<Record<number, GroupName>> = {
 
 /** Combo pairs: dances from the same class that must stay in the same group */
 export const COMBO_PAIRS: [number, number][] = [
-  [7, 8],   // Combo Ballet/Tap Mon 4:15
+  [7, 8], // Combo Ballet/Tap Mon 4:15
   [22, 23], // Combo Ballet/Tap Tue 5:15
   [25, 26], // Combo Ballet/Tap Wed 11am
   [12, 13], // Combo Ballet/Tap Wed 2:30

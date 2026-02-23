@@ -124,9 +124,7 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
     <div className="working-area">
       <div className="panel-header">
         <h2>Groups</h2>
-        <div className="header-actions">
-          {actions}
-        </div>
+        <div className="header-actions">{actions}</div>
       </div>
       <DragDropContext onDragEnd={handleDragEnd}>
         {allGroups.map(g => {

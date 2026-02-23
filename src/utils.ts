@@ -1,5 +1,12 @@
 import Papa from 'papaparse';
-import type { DanceMap, DanceRow, GroupName, GroupOrders, RecitalDanceInstance, SHOW_STRUCTURE } from './types';
+import type {
+  DanceMap,
+  DanceRow,
+  GroupName,
+  GroupOrders,
+  RecitalDanceInstance,
+  SHOW_STRUCTURE,
+} from './types';
 import { SPECTAPULAR_ID, HIPHOP_ID, FINALE_ID } from './types';
 
 const LS_KEY = 'cfta-recital-2026-group-orders';
@@ -50,7 +57,9 @@ const saveStack = (key: string, stack: GroupOrders[]) => {
 };
 
 /** Initialize session (call once on app load) */
-export const initUndoSession = () => { getSessionId(); };
+export const initUndoSession = () => {
+  getSessionId();
+};
 
 /** Push current state onto undo stack before applying a change, clear redo */
 export const pushUndo = (current: GroupOrders) => {
@@ -129,13 +138,13 @@ export const computeShowOrder = (
   groups: GroupOrders,
   danceMap: DanceMap,
   dancerLookup: Record<number, string[]>,
-  showStructure: typeof SHOW_STRUCTURE,
+  showStructure: typeof SHOW_STRUCTURE
 ): ShowData[] => {
   const makeDance = (
     id: number | null,
     group: ShowDance['group'],
     recitalId: number,
-    part: 1 | 2,
+    part: 1 | 2
   ): ShowDance => {
     const d = id != null ? danceMap[id] : null;
     return {
@@ -201,7 +210,7 @@ export const exportCSV = (shows: ShowData[]): string => {
       artist: d.artist,
       dancer_count: d.dancers.length,
       dancers: d.dancers.join(', '),
-    })),
+    }))
   );
   return Papa.unparse(rows);
 };
@@ -212,9 +221,11 @@ export const exportGroupOrdersCSV = (groups: GroupOrders): string => {
     recital_group: g,
     show_order: JSON.stringify(groups[g]).replace(/"/g, '""'),
   }));
-  return 'recital_group,show_order\n' + rows
-    .map(r => `${r.recital_group},"${r.show_order}"`)
-    .join('\n') + '\n';
+  return (
+    'recital_group,show_order\n' +
+    rows.map(r => `${r.recital_group},"${r.show_order}"`).join('\n') +
+    '\n'
+  );
 };
 
 /** Parse CSV in recital_groups.csv format back to GroupOrders */

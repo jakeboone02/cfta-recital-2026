@@ -11,9 +11,10 @@ const db = new Database(`${import.meta.dir}/../build/database.db`, { readonly: t
 
 const loadDances = (): DanceData[] =>
   db
-    .query<{ dance_id: number; dance_name: string; dance_style: string; choreography: string }, SQLQueryBindings[]>(
-      'SELECT dance_id, dance_name, dance_style, choreography FROM dances',
-    )
+    .query<
+      { dance_id: number; dance_name: string; dance_style: string; choreography: string },
+      SQLQueryBindings[]
+    >('SELECT dance_id, dance_name, dance_style, choreography FROM dances')
     .all()
     .map(r => ({
       danceId: r.dance_id,
@@ -31,7 +32,7 @@ const loadDancersByDance = (): Map<number, string[]> => {
          INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
         WHERE NOT (d.dance_name = 'SpecTAPular' AND dc.dancer_name IN (
           SELECT dancer_name FROM dancers WHERE is_teacher = 1
-        ))`,
+        ))`
     )
     .all();
 
@@ -45,9 +46,10 @@ const loadDancersByDance = (): Map<number, string[]> => {
 
 const loadCurrentGroups = (): Solution => {
   const rows = db
-    .query<{ recital_group: GroupName; show_order: string }, SQLQueryBindings[]>(
-      'SELECT recital_group, show_order FROM recital_groups',
-    )
+    .query<
+      { recital_group: GroupName; show_order: string },
+      SQLQueryBindings[]
+    >('SELECT recital_group, show_order FROM recital_groups')
     .all();
 
   const solution: Solution = { A: [], B: [], C: [] };
@@ -96,7 +98,9 @@ const config: AnnealConfig = {
   restarts: 3,
 };
 
-console.log(`Running simulated annealing (${config.iterations.toLocaleString()} iterations × ${config.restarts + 1} runs)...`);
+console.log(
+  `Running simulated annealing (${config.iterations.toLocaleString()} iterations × ${config.restarts + 1} runs)...`
+);
 const startTime = performance.now();
 const TOP_N = 10;
 const { topSolutions } = anneal(currentSolution, ctx, config, TOP_N);
@@ -112,12 +116,15 @@ const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) 
     const order = JSON.stringify(sol[g]).replace(/"/g, '""');
     console.log(`${g},"${order}"`);
   }
-  console.log(`  Breakdown: consec=${result.breakdown.consecutiveDancers}, near=${result.breakdown.nearConsecutiveDancers}, style=${result.breakdown.sameStyleAdjacent}, babyAdj=${result.breakdown.babyAdjacent}, babyEnd=${result.breakdown.babyAtGroupEnd}, families=${result.breakdown.familyImbalance}, preTooClose=${result.breakdown.preTooClose}, styleImbal=${result.breakdown.styleImbalance}`);
+  console.log(
+    `  Breakdown: consec=${result.breakdown.consecutiveDancers}, near=${result.breakdown.nearConsecutiveDancers}, style=${result.breakdown.sameStyleAdjacent}, babyAdj=${result.breakdown.babyAdjacent}, babyEnd=${result.breakdown.babyAtGroupEnd}, families=${result.breakdown.familyImbalance}, preTooClose=${result.breakdown.preTooClose}, styleImbal=${result.breakdown.styleImbalance}`
+  );
 
   // Show conflicts if any
   for (const detail of result.details) {
     if (detail.consecutivePairs.length > 0) {
-      const showLabel = detail.recitalId === 1 ? 'Fri' : detail.recitalId === 2 ? 'Sat AM' : 'Sat PM';
+      const showLabel =
+        detail.recitalId === 1 ? 'Fri' : detail.recitalId === 2 ? 'Sat AM' : 'Sat PM';
       for (const p of detail.consecutivePairs) {
         console.log(`  ⚠ ${showLabel}: ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
       }
@@ -129,10 +136,13 @@ const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) 
 for (let rank = 0; rank < topSolutions.length; rank++) {
   const { solution: sol, score } = topSolutions[rank];
   const result = scoreSolution(sol, ctx);
-  const pctImprove = currentResult.total > 0 ? ((1 - score / currentResult.total) * 100).toFixed(0) : '0';
+  const pctImprove =
+    currentResult.total > 0 ? ((1 - score / currentResult.total) * 100).toFixed(0) : '0';
 
   console.log('════════════════════════════════════════════════════════════════');
-  console.log(`  #${rank + 1}  Score: ${score}  (was ${currentResult.total}, ${pctImprove}% improvement)`);
+  console.log(
+    `  #${rank + 1}  Score: ${score}  (was ${currentResult.total}, ${pctImprove}% improvement)`
+  );
   console.log('════════════════════════════════════════════════════════════════');
   printSolution(sol, result);
   console.log();
@@ -153,14 +163,21 @@ for (const g of ['A', 'B', 'C'] as GroupName[]) {
       console.log(`  ${(idx + 1).toString().padStart(2)}. [PREDANCE placeholder]`);
     } else {
       const d = danceMap.get(id);
-      console.log(`  ${(idx + 1).toString().padStart(2)}. ${d?.danceName ?? `Dance ${id}`} (${d?.danceStyle}, ${d?.choreography})`);
+      console.log(
+        `  ${(idx + 1).toString().padStart(2)}. ${d?.danceName ?? `Dance ${id}`} (${d?.danceStyle}, ${d?.choreography})`
+      );
     }
   });
   console.log();
 }
 
 for (const detail of bestResult.details) {
-  const showLabel = detail.recitalId === 1 ? 'Friday Evening' : detail.recitalId === 2 ? 'Saturday Morning' : 'Saturday Afternoon';
+  const showLabel =
+    detail.recitalId === 1
+      ? 'Friday Evening'
+      : detail.recitalId === 2
+        ? 'Saturday Morning'
+        : 'Saturday Afternoon';
   console.log(`── Show ${detail.recitalId}: ${showLabel} ──`);
   if (detail.consecutivePairs.length > 0) {
     console.log('  ⚠ Consecutive dancer conflicts:');
@@ -171,7 +188,9 @@ for (const detail of bestResult.details) {
     console.log('  ✓ No consecutive dancer conflicts');
   }
   if (detail.nearConsecutivePairs.length > 0) {
-    console.log(`  ⚠ Near-consecutive conflicts (gap=1): ${detail.nearConsecutivePairs.length} pairs`);
+    console.log(
+      `  ⚠ Near-consecutive conflicts (gap=1): ${detail.nearConsecutivePairs.length} pairs`
+    );
     for (const p of detail.nearConsecutivePairs) {
       console.log(`    ${p.dance1} → [gap] → ${p.dance3}: ${p.dancers.join(', ')}`);
     }

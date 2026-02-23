@@ -60,7 +60,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
     let j = randInt(arr.length - 1);
     if (j >= i) j++;
     [arr[i], arr[j]] = [arr[j], arr[i]];
-  } else if (moveType < 0.80) {
+  } else if (moveType < 0.8) {
     // Cross-group swap (1-for-1) to maintain group sizes
     const g1 = randPick(GROUPS);
     const remaining = GROUPS.filter(g => g !== g1);
@@ -71,15 +71,28 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
     // Pick movable dances from each group (not PRE, not fixed to this group)
     const movable1 = arr1
       .map((id, idx) => ({ id, idx }))
-      .filter(({ id }) => canLeaveGroup(id) && !(getFixedGroup(id) === g2 ? false : getFixedGroup(id) != null && getFixedGroup(id) !== g2));
+      .filter(
+        ({ id }) =>
+          canLeaveGroup(id) &&
+          !(getFixedGroup(id) === g2
+            ? false
+            : getFixedGroup(id) != null && getFixedGroup(id) !== g2)
+      );
     const movable2 = arr2
       .map((id, idx) => ({ id, idx }))
-      .filter(({ id }) => canLeaveGroup(id) && !(getFixedGroup(id) === g1 ? false : getFixedGroup(id) != null && getFixedGroup(id) !== g1));
+      .filter(
+        ({ id }) =>
+          canLeaveGroup(id) &&
+          !(getFixedGroup(id) === g1
+            ? false
+            : getFixedGroup(id) != null && getFixedGroup(id) !== g1)
+      );
 
     // Filter: can move to the other group (check fixed group constraints)
     const canMoveTo = (id: number | 'PRE', targetGroup: GroupName): boolean => {
       if (id === 'PRE') return false;
-      if (typeof id === 'number' && FIXED_GROUP[id] && FIXED_GROUP[id] !== targetGroup) return false;
+      if (typeof id === 'number' && FIXED_GROUP[id] && FIXED_GROUP[id] !== targetGroup)
+        return false;
       const sib = comboSiblingMap.get(id);
       if (sib != null && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
       if (sib !== undefined && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
@@ -107,7 +120,10 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
           // Need to find a non-combo dance in g2 to swap with
           const swapCandidates = arr2
             .map((id, idx) => ({ id, idx }))
-            .filter(({ id, idx }) => idx !== pick2.idx && canMoveTo(id, g1) && !comboSiblingMap.has(id as number));
+            .filter(
+              ({ id, idx }) =>
+                idx !== pick2.idx && canMoveTo(id, g1) && !comboSiblingMap.has(id as number)
+            );
           if (swapCandidates.length > 0) {
             const swap2 = randPick(swapCandidates);
             arr1[sibIdx] = swap2.id;
@@ -123,7 +139,10 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
         if (sibIdx !== -1) {
           const swapCandidates = arr1
             .map((id, idx) => ({ id, idx }))
-            .filter(({ id, idx }) => idx !== pick1.idx && canMoveTo(id, g2) && !comboSiblingMap.has(id as number));
+            .filter(
+              ({ id, idx }) =>
+                idx !== pick1.idx && canMoveTo(id, g2) && !comboSiblingMap.has(id as number)
+            );
           if (swapCandidates.length > 0) {
             const swap1 = randPick(swapCandidates);
             arr2[sibIdx] = swap1.id;
@@ -238,12 +257,10 @@ const randomizeSolution = (original: Solution): Solution => {
     const fgA = FIXED_GROUP[a];
     const fgB = FIXED_GROUP[b];
     const forced = fgA ?? fgB;
-    const candidates = forced
-      ? [forced]
-      : shuffle([...GROUPS]).filter(g => capacity[g] >= 2);
+    const candidates = forced ? [forced] : shuffle([...GROUPS]).filter(g => capacity[g] >= 2);
     if (candidates.length === 0) {
       // Fallback: put in group with most capacity
-      candidates.push(GROUPS.reduce((best, g) => capacity[g] > capacity[best] ? g : best, 'A'));
+      candidates.push(GROUPS.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), 'A'));
     }
     const g = candidates[0];
     result[g].push(a, b);
@@ -256,7 +273,7 @@ const randomizeSolution = (original: Solution): Solution => {
     const candidates = GROUPS.filter(g => capacity[g] > 0);
     if (candidates.length === 0) {
       // Overflow: pick group with most capacity (shouldn't happen with correct sizes)
-      const g = GROUPS.reduce((best, g) => capacity[g] > capacity[best] ? g : best, 'A');
+      const g = GROUPS.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), 'A');
       result[g].push(id);
       capacity[g]--;
     } else {
@@ -279,15 +296,14 @@ export interface RankedSolution {
 }
 
 /** Serialize a solution for deduplication */
-const solutionKey = (s: Solution): string =>
-  JSON.stringify([s.A, s.B, s.C]);
+const solutionKey = (s: Solution): string => JSON.stringify([s.A, s.B, s.C]);
 
 /** Run simulated annealing, tracking top-N unique solutions */
 export const anneal = (
   initial: Solution,
   ctx: ScoringContext,
   config: AnnealConfig,
-  topN: number = 10,
+  topN: number = 10
 ): { topSolutions: RankedSolution[]; history: number[] } => {
   // Start from a fully randomized solution for diversity
   let current = randomizeSolution(initial);
@@ -297,7 +313,9 @@ export const anneal = (
   const history: number[] = [currentScore];
 
   // Top-N tracking
-  const topSolutions: RankedSolution[] = [{ solution: cloneSolution(current), score: currentScore }];
+  const topSolutions: RankedSolution[] = [
+    { solution: cloneSolution(current), score: currentScore },
+  ];
   const seenKeys = new Set<string>([solutionKey(current)]);
 
   const maybeAddToTop = (s: Solution, score: number) => {

@@ -154,7 +154,7 @@ export const App = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(groups),
       });
-      const result = await res.json() as GroupOrders;
+      const result = (await res.json()) as GroupOrders;
       handleGroupChange(result);
     } finally {
       setOptimizing(false);
@@ -191,8 +191,12 @@ export const App = () => {
               <button onClick={handleOptimize} disabled={optimizing} title="Run optimizer">
                 {optimizing ? '⏳ Optimizing…' : '⚡ Optimize'}
               </button>
-              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
-              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">
+                ↶
+              </button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">
+                ↷
+              </button>
               <button
                 onClick={handleReset}
                 className="btn-reset"

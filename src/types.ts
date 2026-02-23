@@ -1,4 +1,12 @@
-export type DanceStyle = 'All' | 'Ballet' | 'Hip Hop' | 'Jazz' | 'Modern/Lyrical' | 'Musical Theater' | 'Tap' | 'PREDANCE';
+export type DanceStyle =
+  | 'All'
+  | 'Ballet'
+  | 'Hip Hop'
+  | 'Jazz'
+  | 'Modern/Lyrical'
+  | 'Musical Theater'
+  | 'Tap'
+  | 'PREDANCE';
 export type GroupName = 'A' | 'B' | 'C';
 
 export interface DanceRow {
@@ -43,7 +51,11 @@ export interface GroupOrders {
 }
 
 // Show structure: which groups are in each show
-export const SHOW_STRUCTURE: { recital_id: number; label: string; parts: [GroupName, GroupName] }[] = [
+export const SHOW_STRUCTURE: {
+  recital_id: number;
+  label: string;
+  parts: [GroupName, GroupName];
+}[] = [
   { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] },
   { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] },
   { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] },
