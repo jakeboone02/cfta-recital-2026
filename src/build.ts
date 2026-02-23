@@ -82,6 +82,14 @@ for (const r of dancerRows) {
   (dancersByDance[r.dance_id] ??= []).push(r.dancer_name);
 }
 
+const dancerLastNames = db
+  .query(`SELECT first_name || ' ' || last_name AS dancer_name, last_name FROM dancers`)
+  .all() as { dancer_name: string; last_name: string }[];
+const dancerLastNameMap: Record<string, string> = {};
+for (const r of dancerLastNames) {
+  dancerLastNameMap[r.dancer_name] = r.last_name;
+}
+
 db.close();
 
 // ── Step 3: Write generated data module ──────────────────────────────────
@@ -96,6 +104,8 @@ export const GROUPS: RecitalGroupRow[] = ${JSON.stringify(groups)};
 export const COMBO_PAIRS_DATA: ComboPair[] = ${JSON.stringify(comboPairs)};
 
 export const DANCERS_BY_DANCE: Record<number, string[]> = ${JSON.stringify(dancersByDance)};
+
+export const DANCER_LAST_NAMES: Record<string, string> = ${JSON.stringify(dancerLastNameMap)};
 `;
 
 await Bun.write(`${srcDir}/data.generated.ts`, output);
