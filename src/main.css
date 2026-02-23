@@ -1,3 +1,54 @@
+/* === Dance Style Colors === */
+.style-ballet {
+  color: #e056a0;
+}
+.style-hip-hop {
+  color: #000;
+}
+.style-jazz {
+  color: #f39c12;
+}
+.style-modern-lyrical {
+  color: #2e86de;
+}
+.style-musical-theater {
+  color: #8854d0;
+}
+.style-tap {
+  color: #20bf6b;
+}
+.style-predance {
+  color: #999;
+}
+.style-all {
+  color: #667;
+}
+
+.style-bg-ballet {
+  background-color: #e056a0;
+}
+.style-bg-hip-hop {
+  background-color: #ddd;
+}
+.style-bg-jazz {
+  background-color: #f39c12;
+}
+.style-bg-modern-lyrical {
+  background-color: #2e86de;
+}
+.style-bg-musical-theater {
+  background-color: #8854d0;
+}
+.style-bg-tap {
+  background-color: #20bf6b;
+}
+.style-bg-predance {
+  background-color: #999;
+}
+.style-bg-all {
+  background-color: #667;
+}
+
 /* === Base === */
 html,
 body {
@@ -251,6 +302,7 @@ h3 {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 0.4rem;
+  cursor: pointer;
 }
 
 .show-metrics {
@@ -432,6 +484,10 @@ h3 {
 
 .bold {
   font-weight: bold;
+}
+
+.hidden {
+  display: none;
 }
 
 /* === Bookmark Sidebar === */

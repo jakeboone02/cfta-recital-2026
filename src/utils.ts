@@ -295,14 +295,6 @@ export const exportSQL = (groups: GroupOrders): string => {
     .join('\n');
 };
 
-/** Style colors — chosen for maximum contrast on white, easy to distinguish */
-export const styleColors: Record<string, string> = {
-  Ballet: '#e056a0',
-  'Hip Hop': '#e74c3c',
-  Jazz: '#f39c12',
-  'Modern/Lyrical': '#2e86de',
-  'Musical Theater': '#8854d0',
-  Tap: '#20bf6b',
-  PREDANCE: '#999',
-  All: '#666',
-};
+/** Convert a dance style name to a CSS class suffix (e.g. 'Hip Hop' → 'hip-hop') */
+export const styleSlug = (danceStyle: string): string =>
+  danceStyle.toLowerCase().replace(/[/ ]+/g, '-');

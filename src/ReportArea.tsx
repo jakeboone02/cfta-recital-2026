@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ShowData, ShowDance } from './utils';
-import { styleColors } from './utils';
+import { styleSlug } from './utils';
 import type { GroupName } from './types';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
-  const color = styleColors[dance.dance_style] ?? '#666';
+  const color = styleSlug(dance.dance_style);
   const isSpec = dance.group === 'SpecTAPular';
   return (
     <tr className="report-dance-row">
@@ -20,7 +20,7 @@ const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
       </td>
       <td>
         <div className="report-dance-title">
-          <span style={{ color, fontWeight: 'bold' }}>{dance.dance_name}</span>
+          <span className={`style-${color} bold`}>{dance.dance_name}</span>
           <span className="report-choreo">{dance.choreography}</span>
         </div>
         <div className="report-song">
@@ -56,7 +56,7 @@ const StyleCounts = ({ dances }: { dances: ShowDance[] }) => {
       {Object.entries(counts)
         .sort((a, b) => b[1] - a[1])
         .map(([style, count]) => (
-          <span key={style} style={{ color: styleColors[style] }}>
+          <span key={style} className={`style-${styleSlug(style)}`}>
             {count} {style}
           </span>
         ))}
@@ -139,11 +139,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
             className="btn-collapse-all"
             onClick={collapseExpandAll}
             title={allCollapsed ? 'Expand all' : 'Collapse all'}>
-            <span
-              style={{
-                display: 'inline-block',
-                transform: allCollapsed ? undefined : 'rotate(90deg)',
-              }}>
+            <span className={`collapse-icon ${allCollapsed ? 'collapsed' : ''}`}>
               »
             </span>
           </button>
@@ -164,8 +160,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
           <div key={show.recital_id} className="show-section">
             <div
               className="show-header"
-              onClick={() => toggle(show.recital_id)}
-              style={{ cursor: 'pointer' }}>
+              onClick={() => toggle(show.recital_id)}>
               <h3>
                 {/* {isCollapsed ? (
                   <span className={`collapse-icon collapsed`}>▶</span>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import type { DanceMap, GroupName, GroupOrders } from './types';
-import { styleColors } from './utils';
+import { styleSlug } from './utils';
 
 interface Props {
   groups: GroupOrders;
@@ -23,13 +23,13 @@ const DanceCard = ({
   const dance = danceId !== 'PRE' ? danceMap[danceId] : null;
   const name = dance?.dance_name ?? 'PREDANCE';
   const dStyle = dance?.dance_style ?? 'PREDANCE';
-  const color = styleColors[dStyle] ?? '#666';
+  const slug = styleSlug(dStyle);
 
   return (
     <>
-      <div className="dance-card-color" style={{ backgroundColor: color }} />
+      <div className={`dance-card-color style-bg-${slug}`} />
       <div className="dance-card-content">
-        <div className="dance-card-name" style={{ color }}>
+        <div className={`dance-card-name style-${slug}`}>
           {name}
           {flash && <span className="combo-moved-badge">↳ combo</span>}
         </div>
@@ -149,8 +149,7 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`group-drop-zone ${snapshot.isDraggingOver ? 'drag-over' : ''}`}
-                    style={{ display: isCollapsed ? 'none' : undefined }}>
+                    className={`group-drop-zone ${snapshot.isDraggingOver ? 'drag-over' : ''} ${isCollapsed ? 'hidden' : ''}`}>
                     {groups[g].map((danceId, idx) => (
                       <Draggable
                         key={`${g}-${idx}`}
