@@ -19,10 +19,9 @@ const W_INVALID_SIZE = 100_000; // hard constraint: groups must be 10-11
 const W_CONSECUTIVE = 1000;
 const W_NEAR_CONSECUTIVE = 200;
 const W_SAME_STYLE = 50;
-const W_PRE_ADJACENT = 40;
-const W_PRE_AT_END = 30;
+const W_BABY_ADJACENT = 100; // any baby (PRE or combo) adjacent to another baby
+const W_BABY_AT_END = 80;   // baby dance (PRE or combo) at the end of a group
 const W_COMBO_TOO_CLOSE = 25;
-const W_COMBO_ADJ_BABY = 15;
 const W_FAMILY_IMBALANCE = 5;
 
 /** Precomputed data needed for scoring */
@@ -119,10 +118,9 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
     consecutiveDancers: 0,
     nearConsecutiveDancers: 0,
     sameStyleAdjacent: 0,
-    preAdjacent: 0,
-    preAtGroupEnd: 0,
+    babyAdjacent: 0,
+    babyAtGroupEnd: 0,
     comboPairTooClose: 0,
-    comboAdjacentBaby: 0,
     familyImbalance: 0,
   };
   const details: ShowScoreDetail[] = [];
@@ -199,16 +197,21 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   for (const g of ['A', 'B', 'C'] as GroupName[]) {
     const order = solution[g];
 
-    // Constraint 4a: PRE adjacency
+    // Constraint 4a: Any baby dance (PRE or combo) adjacent to another baby dance
     for (let i = 0; i < order.length - 1; i++) {
-      if (isBaby(order[i]) && isBaby(order[i + 1])) {
-        breakdown.preAdjacent++;
+      const aIsBaby = isBaby(order[i]) || isCombo(order[i], ctx);
+      const bIsBaby = isBaby(order[i + 1]) || isCombo(order[i + 1], ctx);
+      if (aIsBaby && bIsBaby) {
+        breakdown.babyAdjacent++;
       }
     }
 
-    // Constraint 4b: PRE at group end (end = last position; start is OK)
-    if (order.length > 0 && isBaby(order[order.length - 1])) {
-      breakdown.preAtGroupEnd++;
+    // Constraint 4b: Baby dance (PRE or combo) at group end
+    if (order.length > 0) {
+      const last = order[order.length - 1];
+      if (isBaby(last) || isCombo(last, ctx)) {
+        breakdown.babyAtGroupEnd++;
+      }
     }
 
     // Constraint 4c: Combo pair distance within group
@@ -222,20 +225,6 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
       } else if (gap < COMBO_PREFERRED_GAP) {
         // Smaller penalty for being below preferred but above minimum
         breakdown.comboPairTooClose += 0.5 * (COMBO_PREFERRED_GAP - gap);
-      }
-    }
-
-    // Constraint 4d: Combo dance adjacent to another combo or PRE
-    for (let i = 0; i < order.length - 1; i++) {
-      const a = order[i];
-      const b = order[i + 1];
-      const aIsBaby = isBaby(a) || isCombo(a, ctx);
-      const bIsBaby = isBaby(b) || isCombo(b, ctx);
-      if (aIsBaby && bIsBaby) {
-        // Don't double-count PRE-PRE adjacency
-        if (!(isBaby(a) && isBaby(b))) {
-          breakdown.comboAdjacentBaby++;
-        }
       }
     }
   }
@@ -261,10 +250,9 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
     breakdown.consecutiveDancers * W_CONSECUTIVE +
     breakdown.nearConsecutiveDancers * W_NEAR_CONSECUTIVE +
     breakdown.sameStyleAdjacent * W_SAME_STYLE +
-    breakdown.preAdjacent * W_PRE_ADJACENT +
-    breakdown.preAtGroupEnd * W_PRE_AT_END +
+    breakdown.babyAdjacent * W_BABY_ADJACENT +
+    breakdown.babyAtGroupEnd * W_BABY_AT_END +
     breakdown.comboPairTooClose * W_COMBO_TOO_CLOSE +
-    breakdown.comboAdjacentBaby * W_COMBO_ADJ_BABY +
     breakdown.familyImbalance * W_FAMILY_IMBALANCE;
 
   return { total, breakdown, details };

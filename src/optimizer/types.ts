@@ -14,10 +14,9 @@ export interface ScoreBreakdown {
   consecutiveDancers: number;
   nearConsecutiveDancers: number;
   sameStyleAdjacent: number;
-  preAdjacent: number;
-  preAtGroupEnd: number;
+  babyAdjacent: number;
+  babyAtGroupEnd: number;
   comboPairTooClose: number;
-  comboAdjacentBaby: number;
   familyImbalance: number;
 }
 

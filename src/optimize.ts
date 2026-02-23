@@ -98,21 +98,52 @@ const config: AnnealConfig = {
 
 console.log(`Running simulated annealing (${config.iterations.toLocaleString()} iterations × ${config.restarts + 1} runs)...`);
 const startTime = performance.now();
-const { best, bestScore } = anneal(currentSolution, ctx, config);
+const TOP_N = 10;
+const { topSolutions } = anneal(currentSolution, ctx, config, TOP_N);
 const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-console.log(`Done in ${elapsed}s\n`);
+console.log(`Done in ${elapsed}s — found ${topSolutions.length} unique solutions\n`);
 
+const danceMap = new Map(dances.map(d => [d.danceId, d]));
+
+const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) => {
+  // Print groups
+  for (const g of ['A', 'B', 'C'] as GroupName[]) {
+    console.log(`  Group ${g} (${sol[g].length} dances): ${JSON.stringify(sol[g])}`);
+  }
+  console.log(`  Breakdown: consec=${result.breakdown.consecutiveDancers}, near=${result.breakdown.nearConsecutiveDancers}, style=${result.breakdown.sameStyleAdjacent}, babyAdj=${result.breakdown.babyAdjacent}, babyEnd=${result.breakdown.babyAtGroupEnd}, families=${result.breakdown.familyImbalance}`);
+
+  // Show conflicts if any
+  for (const detail of result.details) {
+    if (detail.consecutivePairs.length > 0) {
+      const showLabel = detail.recitalId === 1 ? 'Fri' : detail.recitalId === 2 ? 'Sat AM' : 'Sat PM';
+      for (const p of detail.consecutivePairs) {
+        console.log(`  ⚠ ${showLabel}: ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
+      }
+    }
+  }
+};
+
+// Print all top solutions
+for (let rank = 0; rank < topSolutions.length; rank++) {
+  const { solution: sol, score } = topSolutions[rank];
+  const result = scoreSolution(sol, ctx);
+  const pctImprove = currentResult.total > 0 ? ((1 - score / currentResult.total) * 100).toFixed(0) : '0';
+
+  console.log('════════════════════════════════════════════════════════════════');
+  console.log(`  #${rank + 1}  Score: ${score}  (was ${currentResult.total}, ${pctImprove}% improvement)`);
+  console.log('════════════════════════════════════════════════════════════════');
+  printSolution(sol, result);
+  console.log();
+}
+
+// Detailed view of the #1 solution
+const best = topSolutions[0].solution;
 const bestResult = scoreSolution(best, ctx);
 
 console.log('════════════════════════════════════════════════════════════════');
-console.log('  OPTIMIZED RESULT');
+console.log('  #1 DETAILED VIEW');
 console.log('════════════════════════════════════════════════════════════════\n');
-console.log('Score:', bestResult.total, `(was ${currentResult.total}, ${currentResult.total > 0 ? ((1 - bestResult.total / currentResult.total) * 100).toFixed(0) : 0}% improvement)`);
-console.log('Breakdown:', bestResult.breakdown);
-console.log();
 
-// Print optimized groups
-const danceMap = new Map(dances.map(d => [d.danceId, d]));
 for (const g of ['A', 'B', 'C'] as GroupName[]) {
   console.log(`── Group ${g} (${best[g].length} dances) ──`);
   best[g].forEach((id, idx) => {
@@ -126,7 +157,6 @@ for (const g of ['A', 'B', 'C'] as GroupName[]) {
   console.log();
 }
 
-// Print show-by-show view
 for (const detail of bestResult.details) {
   const showLabel = detail.recitalId === 1 ? 'Friday Evening' : detail.recitalId === 2 ? 'Saturday Morning' : 'Saturday Afternoon';
   console.log(`── Show ${detail.recitalId}: ${showLabel} ──`);
@@ -157,9 +187,9 @@ for (const detail of bestResult.details) {
   console.log();
 }
 
-// Output SQL
+// Output SQL for #1
 console.log('════════════════════════════════════════════════════════════════');
-console.log('  SQL UPDATE STATEMENTS');
+console.log('  SQL UPDATE STATEMENTS (#1)');
 console.log('════════════════════════════════════════════════════════════════\n');
 for (const g of ['A', 'B', 'C'] as GroupName[]) {
   const order = JSON.stringify(best[g]);

@@ -152,17 +152,48 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
   return next;
 };
 
-/** Run simulated annealing */
+/** A scored solution for the top-N leaderboard */
+export interface RankedSolution {
+  solution: Solution;
+  score: number;
+}
+
+/** Serialize a solution for deduplication */
+const solutionKey = (s: Solution): string =>
+  JSON.stringify([s.A, s.B, s.C]);
+
+/** Run simulated annealing, tracking top-N unique solutions */
 export const anneal = (
   initial: Solution,
   ctx: ScoringContext,
   config: AnnealConfig,
-): { best: Solution; bestScore: number; history: number[] } => {
+  topN: number = 10,
+): { topSolutions: RankedSolution[]; history: number[] } => {
   let current = cloneSolution(initial);
   let currentScore = scoreSolution(current, ctx).total;
   let best = cloneSolution(current);
   let bestScore = currentScore;
   const history: number[] = [currentScore];
+
+  // Top-N tracking
+  const topSolutions: RankedSolution[] = [{ solution: cloneSolution(current), score: currentScore }];
+  const seenKeys = new Set<string>([solutionKey(current)]);
+
+  const maybeAddToTop = (s: Solution, score: number) => {
+    const key = solutionKey(s);
+    if (seenKeys.has(key)) return;
+    // Only add if it's better than the worst in the list, or list isn't full
+    if (topSolutions.length < topN || score < topSolutions[topSolutions.length - 1].score) {
+      seenKeys.add(key);
+      topSolutions.push({ solution: cloneSolution(s), score });
+      topSolutions.sort((a, b) => a.score - b.score);
+      // Trim to topN
+      while (topSolutions.length > topN) {
+        const removed = topSolutions.pop()!;
+        seenKeys.delete(solutionKey(removed.solution));
+      }
+    }
+  };
 
   let globalBest = cloneSolution(best);
   let globalBestScore = bestScore;
@@ -194,6 +225,8 @@ export const anneal = (
           best = cloneSolution(current);
           bestScore = currentScore;
         }
+
+        maybeAddToTop(current, currentScore);
       }
 
       temp *= config.coolingRate;
@@ -209,5 +242,5 @@ export const anneal = (
     }
   }
 
-  return { best: globalBest, bestScore: globalBestScore, history };
+  return { topSolutions, history };
 };
