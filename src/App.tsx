@@ -51,6 +51,7 @@ export const App = () => {
   const [bookmarkName, setBookmarkName] = useState('');
   const [bookmarkError, setBookmarkError] = useState('');
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(loadBookmarks);
+  const [compareBookmark, setCompareBookmark] = useState<string | null>(null);
 
   const initialGroups = useMemo<GroupOrders>(() => {
     const g: GroupOrders = { A: [], B: [], C: [] };
@@ -71,6 +72,13 @@ export const App = () => {
     () => (groups ? computeShowOrder(groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE) : []),
     [groups, danceMap]
   );
+
+  const compareData = useMemo(() => {
+    if (!compareBookmark) return null;
+    const bm = bookmarks.find(b => b.name === compareBookmark);
+    if (!bm) return null;
+    return computeShowOrder(bm.groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE);
+  }, [compareBookmark, bookmarks, danceMap]);
 
   const handleGroupChange = (newGroups: GroupOrders) => {
     if (groups) pushUndo(groups);
@@ -182,6 +190,7 @@ export const App = () => {
   };
 
   const handleDeleteBookmark = (name: string) => {
+    if (compareBookmark === name) setCompareBookmark(null);
     deleteBookmark(name);
     setBookmarks(loadBookmarks());
   };
@@ -252,27 +261,41 @@ export const App = () => {
           }
         />
       </div>
-      <div className="right-panel">
-        <ReportArea
-          shows={shows}
-          dancerLastNames={DANCER_LAST_NAMES}
-          actions={
-            <div className="header-actions">
-              <button onClick={handleExportCSV} title="Download show order as CSV file">
-                💾 Download Show Order (CSV)
-              </button>
-              <button onClick={handleOpenImport} title="Import/export group orders as CSV">
-                📥 Import/Export
-              </button>
-              <button
-                onClick={() => setBookmarkOpen(o => !o)}
-                className={bookmarkOpen ? 'btn-bookmark-active' : ''}
-                title="Bookmarks">
-                ⭐
-              </button>
-            </div>
-          }
-        />
+      <div className={`right-panel ${compareData ? 'right-panel--split' : ''}`}>
+        <div className="report-pane">
+          <ReportArea
+            shows={shows}
+            dancerLastNames={DANCER_LAST_NAMES}
+            compact={!!compareData}
+            label="Current"
+            actions={
+              <div className="header-actions">
+                <button onClick={handleExportCSV} title="Download show order as CSV file">
+                  💾 Download Show Order (CSV)
+                </button>
+                <button onClick={handleOpenImport} title="Import/export group orders as CSV">
+                  📥 Import/Export
+                </button>
+                <button
+                  onClick={() => setBookmarkOpen(o => !o)}
+                  className={bookmarkOpen ? 'btn-bookmark-active' : ''}
+                  title="Bookmarks">
+                  ⭐
+                </button>
+              </div>
+            }
+          />
+        </div>
+        {compareData && (
+          <div className="report-pane report-pane--compare">
+            <ReportArea
+              shows={compareData}
+              dancerLastNames={DANCER_LAST_NAMES}
+              compact
+              label={compareBookmark ?? 'Bookmark'}
+            />
+          </div>
+        )}
       </div>
       {bookmarkOpen && (
         <div className="bookmark-sidebar">
@@ -301,6 +324,13 @@ export const App = () => {
           <ul className="bookmark-list">
             {bookmarks.toReversed().map(b => (
               <li key={b.name} className="bookmark-item">
+                <input
+                  type="checkbox"
+                  className="bookmark-compare"
+                  checked={compareBookmark === b.name}
+                  onChange={() => setCompareBookmark(compareBookmark === b.name ? null : b.name)}
+                  title="Compare"
+                />
                 <div className="bookmark-info">
                   <button
                     className="bookmark-name"

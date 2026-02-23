@@ -148,6 +148,24 @@ h3 {
   padding: 1rem;
 }
 
+.right-panel--split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.report-pane {
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.report-pane--compare {
+  border-left: 2px solid #ddd;
+  background: #fafafa;
+}
+
 /* === Working Area === */
 .working-area {
   flex: 1;
@@ -571,6 +589,12 @@ h3 {
   gap: 0.3rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid #eee;
+}
+
+.bookmark-compare {
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #2d6a4f;
 }
 
 .bookmark-info {

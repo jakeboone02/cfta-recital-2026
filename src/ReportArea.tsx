@@ -7,9 +7,52 @@ interface Props {
   shows: ShowData[];
   actions?: React.ReactNode;
   dancerLastNames: Record<string, string>;
+  compact?: boolean;
+  label?: string;
 }
 
-const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
+const OverlapCell = ({ dance, compact }: { dance: ShowDance; compact?: boolean }) => {
+  const isSpec = dance.group === 'SpecTAPular';
+  const nextNames = dance.common_with_next;
+  const next2Names = dance.common_with_next2;
+  if (!nextNames.length && !next2Names.length) return null;
+
+  if (compact) {
+    return (
+      <>
+        {nextNames.length > 0 && (
+          <div className={isSpec ? 'overlap-muted' : 'overlap-next'}>
+            <strong>Next:</strong>{' '}
+            <span title={nextNames.join(', ')}>{nextNames.length}</span>
+          </div>
+        )}
+        {next2Names.length > 0 && (
+          <div className={isSpec ? 'overlap-muted-light' : 'overlap-next2'}>
+            <strong>+2:</strong>{' '}
+            <span title={next2Names.join(', ')}>{next2Names.length}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {nextNames.length > 0 && (
+        <div className={isSpec ? 'overlap-muted' : 'overlap-next'}>
+          <strong>Next:</strong> {nextNames.join(', ')}
+        </div>
+      )}
+      {next2Names.length > 0 && (
+        <div className={isSpec ? 'overlap-muted-light' : 'overlap-next2'}>
+          <strong>+2:</strong> {next2Names.join(', ')}
+        </div>
+      )}
+    </>
+  );
+};
+
+const DanceRow = ({ dance, idx, compact }: { dance: ShowDance; idx: number; compact?: boolean }) => {
   const color = styleSlug(dance.dance_style);
   const isSpec = dance.group === 'SpecTAPular';
   return (
@@ -29,16 +72,7 @@ const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
       </td>
       <td className="report-count">{dance.dancers.length || ''}</td>
       <td className="report-overlap">
-        {dance.common_with_next.length > 0 && (
-          <div className={isSpec ? 'overlap-muted' : 'overlap-next'}>
-            <strong>Next:</strong> {dance.common_with_next.join(', ')}
-          </div>
-        )}
-        {dance.common_with_next2.length > 0 && (
-          <div className={isSpec ? 'overlap-muted-light' : 'overlap-next2'}>
-            <strong>+2:</strong> {dance.common_with_next2.join(', ')}
-          </div>
-        )}
+        <OverlapCell dance={dance} compact={compact} />
       </td>
     </tr>
   );
@@ -120,7 +154,7 @@ const OverlapCount = ({ dances }: { dances: ShowDance[] }) => {
   );
 };
 
-export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
+export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: Props) => {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -133,7 +167,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
   return (
     <div className="report-area">
       <div className="panel-header">
-        <h2>Show Order</h2>
+        <h2>{label ? `Show Order — ${label}` : 'Show Order'}</h2>
         <div className="header-actions">
           <button
             className="btn-collapse-all"
@@ -162,11 +196,6 @@ export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
               className="show-header"
               onClick={() => toggle(show.recital_id)}>
               <h3>
-                {/* {isCollapsed ? (
-                  <span className={`collapse-icon collapsed`}>▶</span>
-                ) : (
-                  <span className={`collapse-icon`}>▼</span>
-                )} */}
                 <span className={`collapse-icon ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                 Show {show.recital_id}: {show.label}
               </h3>
@@ -199,7 +228,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames }: Props) => {
                 </thead>
                 <tbody>
                   {show.dances.map((dance, idx) => (
-                    <DanceRow key={`${show.recital_id}-${idx}`} dance={dance} idx={idx} />
+                    <DanceRow key={`${show.recital_id}-${idx}`} dance={dance} idx={idx} compact={compact} />
                   ))}
                 </tbody>
               </table>
