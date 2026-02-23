@@ -357,6 +357,14 @@ h3 {
   color: #e68a00;
 }
 
+.overlap-muted {
+  color: #667;
+}
+
+.overlap-muted-light {
+  color: #aaa;
+}
+
 /* === Import/Export Modal === */
 .modal-overlay {
   position: fixed;

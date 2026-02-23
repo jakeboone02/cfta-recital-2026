@@ -37,6 +37,7 @@ export const App = () => {
   const [importCopied, setImportCopied] = useState(false);
   const [importError, setImportError] = useState('');
   const [undoVer, setUndoVer] = useState(0);
+  const [optimizing, setOptimizing] = useState(false);
 
   useEffect(() => {
     initUndoSession();
@@ -144,6 +145,22 @@ export const App = () => {
     handleGroupChange(initialGroups);
   };
 
+  const handleOptimize = async () => {
+    if (!groups || optimizing) return;
+    setOptimizing(true);
+    try {
+      const res = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(groups),
+      });
+      const result = await res.json() as GroupOrders;
+      handleGroupChange(result);
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -171,17 +188,16 @@ export const App = () => {
           onChange={handleGroupChange}
           actions={
             <>
-              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">
-                ↶
+              <button onClick={handleOptimize} disabled={optimizing} title="Run optimizer">
+                {optimizing ? '⏳ Optimizing…' : '⚡ Optimize'}
               </button>
-              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">
-                ↷
-              </button>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
               <button
                 onClick={handleReset}
                 className="btn-reset"
                 title="Reset dance order to original database order">
-                ↺ Reset
+                Reset
               </button>
             </>
           }

@@ -10,6 +10,7 @@ interface Props {
 
 const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
   const color = styleColors[dance.dance_style] ?? '#666';
+  const isSpec = dance.group === 'SpecTAPular';
   return (
     <tr className="report-dance-row">
       <td className="report-order">{idx + 1}</td>
@@ -28,12 +29,12 @@ const DanceRow = ({ dance, idx }: { dance: ShowDance; idx: number }) => {
       <td className="report-count">{dance.dancers.length || ''}</td>
       <td className="report-overlap">
         {dance.common_with_next.length > 0 && (
-          <div className="overlap-next">
+          <div className={isSpec ? 'overlap-muted' : 'overlap-next'}>
             <strong>Next:</strong> {dance.common_with_next.join(', ')}
           </div>
         )}
         {dance.common_with_next2.length > 0 && (
-          <div className="overlap-next2">
+          <div className={isSpec ? 'overlap-muted-light' : 'overlap-next2'}>
             <strong>+2:</strong> {dance.common_with_next2.join(', ')}
           </div>
         )}
@@ -98,8 +99,9 @@ const FamilyCount = ({ dances }: { dances: ShowDance[] }) => {
 };
 
 const OverlapCount = ({ dances }: { dances: ShowDance[] }) => {
-  const nextOverlap = dances.reduce((n, d) => n + d.common_with_next.length, 0);
-  const next2Overlap = dances.reduce((n, d) => n + d.common_with_next2.length, 0);
+  const nonSpec = dances.filter(d => d.group !== 'SpecTAPular');
+  const nextOverlap = nonSpec.reduce((n, d) => n + d.common_with_next.length, 0);
+  const next2Overlap = nonSpec.reduce((n, d) => n + d.common_with_next2.length, 0);
 
   return (
     (nextOverlap > 0 || next2Overlap > 0) && (

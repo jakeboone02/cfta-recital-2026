@@ -120,29 +120,11 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
   const groupDanceCountFloor = Math.floor(groupedDanceCount / 3);
   const groupDanceCountCeil = Math.ceil(groupedDanceCount / 3);
 
-  const allCollapsed = allGroups.every(g => collapsed[g]);
-  const collapseExpandAll = () => {
-    const val = !allCollapsed;
-    setCollapsed({ A: val, B: val, C: val });
-  };
-
   return (
     <div className="working-area">
       <div className="panel-header">
         <h2>Groups</h2>
         <div className="header-actions">
-          <button
-            className="btn-collapse-all"
-            onClick={collapseExpandAll}
-            title={allCollapsed ? 'Expand all' : 'Collapse all'}>
-            <span
-              style={{
-                display: 'inline-block',
-                transform: allCollapsed ? undefined : 'rotate(90deg)',
-              }}>
-              »
-            </span>
-          </button>
           {actions}
         </div>
       </div>
