@@ -156,6 +156,122 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
   return next;
 };
 
+/** Fisher-Yates shuffle in place */
+const shuffle = <T>(arr: T[]): T[] => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+/**
+ * Generate a fully randomized solution that respects hard constraints:
+ * - FIXED_GROUP dances go to their required group
+ * - Combo pairs stay together
+ * - Each group gets the same number of PRE placeholders as the original
+ * - Group sizes match the original distribution
+ */
+const randomizeSolution = (original: Solution): Solution => {
+  const groupSizes: Record<GroupName, number> = {
+    A: original.A.length,
+    B: original.B.length,
+    C: original.C.length,
+  };
+  const preCounts: Record<GroupName, number> = { A: 0, B: 0, C: 0 };
+  for (const g of GROUPS) {
+    preCounts[g] = original[g].filter(id => id === 'PRE').length;
+  }
+
+  // Collect all non-PRE dance IDs
+  const allDances: number[] = [];
+  for (const g of GROUPS) {
+    for (const id of original[g]) {
+      if (id !== 'PRE') allDances.push(id);
+    }
+  }
+
+  // Group combo pairs as units; track which dances are part of a pair
+  const pairedDances = new Set<number>();
+  const comboUnits: [number, number][] = [];
+  for (const [a, b] of COMBO_PAIRS) {
+    if (allDances.includes(a) && allDances.includes(b)) {
+      comboUnits.push([a, b]);
+      pairedDances.add(a);
+      pairedDances.add(b);
+    }
+  }
+
+  // Separate fixed and free dances (excluding combo-paired ones handled separately)
+  const fixedDances: { id: number; group: GroupName }[] = [];
+  const freeDances: number[] = [];
+  for (const id of allDances) {
+    if (pairedDances.has(id)) continue; // handled as combo unit
+    const fg = FIXED_GROUP[id];
+    if (fg) {
+      fixedDances.push({ id, group: fg });
+    } else {
+      freeDances.push(id);
+    }
+  }
+
+  // Start building groups with PREs and fixed dances
+  const result: Solution = { A: [], B: [], C: [] };
+  for (const g of GROUPS) {
+    for (let i = 0; i < preCounts[g]; i++) result[g].push('PRE');
+  }
+  for (const { id, group } of fixedDances) {
+    result[group].push(id);
+  }
+
+  // Remaining capacity per group
+  const capacity: Record<GroupName, number> = {
+    A: groupSizes.A - result.A.length,
+    B: groupSizes.B - result.B.length,
+    C: groupSizes.C - result.C.length,
+  };
+
+  // Place combo units randomly (need 2 slots in same group)
+  shuffle(comboUnits);
+  for (const [a, b] of comboUnits) {
+    // Check if either dance has a fixed group
+    const fgA = FIXED_GROUP[a];
+    const fgB = FIXED_GROUP[b];
+    const forced = fgA ?? fgB;
+    const candidates = forced
+      ? [forced]
+      : shuffle([...GROUPS]).filter(g => capacity[g] >= 2);
+    if (candidates.length === 0) {
+      // Fallback: put in group with most capacity
+      candidates.push(GROUPS.reduce((best, g) => capacity[g] > capacity[best] ? g : best, 'A'));
+    }
+    const g = candidates[0];
+    result[g].push(a, b);
+    capacity[g] -= 2;
+  }
+
+  // Distribute remaining free dances randomly across groups with capacity
+  shuffle(freeDances);
+  for (const id of freeDances) {
+    const candidates = GROUPS.filter(g => capacity[g] > 0);
+    if (candidates.length === 0) {
+      // Overflow: pick group with most capacity (shouldn't happen with correct sizes)
+      const g = GROUPS.reduce((best, g) => capacity[g] > capacity[best] ? g : best, 'A');
+      result[g].push(id);
+      capacity[g]--;
+    } else {
+      const g = randPick(candidates);
+      result[g].push(id);
+      capacity[g]--;
+    }
+  }
+
+  // Shuffle the order within each group
+  for (const g of GROUPS) shuffle(result[g]);
+
+  return result;
+};
+
 /** A scored solution for the top-N leaderboard */
 export interface RankedSolution {
   solution: Solution;
@@ -173,7 +289,8 @@ export const anneal = (
   config: AnnealConfig,
   topN: number = 10,
 ): { topSolutions: RankedSolution[]; history: number[] } => {
-  let current = cloneSolution(initial);
+  // Start from a fully randomized solution for diversity
+  let current = randomizeSolution(initial);
   let currentScore = scoreSolution(current, ctx).total;
   let best = cloneSolution(current);
   let bestScore = currentScore;
@@ -206,11 +323,8 @@ export const anneal = (
     let temp = config.initialTemp;
 
     if (restart > 0) {
-      // Restart from global best with slight perturbation
-      current = cloneSolution(globalBest);
-      for (let p = 0; p < 3; p++) {
-        current = generateNeighbor(current, ctx);
-      }
+      // Each restart gets a fresh random solution for maximum diversity
+      current = randomizeSolution(initial);
       currentScore = scoreSolution(current, ctx).total;
       best = cloneSolution(current);
       bestScore = currentScore;
