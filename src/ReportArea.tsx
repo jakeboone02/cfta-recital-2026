@@ -22,14 +22,12 @@ const OverlapCell = ({ dance, compact }: { dance: ShowDance; compact?: boolean }
       <>
         {nextNames.length > 0 && (
           <div className={isSpec ? 'overlap-muted' : 'overlap-next'}>
-            <strong>Next:</strong>{' '}
-            <span title={nextNames.join(', ')}>{nextNames.length}</span>
+            <strong>Next:</strong> <span title={nextNames.join(', ')}>{nextNames.length}</span>
           </div>
         )}
         {next2Names.length > 0 && (
           <div className={isSpec ? 'overlap-muted-light' : 'overlap-next2'}>
-            <strong>+2:</strong>{' '}
-            <span title={next2Names.join(', ')}>{next2Names.length}</span>
+            <strong>+2:</strong> <span title={next2Names.join(', ')}>{next2Names.length}</span>
           </div>
         )}
       </>
@@ -52,14 +50,26 @@ const OverlapCell = ({ dance, compact }: { dance: ShowDance; compact?: boolean }
   );
 };
 
-const DanceRow = ({ dance, idx, compact }: { dance: ShowDance; idx: number; compact?: boolean }) => {
+const DanceRow = ({
+  dance,
+  idx,
+  compact,
+}: {
+  dance: ShowDance;
+  idx: number;
+  compact?: boolean;
+}) => {
   const color = styleSlug(dance.dance_style);
   const isSpec = dance.group === 'SpecTAPular';
   return (
     <tr className="report-dance-row">
-      <td className="report-order">{idx + 1}</td>
+      {/* <td className="report-order">{idx + 1}</td> */}
       <td>
-        <span className="report-group-badge">{dance.group}</span>
+        {['A', 'B', 'C'].includes(dance.group) ? (
+          <span className="report-group-badge">{dance.group}</span>
+        ) : (
+          ' '
+        )}
       </td>
       <td>
         <div className="report-dance-title">
@@ -118,7 +128,13 @@ const ChoreoCount = ({ dances }: { dances: ShowDance[] }) => {
   );
 };
 
-const FamilyCount = ({ dances, dancerLastNames }: { dances: ShowDance[]; dancerLastNames: Record<string, string> }) => {
+const FamilyCount = ({
+  dances,
+  dancerLastNames,
+}: {
+  dances: ShowDance[];
+  dancerLastNames: Record<string, string>;
+}) => {
   const lastNames = new Set<string>();
   for (const d of dances) {
     for (const dancer of d.dancers) {
@@ -173,9 +189,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
             className="btn-collapse-all"
             onClick={collapseExpandAll}
             title={allCollapsed ? 'Expand all' : 'Collapse all'}>
-            <span className={`collapse-icon ${allCollapsed ? 'collapsed' : ''}`}>
-              »
-            </span>
+            <span className={`collapse-icon ${allCollapsed ? 'collapsed' : ''}`}>»</span>
           </button>
           {actions}
         </div>
@@ -192,9 +206,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
 
         return (
           <div key={show.recital_id} className="show-section">
-            <div
-              className="show-header"
-              onClick={() => toggle(show.recital_id)}>
+            <div className="show-header" onClick={() => toggle(show.recital_id)}>
               <h3>
                 <span className={`collapse-icon ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
                 Show {show.recital_id}: {show.label}
@@ -219,7 +231,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
               <table className="report-table">
                 <thead>
                   <tr>
-                    <th>#</th>
+                    {/* <th>#</th> */}
                     <th>Group</th>
                     <th>Dance</th>
                     <th># Dancers</th>
@@ -228,7 +240,12 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
                 </thead>
                 <tbody>
                   {show.dances.map((dance, idx) => (
-                    <DanceRow key={`${show.recital_id}-${idx}`} dance={dance} idx={idx} compact={compact} />
+                    <DanceRow
+                      key={`${show.recital_id}-${idx}`}
+                      dance={dance}
+                      idx={idx}
+                      compact={compact}
+                    />
                   ))}
                 </tbody>
               </table>

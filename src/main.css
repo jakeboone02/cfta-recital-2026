@@ -209,6 +209,17 @@ h3 {
   transform: rotate(-90deg);
 }
 
+.panel-header .collapse-icon.collapsed {
+  font-size: 0.8rem;
+  margin-right: 0.4rem;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.panel-header .collapse-icon {
+  transform: rotate(90deg);
+}
+
 .group-count {
   font-weight: normal;
   font-size: 0.85rem;
