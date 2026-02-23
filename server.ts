@@ -24,6 +24,17 @@ const getGroups = () =>
     .all()
     .map(g => ({ ...g, show_order: JSON.parse(g.show_order as unknown as string) }));
 
+const getComboPairs = () =>
+  db
+    .query<{ dance_id_1: number; dance_id_2: number }, SQLQueryBindings[]>(
+      `SELECT a.dance_id AS dance_id_1, b.dance_id AS dance_id_2
+         FROM class_dances a
+         JOIN class_dances b ON a.class_id = b.class_id AND a.dance_id < b.dance_id
+         JOIN classes c ON a.class_id = c.class_id
+        WHERE c.class_name LIKE '%Combo%'`
+    )
+    .all();
+
 const server = Bun.serve({
   routes: {
     '/': indexHTML,
@@ -34,6 +45,7 @@ const server = Bun.serve({
     if (path === '/api/data') return Response.json(getRecitalOrderData());
     if (path === '/api/dances') return Response.json(getDances());
     if (path === '/api/groups') return Response.json(getGroups());
+    if (path === '/api/combo-pairs') return Response.json(getComboPairs());
 
     return new Response('Page not found', { status: 404 });
   },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import type { DanceMap, GroupName, GroupOrders } from './types';
 import { styleColors } from './utils';
@@ -6,11 +6,20 @@ import { styleColors } from './utils';
 interface Props {
   groups: GroupOrders;
   danceMap: DanceMap;
+  comboSiblingMap: Record<number, number>;
   onChange: (groups: GroupOrders) => void;
   actions?: React.ReactNode;
 }
 
-const DanceCard = ({ danceId, danceMap }: { danceId: number | 'PRE'; danceMap: DanceMap }) => {
+const DanceCard = ({
+  danceId,
+  danceMap,
+  flash,
+}: {
+  danceId: number | 'PRE';
+  danceMap: DanceMap;
+  flash?: boolean;
+}) => {
   const dance = danceId !== 'PRE' ? danceMap[danceId] : null;
   const name = dance?.dance_name ?? 'PREDANCE';
   const dStyle = dance?.dance_style ?? 'PREDANCE';
@@ -22,6 +31,7 @@ const DanceCard = ({ danceId, danceMap }: { danceId: number | 'PRE'; danceMap: D
       <div className="dance-card-content">
         <div className="dance-card-name" style={{ color }}>
           {name}
+          {flash && <span className="combo-moved-badge">↳ combo</span>}
         </div>
         {dance && (
           <div className="dance-card-details">
@@ -36,13 +46,21 @@ const DanceCard = ({ danceId, danceMap }: { danceId: number | 'PRE'; danceMap: D
 
 const allGroups: GroupName[] = ['A', 'B', 'C'];
 
-export const WorkingArea = ({ groups, danceMap, onChange, actions }: Props) => {
+export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actions }: Props) => {
   const [collapsed, setCollapsed] = useState<Record<GroupName, boolean>>({
     A: false,
     B: false,
     C: false,
   });
+  const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
   const toggleCollapse = (g: GroupName) => setCollapsed(prev => ({ ...prev, [g]: !prev[g] }));
+
+  // Clear flash after timeout
+  useEffect(() => {
+    if (flashIds.size === 0) return;
+    const timer = setTimeout(() => setFlashIds(new Set()), 1500);
+    return () => clearTimeout(timer);
+  }, [flashIds]);
 
   const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
@@ -55,23 +73,44 @@ export const WorkingArea = ({ groups, danceMap, onChange, actions }: Props) => {
 
     if (srcGroup === dstGroup && srcIdx === dstIdx) return;
 
-    // PREDANCE cannot move between groups
-    if (srcGroup !== dstGroup && groups[srcGroup][srcIdx] === 'PRE') return;
+    const movedDanceId = groups[srcGroup][srcIdx];
 
-    const newGroups = { ...groups };
+    // PREDANCE cannot move between groups
+    if (srcGroup !== dstGroup && movedDanceId === 'PRE') return;
+
+    const newGroups: GroupOrders = {
+      A: [...groups.A],
+      B: [...groups.B],
+      C: [...groups.C],
+    };
 
     if (srcGroup === dstGroup) {
-      const arr = [...newGroups[srcGroup]];
+      // Within-group reorder — no combo logic
+      const arr = newGroups[srcGroup];
       const [moved] = arr.splice(srcIdx, 1);
       arr.splice(dstIdx, 0, moved);
-      newGroups[srcGroup] = arr;
     } else {
-      const srcArr = [...newGroups[srcGroup]];
-      const dstArr = [...newGroups[dstGroup]];
+      // Cross-group move
+      const srcArr = newGroups[srcGroup];
       const [moved] = srcArr.splice(srcIdx, 1);
+      const dstArr = newGroups[dstGroup];
       dstArr.splice(dstIdx, 0, moved);
-      newGroups[srcGroup] = srcArr;
-      newGroups[dstGroup] = dstArr;
+
+      // Check for combo sibling
+      if (typeof movedDanceId === 'number') {
+        const siblingId = comboSiblingMap[movedDanceId];
+        if (siblingId != null) {
+          // Find and remove sibling from its current group (which should be srcGroup)
+          const sibIdx = srcArr.indexOf(siblingId);
+          if (sibIdx !== -1) {
+            srcArr.splice(sibIdx, 1);
+            // Insert sibling directly after the moved dance in destination
+            const movedIdx = dstArr.indexOf(movedDanceId);
+            dstArr.splice(movedIdx + 1, 0, siblingId);
+            setFlashIds(new Set([movedDanceId, siblingId]));
+          }
+        }
+      }
     }
 
     onChange(newGroups);
@@ -130,7 +169,7 @@ export const WorkingArea = ({ groups, danceMap, onChange, actions }: Props) => {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             className={`dance-card ${snapshot.isDragging ? 'dragging' : ''}`}>
-                            <DanceCard danceId={danceId} danceMap={danceMap} />
+                            <DanceCard danceId={danceId} danceMap={danceMap} flash={typeof danceId === 'number' && flashIds.has(danceId)} />
                           </div>
                         )}
                       </Draggable>

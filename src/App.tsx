@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { DanceRow, GroupOrders, RecitalDanceInstance, RecitalGroupRow } from './types';
-import { SHOW_STRUCTURE } from './types';
+import type { ComboPair, DanceRow, GroupOrders, RecitalDanceInstance, RecitalGroupRow } from './types';
+import { SHOW_STRUCTURE, buildComboSiblingMap } from './types';
 import { WorkingArea } from './WorkingArea';
 import { ReportArea } from './ReportArea';
 import {
@@ -17,6 +17,7 @@ export const App = () => {
   const [dances, setDances] = useState<DanceRow[]>([]);
   const [reportData, setReportData] = useState<RecitalDanceInstance[]>([]);
   const [groups, setGroups] = useState<GroupOrders | null>(null);
+  const [comboPairs, setComboPairs] = useState<ComboPair[]>([]);
   const [sqlCopied, setSqlCopied] = useState(false);
 
   useEffect(() => {
@@ -24,9 +25,11 @@ export const App = () => {
       fetch('/api/dances').then(r => r.json()) as Promise<DanceRow[]>,
       fetch('/api/groups').then(r => r.json()) as Promise<RecitalGroupRow[]>,
       fetch('/api/data').then(r => r.json()) as Promise<RecitalDanceInstance[]>,
-    ]).then(([dances, apiGroups, data]) => {
+      fetch('/api/combo-pairs').then(r => r.json()) as Promise<ComboPair[]>,
+    ]).then(([dances, apiGroups, data, pairs]) => {
       setDances(dances);
       setReportData(data);
+      setComboPairs(pairs);
 
       const saved = loadGroupOrders();
       if (saved) {
@@ -41,6 +44,7 @@ export const App = () => {
 
   const danceMap = useMemo(() => buildDanceMap(dances), [dances]);
   const dancerLookup = useMemo(() => buildDancerLookup(reportData), [reportData]);
+  const comboSiblingMap = useMemo(() => buildComboSiblingMap(comboPairs), [comboPairs]);
 
   const shows = useMemo(
     () => (groups ? computeShowOrder(groups, danceMap, dancerLookup, SHOW_STRUCTURE) : []),
@@ -96,6 +100,7 @@ export const App = () => {
         <WorkingArea
           groups={groups}
           danceMap={danceMap}
+          comboSiblingMap={comboSiblingMap}
           onChange={handleGroupChange}
           actions={
             <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">↺ Reset</button>
