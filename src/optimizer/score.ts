@@ -131,6 +131,8 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
 
       // Skip Finale overlap checks (everyone is in Finale)
       if (b === FIXED.FINALE) continue;
+      // Skip SpecTAPular overlap (dancers can be in SpecTAPular and the next dance)
+      if (a === FIXED.SPECTAPULAR) continue;
 
       // Constraint 1: Consecutive dancer overlap
       const overlap = dancerOverlap(a, b, ctx);
@@ -161,6 +163,7 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
       const a = seq[i];
       const c = seq[i + 2];
       if (c === FIXED.FINALE) continue;
+      if (a === FIXED.SPECTAPULAR) continue;
       const overlap = dancerOverlap(a, c, ctx);
       if (overlap.length > 0) {
         breakdown.nearConsecutiveDancers += overlap.length;
