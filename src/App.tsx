@@ -12,12 +12,18 @@ import { ReportArea } from './ReportArea';
 import {
   buildDanceMap,
   buildDancerLookup,
+  canRedo,
+  canUndo,
   computeShowOrder,
   exportCSV,
   exportGroupOrdersCSV,
+  initUndoSession,
   loadGroupOrders,
   parseGroupOrdersCSV,
+  pushUndo,
+  redo,
   saveGroupOrders,
+  undo,
 } from './utils';
 
 export const App = () => {
@@ -25,10 +31,16 @@ export const App = () => {
   const [reportData, setReportData] = useState<RecitalDanceInstance[]>([]);
   const [groups, setGroups] = useState<GroupOrders | null>(null);
   const [comboPairs, setComboPairs] = useState<ComboPair[]>([]);
+  const [initialGroups, setInitialGroups] = useState<GroupOrders | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importCopied, setImportCopied] = useState(false);
   const [importError, setImportError] = useState('');
+  const [undoVer, setUndoVer] = useState(0);
+
+  useEffect(() => {
+    initUndoSession();
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -40,6 +52,10 @@ export const App = () => {
       setDances(dances);
       setReportData(data);
       setComboPairs(pairs);
+
+      const dbGroups: GroupOrders = { A: [], B: [], C: [] };
+      for (const g of apiGroups) dbGroups[g.recital_group] = g.show_order;
+      setInitialGroups(dbGroups);
 
       const saved = loadGroupOrders();
       if (saved) {
@@ -62,8 +78,10 @@ export const App = () => {
   );
 
   const handleGroupChange = (newGroups: GroupOrders) => {
+    if (groups) pushUndo(groups);
     setGroups(newGroups);
     saveGroupOrders(newGroups);
+    setUndoVer(v => v + 1);
   };
 
   const handleExportCSV = () => {
@@ -101,10 +119,45 @@ export const App = () => {
     });
   };
 
-  const handleReset = () => {
-    localStorage.removeItem('cfta-recital-2026-group-orders');
-    location.reload();
+  const handleUndo = () => {
+    if (!groups) return;
+    const prev = undo(groups);
+    if (prev) {
+      setGroups(prev);
+      saveGroupOrders(prev);
+      setUndoVer(v => v + 1);
+    }
   };
+
+  const handleRedo = () => {
+    if (!groups) return;
+    const next = redo(groups);
+    if (next) {
+      setGroups(next);
+      saveGroupOrders(next);
+      setUndoVer(v => v + 1);
+    }
+  };
+
+  const handleReset = () => {
+    if (!groups || !initialGroups) return;
+    handleGroupChange(initialGroups);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if ((mod && e.key === 'y') || (e.metaKey && e.shiftKey && e.key === 'z')) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
 
   if (!groups) return <div>Loading…</div>;
 
@@ -117,12 +170,20 @@ export const App = () => {
           comboSiblingMap={comboSiblingMap}
           onChange={handleGroupChange}
           actions={
-            <button
+            <>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">
+                ↶
+              </button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">
+                ↷
+              </button>
+              <button
                 onClick={handleReset}
                 className="btn-reset"
                 title="Reset dance order to original database order">
                 ↺ Reset
               </button>
+            </>
           }
         />
       </div>
@@ -148,14 +209,15 @@ export const App = () => {
             <textarea
               rows={8}
               value={importText}
-              onChange={e => { setImportText(e.target.value); setImportError(''); }}
+              onChange={e => {
+                setImportText(e.target.value);
+                setImportError('');
+              }}
             />
             {importError && <div className="import-error">{importError}</div>}
             <div className="modal-actions">
               <button onClick={handleApplyImport}>Apply</button>
-              <button onClick={handleCopyImport}>
-                {importCopied ? '✓ Copied' : '📋 Copy'}
-              </button>
+              <button onClick={handleCopyImport}>{importCopied ? '✓ Copied' : '📋 Copy'}</button>
               <button onClick={() => setImportOpen(false)}>Cancel</button>
             </div>
           </div>

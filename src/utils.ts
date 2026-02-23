@@ -17,6 +17,78 @@ export const saveGroupOrders = (orders: GroupOrders) => {
   localStorage.setItem(LS_KEY, JSON.stringify(orders));
 };
 
+// ── Undo/Redo history (session-scoped, stored in localStorage) ──────────
+
+const LS_UNDO_KEY = 'cfta-recital-2026-undo';
+const LS_REDO_KEY = 'cfta-recital-2026-redo';
+const LS_SESSION_KEY = 'cfta-recital-2026-session-id';
+
+/** Get or create a session ID so history is scoped to this browser session */
+const getSessionId = (): string => {
+  let id = sessionStorage.getItem(LS_SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    sessionStorage.setItem(LS_SESSION_KEY, id);
+    // Clear stale history from a previous session
+    localStorage.removeItem(LS_UNDO_KEY);
+    localStorage.removeItem(LS_REDO_KEY);
+  }
+  return id;
+};
+
+const loadStack = (key: string): GroupOrders[] => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveStack = (key: string, stack: GroupOrders[]) => {
+  localStorage.setItem(key, JSON.stringify(stack));
+};
+
+/** Initialize session (call once on app load) */
+export const initUndoSession = () => { getSessionId(); };
+
+/** Push current state onto undo stack before applying a change, clear redo */
+export const pushUndo = (current: GroupOrders) => {
+  getSessionId();
+  const stack = loadStack(LS_UNDO_KEY);
+  stack.push(current);
+  saveStack(LS_UNDO_KEY, stack);
+  saveStack(LS_REDO_KEY, []);
+};
+
+/** Undo: pop from undo stack, push current onto redo, return previous state */
+export const undo = (current: GroupOrders): GroupOrders | null => {
+  const undoStack = loadStack(LS_UNDO_KEY);
+  if (undoStack.length === 0) return null;
+  const prev = undoStack.pop()!;
+  saveStack(LS_UNDO_KEY, undoStack);
+  const redoStack = loadStack(LS_REDO_KEY);
+  redoStack.push(current);
+  saveStack(LS_REDO_KEY, redoStack);
+  return prev;
+};
+
+/** Redo: pop from redo stack, push current onto undo, return next state */
+export const redo = (current: GroupOrders): GroupOrders | null => {
+  const redoStack = loadStack(LS_REDO_KEY);
+  if (redoStack.length === 0) return null;
+  const next = redoStack.pop()!;
+  saveStack(LS_REDO_KEY, redoStack);
+  const undoStack = loadStack(LS_UNDO_KEY);
+  undoStack.push(current);
+  saveStack(LS_UNDO_KEY, undoStack);
+  return next;
+};
+
+/** Check if undo/redo are available */
+export const canUndo = (): boolean => loadStack(LS_UNDO_KEY).length > 0;
+export const canRedo = (): boolean => loadStack(LS_REDO_KEY).length > 0;
+
 export const buildDanceMap = (dances: DanceRow[]): DanceMap =>
   Object.fromEntries(dances.map(d => [d.dance_id, d]));
 

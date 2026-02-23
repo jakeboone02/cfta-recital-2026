@@ -116,6 +116,10 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
     onChange(newGroups);
   };
 
+  const groupedDanceCount = groups.A.length + groups.B.length + groups.C.length;
+  const groupDanceCountFloor = Math.floor(groupedDanceCount / 3);
+  const groupDanceCountCeil = Math.ceil(groupedDanceCount / 3);
+
   const allCollapsed = allGroups.every(g => collapsed[g]);
   const collapseExpandAll = () => {
     const val = !allCollapsed;
@@ -125,10 +129,19 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
   return (
     <div className="working-area">
       <div className="panel-header">
-        <h2>Group Orders</h2>
+        <h2>Groups</h2>
         <div className="header-actions">
-          <button className="btn-collapse-all" onClick={collapseExpandAll} title={allCollapsed ? 'Expand all' : 'Collapse all'}>
-            <span style={{ display: 'inline-block', transform: allCollapsed ? undefined : 'rotate(90deg)' }}>»</span>
+          <button
+            className="btn-collapse-all"
+            onClick={collapseExpandAll}
+            title={allCollapsed ? 'Expand all' : 'Collapse all'}>
+            <span
+              style={{
+                display: 'inline-block',
+                transform: allCollapsed ? undefined : 'rotate(90deg)',
+              }}>
+              »
+            </span>
           </button>
           {actions}
         </div>
@@ -136,7 +149,7 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
       <DragDropContext onDragEnd={handleDragEnd}>
         {allGroups.map(g => {
           const count = groups[g].length;
-          const warn = count < 10 || count > 11;
+          const warn = count < groupDanceCountFloor || count > groupDanceCountCeil;
           const isCollapsed = collapsed[g];
           return (
             <div key={g} className="group-section">
@@ -169,7 +182,11 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             className={`dance-card ${snapshot.isDragging ? 'dragging' : ''}`}>
-                            <DanceCard danceId={danceId} danceMap={danceMap} flash={typeof danceId === 'number' && flashIds.has(danceId)} />
+                            <DanceCard
+                              danceId={danceId}
+                              danceMap={danceMap}
+                              flash={typeof danceId === 'number' && flashIds.has(danceId)}
+                            />
                           </div>
                         )}
                       </Draggable>
