@@ -29,6 +29,10 @@ const canLeaveGroup = (danceId: number | 'PRE'): boolean => {
   return !fixedDanceIds.has(danceId);
 };
 
+/** Get the fixed group for a dance ID, if any */
+const getFixedGroup = (id: number | 'PRE'): GroupName | undefined =>
+  typeof id === 'number' ? FIXED_GROUP[id] : undefined;
+
 /** Pick a random int in [0, max) */
 const randInt = (max: number): number => Math.floor(Math.random() * max);
 
@@ -67,17 +71,17 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
     // Pick movable dances from each group (not PRE, not fixed to this group)
     const movable1 = arr1
       .map((id, idx) => ({ id, idx }))
-      .filter(({ id }) => canLeaveGroup(id) && !(typeof id === 'number' && FIXED_GROUP[id] === g2 ? false : FIXED_GROUP[id] != null && FIXED_GROUP[id] !== g2));
+      .filter(({ id }) => canLeaveGroup(id) && !(getFixedGroup(id) === g2 ? false : getFixedGroup(id) != null && getFixedGroup(id) !== g2));
     const movable2 = arr2
       .map((id, idx) => ({ id, idx }))
-      .filter(({ id }) => canLeaveGroup(id) && !(typeof id === 'number' && FIXED_GROUP[id] === g1 ? false : FIXED_GROUP[id] != null && FIXED_GROUP[id] !== g1));
+      .filter(({ id }) => canLeaveGroup(id) && !(getFixedGroup(id) === g1 ? false : getFixedGroup(id) != null && getFixedGroup(id) !== g1));
 
     // Filter: can move to the other group (check fixed group constraints)
     const canMoveTo = (id: number | 'PRE', targetGroup: GroupName): boolean => {
       if (id === 'PRE') return false;
       if (typeof id === 'number' && FIXED_GROUP[id] && FIXED_GROUP[id] !== targetGroup) return false;
-      // Check combo sibling: if sibling is fixed to current group, can't move
       const sib = comboSiblingMap.get(id);
+      if (sib != null && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
       if (sib !== undefined && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
       return true;
     };

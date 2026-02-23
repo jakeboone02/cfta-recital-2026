@@ -134,6 +134,38 @@ export const exportCSV = (shows: ShowData[]): string => {
   return Papa.unparse(rows);
 };
 
+/** Export group orders as CSV in the same format as recital_groups.csv */
+export const exportGroupOrdersCSV = (groups: GroupOrders): string => {
+  const rows = (['A', 'B', 'C'] as GroupName[]).map(g => ({
+    recital_group: g,
+    show_order: JSON.stringify(groups[g]).replace(/"/g, '""'),
+  }));
+  return 'recital_group,show_order\n' + rows
+    .map(r => `${r.recital_group},"${r.show_order}"`)
+    .join('\n') + '\n';
+};
+
+/** Parse CSV in recital_groups.csv format back to GroupOrders */
+export const parseGroupOrdersCSV = (csv: string): GroupOrders | null => {
+  try {
+    const result = Papa.parse<{ recital_group: string; show_order: string }>(csv.trim(), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    const groups: GroupOrders = { A: [], B: [], C: [] };
+    for (const row of result.data) {
+      const g = row.recital_group?.trim() as GroupName;
+      if (g !== 'A' && g !== 'B' && g !== 'C') continue;
+      const arr = JSON.parse(row.show_order) as (number | string)[];
+      groups[g] = arr.map(v => (v === 'PRE' ? 'PRE' : Number(v)));
+    }
+    if (!groups.A.length && !groups.B.length && !groups.C.length) return null;
+    return groups;
+  } catch {
+    return null;
+  }
+};
+
 /** Generate SQL UPDATE statements for syncing group orders back to the database */
 export const exportSQL = (groups: GroupOrders): string => {
   return (['A', 'B', 'C'] as GroupName[])

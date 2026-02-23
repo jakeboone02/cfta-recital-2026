@@ -97,6 +97,22 @@ const FamilyCount = ({ dances }: { dances: ShowDance[] }) => {
   );
 };
 
+const OverlapCount = ({ dances }: { dances: ShowDance[] }) => {
+  return (
+    <div>
+      Dancer overlap issues:{' '}
+      <span className="overlap-next">
+        Next dance <strong>{dances.reduce((n, d) => n + d.common_with_next.length, 0)}</strong>
+      </span>
+      {', '}
+      <span className="overlap-next2">
+        Dance after next{' '}
+        <strong>{dances.reduce((n, d) => n + d.common_with_next2.length, 0)}</strong>
+      </span>
+    </div>
+  );
+};
+
 export const ReportArea = ({ shows, actions }: Props) => {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
@@ -112,8 +128,17 @@ export const ReportArea = ({ shows, actions }: Props) => {
       <div className="panel-header">
         <h2>Show Order</h2>
         <div className="header-actions">
-          <button className="btn-collapse-all" onClick={collapseExpandAll} title={allCollapsed ? 'Expand all' : 'Collapse all'}>
-            <span style={{ display: 'inline-block', transform: allCollapsed ? undefined : 'rotate(90deg)' }}>»</span>
+          <button
+            className="btn-collapse-all"
+            onClick={collapseExpandAll}
+            title={allCollapsed ? 'Expand all' : 'Collapse all'}>
+            <span
+              style={{
+                display: 'inline-block',
+                transform: allCollapsed ? undefined : 'rotate(90deg)',
+              }}>
+              »
+            </span>
           </button>
           {actions}
         </div>
@@ -146,6 +171,7 @@ export const ReportArea = ({ shows, actions }: Props) => {
               <div className="show-metrics">
                 <FamilyCount dances={show.dances} />
                 <ChoreoCount dances={show.dances} />
+                <OverlapCount dances={show.dances} />
               </div>
             </div>
 

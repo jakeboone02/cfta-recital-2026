@@ -71,7 +71,9 @@ h3 {
   padding: 0.1rem 0;
 }
 
-.btn-collapse-all:hover { color: #333; }
+.btn-collapse-all:hover {
+  color: #333;
+}
 
 /* Drop zone highlight */
 .group-drop-zone {
@@ -213,9 +215,15 @@ h3 {
 }
 
 @keyframes fade-out {
-  0% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* === SQL Modal === */
@@ -343,9 +351,77 @@ h3 {
 
 .overlap-next {
   color: #c00;
-  margin-bottom: 2px;
 }
 
 .overlap-next2 {
   color: #e68a00;
+}
+
+/* === Import/Export Modal === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 6px;
+  padding: 1.2rem;
+  width: 520px;
+  max-width: 90vw;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin: 0 0 0.6rem;
+}
+
+.modal-content textarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.modal-actions button {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.modal-actions button:first-child {
+  background: #2d6a4f;
+  color: #fff;
+  border-color: #2d6a4f;
+}
+
+.modal-actions button:hover {
+  opacity: 0.85;
+}
+
+.import-error {
+  color: #c00;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.bold {
+  font-weight: bold;
 }
