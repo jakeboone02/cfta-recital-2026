@@ -155,7 +155,18 @@ export const App = () => {
     const worker = new Worker(url);
     worker.onmessage = (e: MessageEvent) => {
       if (e.data.type === 'result') {
-        handleGroupChange(e.data.groups);
+        const newGroups = e.data.groups;
+        handleGroupChange(newGroups);
+        // Auto-bookmark with timestamp
+        const now = new Date();
+        const base = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          + ' ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        let name = base;
+        let suffix = 2;
+        while (!addBookmark(name, newGroups)) {
+          name = `${base} (${suffix++})`;
+        }
+        setBookmarks(loadBookmarks());
       }
       setOptimizing(false);
       worker.terminate();
