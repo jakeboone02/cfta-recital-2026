@@ -18,6 +18,8 @@ export interface ScoreBreakdown {
   babyAtGroupEnd: number;
   comboPairTooClose: number;
   familyImbalance: number;
+  preTooClose: number;
+  styleImbalance: number;
 }
 
 /** Full scoring result */

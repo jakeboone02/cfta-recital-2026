@@ -1,18 +1,6 @@
 import type { GroupName } from '../types';
-import type {
-  DanceData,
-  ScoreBreakdown,
-  ScoreResult,
-  ShowScoreDetail,
-  Solution,
-} from './types';
-import {
-  COMBO_MIN_GAP,
-  COMBO_PREFERRED_GAP,
-  COMBO_PAIRS,
-  FIXED,
-  SHOW_PARTS,
-} from './types';
+import type { DanceData, ScoreBreakdown, ScoreResult, ShowScoreDetail, Solution } from './types';
+import { COMBO_MIN_GAP, COMBO_PREFERRED_GAP, COMBO_PAIRS, FIXED, SHOW_PARTS } from './types';
 
 // Penalty weights
 const W_INVALID_SIZE = 100_000; // hard constraint: groups must be 10-11
@@ -20,9 +8,11 @@ const W_CONSECUTIVE = 1000;
 const W_NEAR_CONSECUTIVE = 200;
 const W_SAME_STYLE = 50;
 const W_BABY_ADJACENT = 100; // any baby (PRE or combo) adjacent to another baby
-const W_BABY_AT_END = 80;   // baby dance (PRE or combo) at the end of a group
+const W_BABY_AT_END = 80; // baby dance (PRE or combo) at the end of a group
 const W_COMBO_TOO_CLOSE = 25;
 const W_FAMILY_IMBALANCE = 5;
+const W_PRE_TOO_CLOSE = 50; // two PRE placeholders in same group < 2 dances apart
+const W_STYLE_IMBALANCE = 100; // uneven distribution of styles across groups
 
 /** Precomputed data needed for scoring */
 export interface ScoringContext {
@@ -38,7 +28,7 @@ export interface ScoringContext {
 
 export const buildScoringContext = (
   dances: DanceData[],
-  dancersByDance: Map<number, string[]>,
+  dancersByDance: Map<number, string[]>
 ): ScoringContext => {
   const dancerSets = new Map<number, Set<string>>();
   for (const [id, dancers] of dancersByDance) {
@@ -72,11 +62,7 @@ const getName = (id: number | 'PRE', ctx: ScoringContext): string => {
 };
 
 /** Check how many dancers overlap between two dance IDs */
-const dancerOverlap = (
-  a: number | 'PRE',
-  b: number | 'PRE',
-  ctx: ScoringContext,
-): string[] => {
+const dancerOverlap = (a: number | 'PRE', b: number | 'PRE', ctx: ScoringContext): string[] => {
   if (a === 'PRE' || b === 'PRE') return [];
   const setA = ctx.dancerSets.get(a);
   const setB = ctx.dancerSets.get(b);
@@ -100,15 +86,9 @@ const isCombo = (id: number | 'PRE', ctx: ScoringContext): boolean => {
 const buildShowSequence = (
   solution: Solution,
   part1: GroupName,
-  part2: GroupName,
+  part2: GroupName
 ): (number | 'PRE')[] => {
-  return [
-    FIXED.SPECTAPULAR,
-    ...solution[part1],
-    ...solution[part2],
-    FIXED.HIPHOP,
-    FIXED.FINALE,
-  ];
+  return [FIXED.SPECTAPULAR, ...solution[part1], ...solution[part2], FIXED.HIPHOP, FIXED.FINALE];
 };
 
 /** Score a solution against all constraints */
@@ -122,6 +102,8 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
     babyAtGroupEnd: 0,
     comboPairTooClose: 0,
     familyImbalance: 0,
+    preTooClose: 0,
+    styleImbalance: 0,
   };
   const details: ShowScoreDetail[] = [];
 
@@ -221,10 +203,21 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
       if (idxA === -1 || idxB === -1) continue; // not both in this group
       const gap = Math.abs(idxA - idxB) - 1; // number of dances between them
       if (gap < COMBO_MIN_GAP) {
-        breakdown.comboPairTooClose += (COMBO_MIN_GAP - gap);
+        breakdown.comboPairTooClose += COMBO_MIN_GAP - gap;
       } else if (gap < COMBO_PREFERRED_GAP) {
         // Smaller penalty for being below preferred but above minimum
         breakdown.comboPairTooClose += 0.5 * (COMBO_PREFERRED_GAP - gap);
+      }
+    }
+    // Constraint 4d: PRE placeholders must be ≥2 dances apart
+    const preIndices = order.reduce<number[]>((acc, id, idx) => {
+      if (id === 'PRE') acc.push(idx);
+      return acc;
+    }, []);
+    for (let i = 0; i < preIndices.length - 1; i++) {
+      const gap = preIndices[i + 1] - preIndices[i] - 1;
+      if (gap < 2) {
+        breakdown.preTooClose += 2 - gap;
       }
     }
   }
@@ -245,6 +238,26 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   const sizes = [familyCounts.A.size, familyCounts.B.size, familyCounts.C.size];
   breakdown.familyImbalance = Math.max(...sizes) - Math.min(...sizes);
 
+  // --- Constraint 7: Style distribution across groups ---
+  const styleCounts: Record<string, number[]> = {};
+  for (let gi = 0; gi < 3; gi++) {
+    const g = (['A', 'B', 'C'] as GroupName[])[gi];
+    for (const id of solution[g]) {
+      if (id === 'PRE') continue;
+      const style = ctx.danceInfo.get(id)?.danceStyle;
+      if (!style || style === 'PREDANCE' || style === 'All') continue;
+      if (!styleCounts[style]) styleCounts[style] = [0, 0, 0];
+      styleCounts[style][gi]++;
+    }
+  }
+  for (const counts of Object.values(styleCounts)) {
+    const max = Math.max(...counts);
+    const min = Math.min(...counts);
+    if (max - min > 1) {
+      breakdown.styleImbalance += max - min - 1;
+    }
+  }
+
   const total =
     breakdown.invalidGroupSize * W_INVALID_SIZE +
     breakdown.consecutiveDancers * W_CONSECUTIVE +
@@ -253,7 +266,9 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
     breakdown.babyAdjacent * W_BABY_ADJACENT +
     breakdown.babyAtGroupEnd * W_BABY_AT_END +
     breakdown.comboPairTooClose * W_COMBO_TOO_CLOSE +
-    breakdown.familyImbalance * W_FAMILY_IMBALANCE;
+    breakdown.familyImbalance * W_FAMILY_IMBALANCE +
+    breakdown.preTooClose * W_PRE_TOO_CLOSE +
+    breakdown.styleImbalance * W_STYLE_IMBALANCE;
 
   return { total, breakdown, details };
 };

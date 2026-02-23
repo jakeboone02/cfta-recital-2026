@@ -106,11 +106,13 @@ console.log(`Done in ${elapsed}s — found ${topSolutions.length} unique solutio
 const danceMap = new Map(dances.map(d => [d.danceId, d]));
 
 const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) => {
-  // Print groups
+  // Print CSV (same format as recital_groups.csv)
+  console.log('recital_group,show_order');
   for (const g of ['A', 'B', 'C'] as GroupName[]) {
-    console.log(`  Group ${g} (${sol[g].length} dances): ${JSON.stringify(sol[g])}`);
+    const order = JSON.stringify(sol[g]).replace(/"/g, '""');
+    console.log(`${g},"${order}"`);
   }
-  console.log(`  Breakdown: consec=${result.breakdown.consecutiveDancers}, near=${result.breakdown.nearConsecutiveDancers}, style=${result.breakdown.sameStyleAdjacent}, babyAdj=${result.breakdown.babyAdjacent}, babyEnd=${result.breakdown.babyAtGroupEnd}, families=${result.breakdown.familyImbalance}`);
+  console.log(`  Breakdown: consec=${result.breakdown.consecutiveDancers}, near=${result.breakdown.nearConsecutiveDancers}, style=${result.breakdown.sameStyleAdjacent}, babyAdj=${result.breakdown.babyAdjacent}, babyEnd=${result.breakdown.babyAtGroupEnd}, families=${result.breakdown.familyImbalance}, preTooClose=${result.breakdown.preTooClose}, styleImbal=${result.breakdown.styleImbalance}`);
 
   // Show conflicts if any
   for (const detail of result.details) {
@@ -187,12 +189,13 @@ for (const detail of bestResult.details) {
   console.log();
 }
 
-// Output SQL for #1
+// Output CSV for #1 (copy-paste into Import)
 console.log('════════════════════════════════════════════════════════════════');
-console.log('  SQL UPDATE STATEMENTS (#1)');
+console.log('  CSV — PASTE INTO IMPORT (#1)');
 console.log('════════════════════════════════════════════════════════════════\n');
+console.log('recital_group,show_order');
 for (const g of ['A', 'B', 'C'] as GroupName[]) {
-  const order = JSON.stringify(best[g]);
-  console.log(`UPDATE recital_groups SET show_order = '${order}' WHERE recital_group = '${g}';`);
+  const order = JSON.stringify(best[g]).replace(/"/g, '""');
+  console.log(`${g},"${order}"`);
 }
 console.log();

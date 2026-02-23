@@ -98,18 +98,22 @@ const FamilyCount = ({ dances }: { dances: ShowDance[] }) => {
 };
 
 const OverlapCount = ({ dances }: { dances: ShowDance[] }) => {
+  const nextOverlap = dances.reduce((n, d) => n + d.common_with_next.length, 0);
+  const next2Overlap = dances.reduce((n, d) => n + d.common_with_next2.length, 0);
+
   return (
-    <div>
-      Dancer overlap issues:{' '}
-      <span className="overlap-next">
-        Next dance <strong>{dances.reduce((n, d) => n + d.common_with_next.length, 0)}</strong>
-      </span>
-      {', '}
-      <span className="overlap-next2">
-        Dance after next{' '}
-        <strong>{dances.reduce((n, d) => n + d.common_with_next2.length, 0)}</strong>
-      </span>
-    </div>
+    (nextOverlap > 0 || next2Overlap > 0) && (
+      <div>
+        <strong>Dancer overlap issues</strong>:{' '}
+        <span className="overlap-next">
+          Next dance <strong>{nextOverlap}</strong>
+        </span>
+        {', '}
+        <span className="overlap-next2">
+          Dance after next <strong>{next2Overlap}</strong>
+        </span>
+      </div>
+    )
   );
 };
 
