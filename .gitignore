@@ -26,3 +26,4 @@ dist-ssr
 
 # Bespoke
 src/database.db
+src/*.generated.ts

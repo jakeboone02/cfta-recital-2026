@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import type {
-  ComboPair,
-  DanceRow,
-  GroupOrders,
-  RecitalDanceInstance,
-  RecitalGroupRow,
-} from './types';
+import type { DanceRow, GroupOrders } from './types';
 import { SHOW_STRUCTURE, buildComboSiblingMap } from './types';
+import { DANCES, GROUPS, COMBO_PAIRS_DATA, DANCERS_BY_DANCE } from './data.generated';
+import { WORKER_CODE } from './optimizer-worker-code.generated';
 import { WorkingArea } from './WorkingArea';
 import { ReportArea } from './ReportArea';
 import {
   buildDanceMap,
-  buildDancerLookup,
   canRedo,
   canUndo,
   computeShowOrder,
@@ -25,13 +20,17 @@ import {
   saveGroupOrders,
   undo,
 } from './utils';
+import type { AnnealConfig } from './optimizer/types';
+
+const OPTIMIZE_CONFIG: AnnealConfig = {
+  initialTemp: 5000,
+  coolingRate: 0.9997,
+  iterations: 200_000,
+  restarts: 3,
+};
 
 export const App = () => {
-  const [dances, setDances] = useState<DanceRow[]>([]);
-  const [reportData, setReportData] = useState<RecitalDanceInstance[]>([]);
   const [groups, setGroups] = useState<GroupOrders | null>(null);
-  const [comboPairs, setComboPairs] = useState<ComboPair[]>([]);
-  const [initialGroups, setInitialGroups] = useState<GroupOrders | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importCopied, setImportCopied] = useState(false);
@@ -39,43 +38,24 @@ export const App = () => {
   const [undoVer, setUndoVer] = useState(0);
   const [optimizing, setOptimizing] = useState(false);
 
+  const initialGroups = useMemo<GroupOrders>(() => {
+    const g: GroupOrders = { A: [], B: [], C: [] };
+    for (const row of GROUPS) g[row.recital_group] = row.show_order;
+    return g;
+  }, []);
+
   useEffect(() => {
     initUndoSession();
+    const saved = loadGroupOrders();
+    setGroups(saved ?? initialGroups);
   }, []);
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/dances').then(r => r.json()) as Promise<DanceRow[]>,
-      fetch('/api/groups').then(r => r.json()) as Promise<RecitalGroupRow[]>,
-      fetch('/api/data').then(r => r.json()) as Promise<RecitalDanceInstance[]>,
-      fetch('/api/combo-pairs').then(r => r.json()) as Promise<ComboPair[]>,
-    ]).then(([dances, apiGroups, data, pairs]) => {
-      setDances(dances);
-      setReportData(data);
-      setComboPairs(pairs);
-
-      const dbGroups: GroupOrders = { A: [], B: [], C: [] };
-      for (const g of apiGroups) dbGroups[g.recital_group] = g.show_order;
-      setInitialGroups(dbGroups);
-
-      const saved = loadGroupOrders();
-      if (saved) {
-        setGroups(saved);
-      } else {
-        const initial: GroupOrders = { A: [], B: [], C: [] };
-        for (const g of apiGroups) initial[g.recital_group] = g.show_order;
-        setGroups(initial);
-      }
-    });
-  }, []);
-
-  const danceMap = useMemo(() => buildDanceMap(dances), [dances]);
-  const dancerLookup = useMemo(() => buildDancerLookup(reportData), [reportData]);
-  const comboSiblingMap = useMemo(() => buildComboSiblingMap(comboPairs), [comboPairs]);
+  const danceMap = useMemo(() => buildDanceMap(DANCES), []);
+  const comboSiblingMap = useMemo(() => buildComboSiblingMap(COMBO_PAIRS_DATA), []);
 
   const shows = useMemo(
-    () => (groups ? computeShowOrder(groups, danceMap, dancerLookup, SHOW_STRUCTURE) : []),
-    [groups, danceMap, dancerLookup]
+    () => (groups ? computeShowOrder(groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE) : []),
+    [groups, danceMap]
   );
 
   const handleGroupChange = (newGroups: GroupOrders) => {
@@ -145,20 +125,26 @@ export const App = () => {
     handleGroupChange(initialGroups);
   };
 
-  const handleOptimize = async () => {
+  const handleOptimize = () => {
     if (!groups || optimizing) return;
     setOptimizing(true);
-    try {
-      const res = await fetch('/api/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(groups),
-      });
-      const result = (await res.json()) as GroupOrders;
-      handleGroupChange(result);
-    } finally {
+    const blob = new Blob([WORKER_CODE], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    worker.onmessage = (e: MessageEvent) => {
+      if (e.data.type === 'result') {
+        handleGroupChange(e.data.groups);
+      }
       setOptimizing(false);
-    }
+      worker.terminate();
+      URL.revokeObjectURL(url);
+    };
+    worker.onerror = () => {
+      setOptimizing(false);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+    };
+    worker.postMessage({ groups, config: OPTIMIZE_CONFIG });
   };
 
   useEffect(() => {
