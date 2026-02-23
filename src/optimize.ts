@@ -1,0 +1,168 @@
+import { Database, type SQLQueryBindings } from 'bun:sqlite';
+import type { GroupName } from './types';
+import type { AnnealConfig, DanceData, Solution } from './optimizer/types';
+import { FIXED } from './optimizer/types';
+import { buildScoringContext, scoreSolution } from './optimizer/score';
+import { anneal } from './optimizer/anneal';
+
+// ── Load data from database ──────────────────────────────────────────────
+
+const db = new Database(`${import.meta.dir}/../build/database.db`, { readonly: true });
+
+const loadDances = (): DanceData[] =>
+  db
+    .query<{ dance_id: number; dance_name: string; dance_style: string; choreography: string }, SQLQueryBindings[]>(
+      'SELECT dance_id, dance_name, dance_style, choreography FROM dances',
+    )
+    .all()
+    .map(r => ({
+      danceId: r.dance_id,
+      danceName: r.dance_name,
+      danceStyle: r.dance_style,
+      choreography: r.choreography,
+    }));
+
+const loadDancersByDance = (): Map<number, string[]> => {
+  const rows = db
+    .query<{ dance_id: number; dancer_name: string }, SQLQueryBindings[]>(
+      `SELECT DISTINCT d.dance_id, dc.dancer_name
+         FROM dances d
+         INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
+         INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
+        WHERE NOT (d.dance_name = 'SpecTAPular' AND dc.dancer_name IN (
+          SELECT dancer_name FROM dancers WHERE is_teacher = 1
+        ))`,
+    )
+    .all();
+
+  const map = new Map<number, string[]>();
+  for (const r of rows) {
+    if (!map.has(r.dance_id)) map.set(r.dance_id, []);
+    map.get(r.dance_id)!.push(r.dancer_name);
+  }
+  return map;
+};
+
+const loadCurrentGroups = (): Solution => {
+  const rows = db
+    .query<{ recital_group: GroupName; show_order: string }, SQLQueryBindings[]>(
+      'SELECT recital_group, show_order FROM recital_groups',
+    )
+    .all();
+
+  const solution: Solution = { A: [], B: [], C: [] };
+  for (const r of rows) {
+    solution[r.recital_group] = JSON.parse(r.show_order);
+  }
+  return solution;
+};
+
+// ── Main ─────────────────────────────────────────────────────────────────
+
+const dances = loadDances();
+const dancersByDance = loadDancersByDance();
+const ctx = buildScoringContext(dances, dancersByDance);
+const currentSolution = loadCurrentGroups();
+
+db.close();
+
+// Score the current solution
+const currentResult = scoreSolution(currentSolution, ctx);
+
+console.log('════════════════════════════════════════════════════════════════');
+console.log('  CFTA Recital 2026 — Show Order Optimizer');
+console.log('════════════════════════════════════════════════════════════════\n');
+
+console.log('Current solution score:', currentResult.total);
+console.log('Breakdown:', currentResult.breakdown);
+console.log();
+
+// Print current show details
+for (const detail of currentResult.details) {
+  if (detail.consecutivePairs.length > 0) {
+    console.log(`Show ${detail.recitalId} — consecutive conflicts:`);
+    for (const p of detail.consecutivePairs) {
+      console.log(`  ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
+    }
+  }
+}
+console.log();
+
+// Run optimizer
+const config: AnnealConfig = {
+  initialTemp: 5000,
+  coolingRate: 0.9997,
+  iterations: 200_000,
+  restarts: 3,
+};
+
+console.log(`Running simulated annealing (${config.iterations.toLocaleString()} iterations × ${config.restarts + 1} runs)...`);
+const startTime = performance.now();
+const { best, bestScore } = anneal(currentSolution, ctx, config);
+const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+console.log(`Done in ${elapsed}s\n`);
+
+const bestResult = scoreSolution(best, ctx);
+
+console.log('════════════════════════════════════════════════════════════════');
+console.log('  OPTIMIZED RESULT');
+console.log('════════════════════════════════════════════════════════════════\n');
+console.log('Score:', bestResult.total, `(was ${currentResult.total}, ${currentResult.total > 0 ? ((1 - bestResult.total / currentResult.total) * 100).toFixed(0) : 0}% improvement)`);
+console.log('Breakdown:', bestResult.breakdown);
+console.log();
+
+// Print optimized groups
+const danceMap = new Map(dances.map(d => [d.danceId, d]));
+for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  console.log(`── Group ${g} (${best[g].length} dances) ──`);
+  best[g].forEach((id, idx) => {
+    if (id === 'PRE') {
+      console.log(`  ${(idx + 1).toString().padStart(2)}. [PREDANCE placeholder]`);
+    } else {
+      const d = danceMap.get(id);
+      console.log(`  ${(idx + 1).toString().padStart(2)}. ${d?.danceName ?? `Dance ${id}`} (${d?.danceStyle}, ${d?.choreography})`);
+    }
+  });
+  console.log();
+}
+
+// Print show-by-show view
+for (const detail of bestResult.details) {
+  const showLabel = detail.recitalId === 1 ? 'Friday Evening' : detail.recitalId === 2 ? 'Saturday Morning' : 'Saturday Afternoon';
+  console.log(`── Show ${detail.recitalId}: ${showLabel} ──`);
+  if (detail.consecutivePairs.length > 0) {
+    console.log('  ⚠ Consecutive dancer conflicts:');
+    for (const p of detail.consecutivePairs) {
+      console.log(`    ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
+    }
+  } else {
+    console.log('  ✓ No consecutive dancer conflicts');
+  }
+  if (detail.nearConsecutivePairs.length > 0) {
+    console.log(`  ⚠ Near-consecutive conflicts (gap=1): ${detail.nearConsecutivePairs.length} pairs`);
+    for (const p of detail.nearConsecutivePairs) {
+      console.log(`    ${p.dance1} → [gap] → ${p.dance3}: ${p.dancers.join(', ')}`);
+    }
+  } else {
+    console.log('  ✓ No near-consecutive dancer conflicts');
+  }
+  if (detail.sameStylePairs.length > 0) {
+    console.log('  ⚠ Same-style adjacent:');
+    for (const p of detail.sameStylePairs) {
+      console.log(`    ${p.dance1} → ${p.dance2} (${p.style})`);
+    }
+  } else {
+    console.log('  ✓ No same-style adjacent');
+  }
+  console.log();
+}
+
+// Output SQL
+console.log('════════════════════════════════════════════════════════════════');
+console.log('  SQL UPDATE STATEMENTS');
+console.log('════════════════════════════════════════════════════════════════\n');
+for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  const order = JSON.stringify(best[g]);
+  console.log(`UPDATE recital_groups SET show_order = '${order}' WHERE recital_group = '${g}';`);
+}
+console.log();

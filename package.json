@@ -6,7 +6,8 @@
   "scripts": {
     "start": "bun --hot run ./server.ts",
     "build": "bun build ./src/index.html --outdir ./build",
-    "rebuild:db": "bun ./src/create_database.ts && cp ./src/database.db ./build"
+    "rebuild:db": "bun ./src/create_database.ts && cp ./src/database.db ./build",
+    "optimize": "bun ./src/optimize.ts"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
