@@ -33421,6 +33421,58 @@ var parseGroupOrdersCSV = (csv) => {
   }
 };
 var styleSlug = (danceStyle) => danceStyle.toLowerCase().replace(/[/ ]+/g, "-");
+var STYLE_COLORS = {
+  ballet: { bg: "#e056a0", text: "#fff" },
+  "hip-hop": { bg: "#ddd", text: "#222" },
+  jazz: { bg: "#f39c12", text: "#fff" },
+  "modern-lyrical": { bg: "#2e86de", text: "#fff" },
+  "musical-theater": { bg: "#8854d0", text: "#fff" },
+  tap: { bg: "#20bf6b", text: "#fff" },
+  predance: { bg: "#999", text: "#fff" },
+  all: { bg: "#667", text: "#fff" }
+};
+var exportExcel = (shows) => {
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const headers = [
+    "Show",
+    "#",
+    "Group",
+    "Part",
+    "Dance Name",
+    "Style",
+    "Choreography",
+    "Song",
+    "Artist",
+    "Count",
+    "Dancers"
+  ];
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' + '<head><meta charset="utf-8"/></head><body>' + '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:11pt;white-space:nowrap">' + `<col/>`.repeat(headers.length - 1) + `<col width="500"/>`;
+  html += "<tr>" + headers.map((h) => `<th style="background:#333;color:#fff;font-weight:bold">${esc(h)}</th>`).join("") + "</tr>";
+  for (const show of shows) {
+    html += `<tr><td colspan="${headers.length}" style="background:#2d6a4f;color:#fff;font-weight:bold;font-size:13pt">${esc(show.label)}</td></tr>`;
+    show.dances.forEach((d, di) => {
+      const slug = styleSlug(d.dance_style);
+      const c = STYLE_COLORS[slug] ?? { bg: "#eee", text: "#222" };
+      const cellStyle = `background:${c.bg};color:${c.text}`;
+      const plainStyle = `background:#fff;color:#222`;
+      html += "<tr>" + [
+        `<td style="${plainStyle}">${esc(show.label)}</td>`,
+        `<td style="${plainStyle}" align="center">${di + 1}</td>`,
+        `<td style="${plainStyle}">${esc(d.group)}</td>`,
+        `<td style="${plainStyle}" align="center">${d.part}</td>`,
+        `<td style="${cellStyle};font-weight:bold">${esc(d.dance_name)}</td>`,
+        `<td style="${cellStyle}">${esc(d.dance_style)}</td>`,
+        `<td style="${plainStyle}">${esc(d.choreography)}</td>`,
+        `<td style="${plainStyle}">${esc(d.song)}</td>`,
+        `<td style="${plainStyle}">${esc(d.artist)}</td>`,
+        `<td style="${plainStyle}" align="center">${d.dancers.length}</td>`,
+        `<td style="${plainStyle}">${esc(d.dancers.join(", "))}</td>`
+      ].join("") + "</tr>";
+    });
+  }
+  html += "</table></body></html>";
+  return html;
+};
 
 // src/WorkingArea.tsx
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -33927,13 +33979,13 @@ var ReportArea = ({ shows, actions, dancerLastNames, compact, label }) => {
                   children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("tr", {
                     children: [
                       /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("th", {
-                        children: "Group"
+                        children: "G"
                       }, undefined, false, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("th", {
                         children: "Dance"
                       }, undefined, false, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("th", {
-                        children: "# Dancers"
+                        children: "#"
                       }, undefined, false, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("th", {
                         children: "Dancer Overlap"
@@ -34014,6 +34066,16 @@ var App2 = () => {
     const a = document.createElement("a");
     a.href = url;
     a.download = "recital-order-2026.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const handleExportExcel = () => {
+    const html = exportExcel(shows);
+    const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "recital-order-2026.xls";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -34208,7 +34270,12 @@ var App2 = () => {
                   /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
                     onClick: handleExportCSV,
                     title: "Download show order as CSV file",
-                    children: "\uD83D\uDCBE Download Show Order (CSV)"
+                    children: "\uD83D\uDCBE CSV"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
+                    onClick: handleExportExcel,
+                    title: "Download show order as formatted Excel file",
+                    children: "\uD83D\uDCCA Excel"
                   }, undefined, false, undefined, this),
                   /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
                     onClick: handleOpenImport,
