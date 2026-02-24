@@ -19,6 +19,7 @@ import {
   computeShowOrder,
   deleteBookmark,
   exportCSV,
+  exportExcel,
   exportGroupOrdersCSV,
   initUndoSession,
   loadBookmarks,
@@ -98,6 +99,17 @@ export const App = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportExcel = () => {
+    const html = exportExcel(shows);
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recital-order-2026.xls';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleOpenImport = () => {
     if (groups) setImportText(exportGroupOrdersCSV(groups));
     setImportError('');
@@ -159,8 +171,10 @@ export const App = () => {
         handleGroupChange(newGroups);
         // Auto-bookmark with timestamp
         const now = new Date();
-        const base = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          + ' ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const base =
+          now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+          ' ' +
+          now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         let name = base;
         let suffix = 2;
         while (!addBookmark(name, newGroups)) {
@@ -282,7 +296,12 @@ export const App = () => {
             actions={
               <div className="header-actions">
                 <button onClick={handleExportCSV} title="Download show order as CSV file">
-                  💾 Download Show Order (CSV)
+                  💾 CSV
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  title="Download show order as formatted Excel file">
+                  📊 Excel
                 </button>
                 <button onClick={handleOpenImport} title="Import/export group orders as CSV">
                   📥 Import/Export

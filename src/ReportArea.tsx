@@ -232,9 +232,9 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
                 <thead>
                   <tr>
                     {/* <th>#</th> */}
-                    <th>Group</th>
+                    <th>G</th>
                     <th>Dance</th>
-                    <th># Dancers</th>
+                    <th>#</th>
                     <th>Dancer Overlap</th>
                   </tr>
                 </thead>

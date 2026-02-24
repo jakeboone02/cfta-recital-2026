@@ -391,7 +391,8 @@ h3 {
   width: 2rem;
 }
 .report-count {
-  text-align: center;
+  font-size: smaller;
+  text-align: right;
   width: 2rem;
 }
 
