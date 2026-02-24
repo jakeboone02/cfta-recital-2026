@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "bun ./src/build.ts",
+    "start": "bun run build && bun ./build/index.html",
     "optimize": "bun ./src/optimize.ts"
   },
   "dependencies": {
