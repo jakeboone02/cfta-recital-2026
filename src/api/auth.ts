@@ -11,13 +11,14 @@ export function checkAuth(request: Request, env: Env): Response | null {
     .find(c => c.startsWith(`${COOKIE_NAME}=`))
     ?.split('=')[1];
 
-  if (token && token === env.RECITAL_PASSWORD) return null; // authenticated
+  if (token && token === String(env.RECITAL_PASSWORD ?? '')) return null; // authenticated
   return new Response('Unauthorized', { status: 401 });
 }
 
 export async function handleLogin(request: Request, env: Env): Promise<Response> {
   const body = (await request.json()) as { password?: string };
-  if (!body.password || body.password !== env.RECITAL_PASSWORD) {
+  const expected = String(env.RECITAL_PASSWORD ?? '');
+  if (!body.password || !expected || body.password !== expected) {
     return Response.json({ error: 'Invalid password' }, { status: 401 });
   }
 
