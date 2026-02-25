@@ -174,6 +174,7 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
   const [files, setFiles] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const [editingTable, setEditingTable] = useState<string | null>(null);
 
   const handleFile = (tableName: string, file: File) => {
     const reader = new FileReader();
@@ -198,25 +199,53 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
     setUploading(false);
   };
 
+  // Lazy-load DataGrid only when needed
+  const [DataGrid, setDataGrid] = useState<React.ComponentType<{ instanceId: number; tableName: string }> | null>(null);
+  useEffect(() => {
+    if (editingTable && !DataGrid) {
+      import('./DataGrid').then(m => setDataGrid(() => m.DataGrid));
+    }
+  }, [editingTable, DataGrid]);
+
   return (
     <div className="setup-page">
-      <h2>Upload Data</h2>
-      <p><a href={`#/instances/${instanceId}`}>← Back to planner</a></p>
+      <div className="setup-header">
+        <h2>Manage Data</h2>
+        <a href={`#/instances/${instanceId}`} className="setup-back">← Back to planner</a>
+      </div>
       <div className="csv-upload-grid">
         {CSV_TABLES.map(table => (
-          <div key={table.name} className="csv-upload-row">
-            <label>
-              <strong>{table.label}</strong>
-              <span className="csv-cols">{table.cols}</span>
-            </label>
-            <input type="file" accept=".csv" onChange={e => e.target.files?.[0] && handleFile(table.name, e.target.files[0])} />
-            {files[table.name] && <span className="csv-ready">Ready</span>}
-            {status[table.name] && <span className={status[table.name].startsWith('✗') ? 'csv-error' : 'csv-ok'}>{status[table.name]}</span>}
+          <div key={table.name} className={`csv-upload-card ${editingTable === table.name ? 'csv-upload-card--editing' : ''}`}>
+            <div className="csv-upload-row">
+              <div className="csv-upload-info">
+                <strong>{table.label}</strong>
+                <span className="csv-cols">{table.cols}</span>
+              </div>
+              <div className="csv-upload-actions">
+                <label className="csv-file-label">
+                  📁 CSV
+                  <input type="file" accept=".csv" onChange={e => e.target.files?.[0] && handleFile(table.name, e.target.files[0])} />
+                </label>
+                {files[table.name] && <span className="csv-ready">Ready</span>}
+                {status[table.name] && <span className={status[table.name].startsWith('✗') ? 'csv-error' : 'csv-ok'}>{status[table.name]}</span>}
+                <button
+                  className={`btn-edit-table ${editingTable === table.name ? 'btn-edit-table--active' : ''}`}
+                  onClick={() => setEditingTable(editingTable === table.name ? null : table.name)}
+                >
+                  {editingTable === table.name ? '▲ Close' : '✏️ Edit'}
+                </button>
+              </div>
+            </div>
+            {editingTable === table.name && DataGrid && (
+              <div className="csv-upload-editor">
+                <DataGrid instanceId={instanceId} tableName={table.name} />
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <button onClick={handleUploadAll} disabled={uploading || Object.keys(files).length === 0}>
-        {uploading ? 'Uploading…' : 'Upload All'}
+      <button className="btn-upload-all" onClick={handleUploadAll} disabled={uploading || Object.keys(files).length === 0}>
+        {uploading ? 'Uploading…' : '⬆ Upload All CSVs'}
       </button>
     </div>
   );

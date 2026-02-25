@@ -5,6 +5,8 @@ import { handleCsvUpload } from './csv-upload';
 import { handleData } from './data';
 import { handleOrder } from './order';
 
+import { handleTables } from './tables';
+
 export async function handleApiRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -28,6 +30,8 @@ export async function handleApiRequest(request: Request, env: Env): Promise<Resp
     if (sub === 'csv') return handleCsvUpload(request, env, instanceId);
     if (sub === 'data') return handleData(request, env, instanceId);
     if (sub === 'order') return handleOrder(request, env, instanceId);
+    const tableMatch = sub.match(/^tables\/(.+)$/);
+    if (tableMatch) return handleTables(request, env, instanceId, tableMatch[1]);
   }
 
   return new Response('Not Found', { status: 404 });

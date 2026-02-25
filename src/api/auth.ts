@@ -22,11 +22,13 @@ export async function handleLogin(request: Request, env: Env): Promise<Response>
     return Response.json({ error: 'Invalid password' }, { status: 401 });
   }
 
+  const isSecure = new URL(request.url).protocol === 'https:';
+  const securePart = isSecure ? '; Secure' : '';
   return Response.json(
     { ok: true },
     {
       headers: {
-        'Set-Cookie': `${COOKIE_NAME}=${env.RECITAL_PASSWORD}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${COOKIE_MAX_AGE}; Secure`,
+        'Set-Cookie': `${COOKIE_NAME}=${env.RECITAL_PASSWORD}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${COOKIE_MAX_AGE}${securePart}`,
       },
     }
   );

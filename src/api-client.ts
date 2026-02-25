@@ -101,3 +101,25 @@ export const deleteBookmarkApi = (id: number, name: string) =>
   apiFetch<{ ok: boolean }>(`/instances/${id}/order?name=${encodeURIComponent(name)}`, {
     method: 'DELETE',
   });
+
+// Table CRUD
+export interface TableData {
+  rows: Record<string, any>[];
+  columns: string[];
+  pk: string;
+  editableColumns: string[];
+}
+
+export const getTableRows = (instanceId: number, table: string) =>
+  apiFetch<TableData>(`/instances/${instanceId}/tables/${table}`);
+
+export const upsertTableRow = (instanceId: number, table: string, row: Record<string, any>) =>
+  apiFetch<{ ok: boolean; id?: number }>(`/instances/${instanceId}/tables/${table}`, {
+    method: 'PUT',
+    body: JSON.stringify(row),
+  });
+
+export const deleteTableRow = (instanceId: number, table: string, id: string | number) =>
+  apiFetch<{ ok: boolean }>(`/instances/${instanceId}/tables/${table}?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
