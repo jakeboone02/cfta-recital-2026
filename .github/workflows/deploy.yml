@@ -1,9 +1,7 @@
-name: Build and Deploy
+name: CI
 on: [push]
-permissions:
-  contents: write
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,12 +12,8 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install and Build
-        run: |
-          bun install
-          bun run build
+      - name: Install
+        run: bun install
 
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: build
+      - name: Build
+        run: bun run build

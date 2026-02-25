@@ -1,37 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { DanceRow, GroupOrders } from './types';
-import { SHOW_STRUCTURE, buildComboSiblingMap } from './types';
-import {
-  DANCES,
-  GROUPS,
-  COMBO_PAIRS_DATA,
-  DANCERS_BY_DANCE,
-  DANCER_LAST_NAMES,
-} from './data.generated';
+import { buildComboSiblingMap } from './types';
 import { WORKER_CODE } from './optimizer-worker-code.generated';
 import { WorkingArea } from './WorkingArea';
 import { ReportArea } from './ReportArea';
 import {
-  addBookmark,
   buildDanceMap,
-  canRedo,
-  canUndo,
   computeShowOrder,
-  deleteBookmark,
   exportCSV,
   exportExcel,
   exportGroupOrdersCSV,
-  initUndoSession,
-  loadBookmarks,
-  loadGroupOrders,
   parseGroupOrdersCSV,
+  initUndoSession,
   pushUndo,
-  redo,
-  saveGroupOrders,
+  canUndo,
+  canRedo,
   undo,
+  redo,
 } from './utils';
-import type { Bookmark } from './utils';
+import type { Bookmark, ShowData } from './utils';
 import type { AnnealConfig } from './optimizer/types';
+import {
+  login as apiLogin,
+  getInstances,
+  createInstance,
+  getInstanceData,
+  getOrder,
+  saveOrder,
+  saveBookmark as apiSaveBookmark,
+  deleteBookmarkApi,
+  renameBookmarkApi,
+  type RecitalInstance,
+  type InstanceData,
+} from './api-client';
 
 const OPTIMIZE_CONFIG: AnnealConfig = {
   initialTemp: 5000,
@@ -40,8 +41,195 @@ const OPTIMIZE_CONFIG: AnnealConfig = {
   restarts: 3,
 };
 
+// Simple hash-based router
+const getRoute = () => window.location.hash.replace('#', '') || '/';
+
 export const App = () => {
+  const [route, setRoute] = useState(getRoute);
+  useEffect(() => {
+    const onHash = () => setRoute(getRoute());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Check auth on load
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => {
+    getInstances().then(() => setAuthed(true)).catch(() => setAuthed(false));
+  }, []);
+
+  if (authed === null) return <div className="loading">Loading…</div>;
+  if (!authed || route === '/login') return <LoginPage onLogin={() => { setAuthed(true); window.location.hash = '#/'; }} />;
+
+  const instanceMatch = route.match(/^\/instances\/(\d+)/);
+  if (instanceMatch) {
+    const id = parseInt(instanceMatch[1], 10);
+    if (route.endsWith('/setup')) return <SetupPage instanceId={id} />;
+    return <PlannerPage instanceId={id} />;
+  }
+
+  return <InstanceListPage />;
+};
+
+// ── Login Page ───────────────────────────────────────────────────────────
+
+const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiLogin(password);
+      onLogin();
+    } catch {
+      setError('Invalid password');
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <h1>CFTA Dance Recital</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => { setPassword(e.target.value); setError(''); }}
+          autoFocus
+        />
+        <button type="submit">Log In</button>
+        {error && <div className="login-error">{error}</div>}
+      </form>
+    </div>
+  );
+};
+
+// ── Instance List Page ───────────────────────────────────────────────────
+
+const InstanceListPage = () => {
+  const [instances, setInstances] = useState<RecitalInstance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newYear, setNewYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    getInstances().then(setInstances).finally(() => setLoading(false));
+  }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    const inst = await createInstance(newName.trim(), newYear);
+    setInstances(prev => [inst, ...prev]);
+    setShowCreate(false);
+    setNewName('');
+    window.location.hash = `#/instances/${inst.id}/setup`;
+  };
+
+  if (loading) return <div className="loading">Loading…</div>;
+
+  return (
+    <div className="instance-list-page">
+      <h1>CFTA Dance Recitals</h1>
+      <button className="btn-create" onClick={() => setShowCreate(true)}>+ New Dance Recital</button>
+      {showCreate && (
+        <form className="create-form" onSubmit={handleCreate}>
+          <input placeholder="Name (e.g., 2027 Spring Dance Recital)" value={newName} onChange={e => setNewName(e.target.value)} autoFocus />
+          <input type="number" placeholder="Year" value={newYear} onChange={e => setNewYear(parseInt(e.target.value, 10))} />
+          <button type="submit">Create</button>
+          <button type="button" onClick={() => setShowCreate(false)}>Cancel</button>
+        </form>
+      )}
+      <ul className="instance-list">
+        {instances.map(inst => (
+          <li key={inst.id}>
+            <a href={`#/instances/${inst.id}`}>
+              <strong>{inst.name}</strong>
+              <span className="instance-year">{inst.year}</span>
+              {inst.is_archived ? <span className="badge-archived">Archived</span> : null}
+            </a>
+          </li>
+        ))}
+        {instances.length === 0 && <li className="empty">No dance recitals yet. Create one to get started.</li>}
+      </ul>
+    </div>
+  );
+};
+
+// ── CSV Setup Page ──────────────────────────────────────────────────────
+
+const CSV_TABLES = [
+  { name: 'dancers', label: 'Dancers', cols: 'first_name, last_name, is_teacher' },
+  { name: 'classes', label: 'Classes', cols: 'class_id, teacher, class_name, class_time' },
+  { name: 'dances', label: 'Dances', cols: 'dance_id, dance_style, dance_name, choreography, song, artist' },
+  { name: 'class_dances', label: 'Class→Dance', cols: 'class_id, dance_id' },
+  { name: 'dancer_classes', label: 'Dancer→Class', cols: 'class_id, dancer_name' },
+  { name: 'recitals', label: 'Recitals', cols: 'recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time' },
+  { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
+];
+
+const SetupPage = ({ instanceId }: { instanceId: number }) => {
+  const [files, setFiles] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = (tableName: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setFiles(prev => ({ ...prev, [tableName]: reader.result as string }));
+    reader.readAsText(file);
+  };
+
+  const handleUploadAll = async () => {
+    setUploading(true);
+    setStatus({});
+    for (const table of CSV_TABLES) {
+      const csv = files[table.name];
+      if (!csv) { setStatus(prev => ({ ...prev, [table.name]: 'skipped' })); continue; }
+      try {
+        const { uploadCsv } = await import('./api-client');
+        const result = await uploadCsv(instanceId, table.name, csv);
+        setStatus(prev => ({ ...prev, [table.name]: `✓ ${result.rows} rows` }));
+      } catch (e: any) {
+        setStatus(prev => ({ ...prev, [table.name]: `✗ ${e.message}` }));
+      }
+    }
+    setUploading(false);
+  };
+
+  return (
+    <div className="setup-page">
+      <h2>Upload Data</h2>
+      <p><a href={`#/instances/${instanceId}`}>← Back to planner</a></p>
+      <div className="csv-upload-grid">
+        {CSV_TABLES.map(table => (
+          <div key={table.name} className="csv-upload-row">
+            <label>
+              <strong>{table.label}</strong>
+              <span className="csv-cols">{table.cols}</span>
+            </label>
+            <input type="file" accept=".csv" onChange={e => e.target.files?.[0] && handleFile(table.name, e.target.files[0])} />
+            {files[table.name] && <span className="csv-ready">Ready</span>}
+            {status[table.name] && <span className={status[table.name].startsWith('✗') ? 'csv-error' : 'csv-ok'}>{status[table.name]}</span>}
+          </div>
+        ))}
+      </div>
+      <button onClick={handleUploadAll} disabled={uploading || Object.keys(files).length === 0}>
+        {uploading ? 'Uploading…' : 'Upload All'}
+      </button>
+    </div>
+  );
+};
+
+// ── Planner Page (main working area) ─────────────────────────────────────
+
+const PlannerPage = ({ instanceId }: { instanceId: number }) => {
+  const [data, setData] = useState<InstanceData | null>(null);
   const [groups, setGroups] = useState<GroupOrders | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importCopied, setImportCopied] = useState(false);
@@ -51,40 +239,65 @@ export const App = () => {
   const [bookmarkOpen, setBookmarkOpen] = useState(false);
   const [bookmarkName, setBookmarkName] = useState('');
   const [bookmarkError, setBookmarkError] = useState('');
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(loadBookmarks);
   const [compareBookmark, setCompareBookmark] = useState<string | null>(null);
+  const [renamingBookmark, setRenamingBookmark] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
-  const initialGroups = useMemo<GroupOrders>(() => {
-    const g: GroupOrders = { A: [], B: [], C: [] };
-    for (const row of GROUPS) g[row.recital_group] = row.show_order;
-    return g;
-  }, []);
-
+  // Load data + saved order
   useEffect(() => {
     initUndoSession();
-    const saved = loadGroupOrders();
-    setGroups(saved ?? initialGroups);
-  }, []);
+    Promise.all([getInstanceData(instanceId), getOrder(instanceId)])
+      .then(([instanceData, orderData]) => {
+        setData(instanceData);
+        const initialGroups: GroupOrders = { A: [], B: [], C: [] };
+        for (const row of instanceData.groups) initialGroups[row.recital_group] = row.show_order;
+        setGroups(orderData.groupOrders ?? initialGroups);
+        setBookmarks(orderData.bookmarks);
+      })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [instanceId]);
 
-  const danceMap = useMemo(() => buildDanceMap(DANCES), []);
-  const comboSiblingMap = useMemo(() => buildComboSiblingMap(COMBO_PAIRS_DATA), []);
+  const danceMap = useMemo(() => (data ? buildDanceMap(data.dances) : {}), [data]);
+  const comboSiblingMap = useMemo(() => (data ? buildComboSiblingMap(data.comboPairs) : {}), [data]);
+  const dancersByDance = data?.dancersByDance ?? {};
+  const dancerLastNames = data?.dancerLastNames ?? {};
+
+  // TODO: make this configurable via instance config (Phase 5)
+  const showStructure = useMemo(() => [
+    { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] as ['A', 'B'] },
+    { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] as ['C', 'A'] },
+    { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] as ['B', 'C'] },
+  ], []);
 
   const shows = useMemo(
-    () => (groups ? computeShowOrder(groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE) : []),
-    [groups, danceMap]
+    () => (groups && data ? computeShowOrder(groups, danceMap, dancersByDance, showStructure) : []),
+    [groups, danceMap, dancersByDance, showStructure, data]
   );
 
   const compareData = useMemo(() => {
-    if (!compareBookmark) return null;
+    if (!compareBookmark || !data) return null;
     const bm = bookmarks.find(b => b.name === compareBookmark);
     if (!bm) return null;
-    return computeShowOrder(bm.groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE);
-  }, [compareBookmark, bookmarks, danceMap]);
+    return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure);
+  }, [compareBookmark, bookmarks, danceMap, dancersByDance, showStructure, data]);
+
+  // Debounced save to server
+  const saveToServer = useCallback(
+    (() => {
+      let timer: ReturnType<typeof setTimeout>;
+      return (newGroups: GroupOrders) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => saveOrder(instanceId, newGroups).catch(() => {}), 500);
+      };
+    })(),
+    [instanceId]
+  );
 
   const handleGroupChange = (newGroups: GroupOrders) => {
     if (groups) pushUndo(groups);
     setGroups(newGroups);
-    saveGroupOrders(newGroups);
+    saveToServer(newGroups);
     setUndoVer(v => v + 1);
   };
 
@@ -94,7 +307,7 @@ export const App = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'recital-order-2026.csv';
+    a.download = 'recital-order.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -105,7 +318,7 @@ export const App = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'recital-order-2026.xls';
+    a.download = 'recital-order.xls';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -119,10 +332,7 @@ export const App = () => {
 
   const handleApplyImport = () => {
     const parsed = parseGroupOrdersCSV(importText);
-    if (!parsed) {
-      setImportError('Invalid CSV format. Expected recital_group,show_order columns.');
-      return;
-    }
+    if (!parsed) { setImportError('Invalid CSV format. Expected recital_group,show_order columns.'); return; }
     handleGroupChange(parsed);
     setImportOpen(false);
   };
@@ -137,30 +347,24 @@ export const App = () => {
   const handleUndo = () => {
     if (!groups) return;
     const prev = undo(groups);
-    if (prev) {
-      setGroups(prev);
-      saveGroupOrders(prev);
-      setUndoVer(v => v + 1);
-    }
+    if (prev) { setGroups(prev); saveToServer(prev); setUndoVer(v => v + 1); }
   };
 
   const handleRedo = () => {
     if (!groups) return;
     const next = redo(groups);
-    if (next) {
-      setGroups(next);
-      saveGroupOrders(next);
-      setUndoVer(v => v + 1);
-    }
+    if (next) { setGroups(next); saveToServer(next); setUndoVer(v => v + 1); }
   };
 
   const handleReset = () => {
-    if (!groups || !initialGroups) return;
-    handleGroupChange(initialGroups);
+    if (!groups || !data) return;
+    const initial: GroupOrders = { A: [], B: [], C: [] };
+    for (const row of data.groups) initial[row.recital_group] = row.show_order;
+    handleGroupChange(initial);
   };
 
   const handleOptimize = () => {
-    if (!groups || optimizing) return;
+    if (!groups || !data || optimizing) return;
     setOptimizing(true);
     const blob = new Blob([WORKER_CODE], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
@@ -169,93 +373,86 @@ export const App = () => {
       if (e.data.type === 'result') {
         const newGroups = e.data.groups;
         handleGroupChange(newGroups);
-        // Auto-bookmark with timestamp
         const now = new Date();
-        const base =
-          now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-          ' ' +
+        const base = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
           now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-        let name = base;
-        let suffix = 2;
-        while (!addBookmark(name, newGroups)) {
-          name = `${base} (${suffix++})`;
-        }
-        setBookmarks(loadBookmarks());
+        apiSaveBookmark(instanceId, base, newGroups)
+          .then(() => getOrder(instanceId).then(o => setBookmarks(o.bookmarks)))
+          .catch(() => {});
       }
       setOptimizing(false);
       worker.terminate();
       URL.revokeObjectURL(url);
     };
-    worker.onerror = () => {
-      setOptimizing(false);
-      worker.terminate();
-      URL.revokeObjectURL(url);
-    };
-    worker.postMessage({ groups, config: OPTIMIZE_CONFIG });
+    worker.onerror = () => { setOptimizing(false); worker.terminate(); URL.revokeObjectURL(url); };
+    worker.postMessage({
+      groups,
+      config: OPTIMIZE_CONFIG,
+      dances: data.dances,
+      dancersByDance: data.dancersByDance,
+    });
   };
 
   const handleSaveBookmark = () => {
     const name = bookmarkName.trim();
-    if (!name) {
-      setBookmarkError('Name is required.');
-      return;
-    }
+    if (!name) { setBookmarkError('Name is required.'); return; }
     if (!groups) return;
-    if (!addBookmark(name, groups)) {
-      setBookmarkError('A bookmark with that name already exists.');
-      return;
-    }
-    setBookmarks(loadBookmarks());
-    setBookmarkName('');
-    setBookmarkError('');
+    apiSaveBookmark(instanceId, name, groups)
+      .then(() => {
+        setBookmarks(prev => [...prev, { name, groups: groups!, savedAt: new Date().toISOString() }]);
+        setBookmarkName('');
+        setBookmarkError('');
+      })
+      .catch(e => setBookmarkError(e.message));
   };
 
-  const handleLoadBookmark = (b: Bookmark) => {
-    handleGroupChange(b.groups);
-  };
+  const handleLoadBookmark = (b: Bookmark) => handleGroupChange(b.groups);
 
   const handleDeleteBookmark = (name: string) => {
     if (compareBookmark === name) setCompareBookmark(null);
-    deleteBookmark(name);
-    setBookmarks(loadBookmarks());
+    deleteBookmarkApi(instanceId, name)
+      .then(() => setBookmarks(prev => prev.filter(b => b.name !== name)))
+      .catch(() => {});
   };
 
-  /** Compute per-show family counts for a bookmark */
+  const handleRenameBookmark = (oldName: string) => {
+    const newName = renameValue.trim();
+    if (!newName || newName === oldName) { setRenamingBookmark(null); return; }
+    renameBookmarkApi(instanceId, oldName, newName)
+      .then(() => {
+        setBookmarks(prev => prev.map(b => b.name === oldName ? { ...b, name: newName } : b));
+        if (compareBookmark === oldName) setCompareBookmark(newName);
+        setRenamingBookmark(null);
+      })
+      .catch(() => setBookmarkError('Name already exists'));
+  };
+
   const bookmarkStats = (b: Bookmark): string => {
-    const showOrders = computeShowOrder(b.groups, danceMap, DANCERS_BY_DANCE, SHOW_STRUCTURE);
-    return (
-      'Families: ' +
-      showOrders
-        .map(show => {
-          const lastNames = new Set<string>();
-          for (const d of show.dances) {
-            for (const dancer of d.dancers) {
-              const ln = DANCER_LAST_NAMES[dancer];
-              if (ln) lastNames.add(ln);
-            }
-          }
-          return lastNames.size;
-        })
-        .join(' · ')
-    );
+    if (!data) return '';
+    const showOrders = computeShowOrder(b.groups, danceMap, dancersByDance, showStructure);
+    return 'Families: ' + showOrders.map(show => {
+      const lastNames = new Set<string>();
+      for (const d of show.dances) for (const dancer of d.dancers) {
+        const ln = dancerLastNames[dancer];
+        if (ln) lastNames.add(ln);
+      }
+      return lastNames.size;
+    }).join(' · ');
   };
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-      } else if ((mod && e.key === 'y') || (e.metaKey && e.shiftKey && e.key === 'z')) {
-        e.preventDefault();
-        handleRedo();
-      }
+      if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      else if ((mod && e.key === 'y') || (e.metaKey && e.shiftKey && e.key === 'z')) { e.preventDefault(); handleRedo(); }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   });
 
-  if (!groups) return <div>Loading…</div>;
+  if (loading) return <div className="loading">Loading…</div>;
+  if (error) return <div className="error">Error: {error} <a href={`#/instances/${instanceId}/setup`}>Upload data</a></div>;
+  if (!groups || !data) return <div className="loading">Loading…</div>;
 
   return (
     <div className={`app-layout ${bookmarkOpen ? 'app-layout--bookmarks' : ''}`}>
@@ -267,21 +464,14 @@ export const App = () => {
           onChange={handleGroupChange}
           actions={
             <>
+              <a href="#/" className="btn-nav" title="All recitals">🏠</a>
+              <a href={`#/instances/${instanceId}/setup`} className="btn-nav" title="Upload data">📂</a>
               <button onClick={handleOptimize} disabled={optimizing} title="Run optimizer">
                 {optimizing ? '⏳ Optimizing…' : '⚡ Optimize'}
               </button>
-              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">
-                ↶
-              </button>
-              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">
-                ↷
-              </button>
-              <button
-                onClick={handleReset}
-                className="btn-reset"
-                title="Reset dance order to original database order">
-                Reset
-              </button>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
+              <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">Reset</button>
             </>
           }
         />
@@ -290,40 +480,22 @@ export const App = () => {
         <div className="report-pane">
           <ReportArea
             shows={shows}
-            dancerLastNames={DANCER_LAST_NAMES}
+            dancerLastNames={dancerLastNames}
             compact={!!compareData}
             label="Current"
             actions={
               <div className="header-actions">
-                <button onClick={handleExportCSV} title="Download show order as CSV file">
-                  💾 CSV
-                </button>
-                <button
-                  onClick={handleExportExcel}
-                  title="Download show order as formatted Excel file">
-                  📊 Excel
-                </button>
-                <button onClick={handleOpenImport} title="Import/export group orders as CSV">
-                  📥 Import/Export
-                </button>
-                <button
-                  onClick={() => setBookmarkOpen(o => !o)}
-                  className={bookmarkOpen ? 'btn-bookmark-active' : ''}
-                  title="Bookmarks">
-                  ⭐
-                </button>
+                <button onClick={handleExportCSV} title="Download show order as CSV file">💾 CSV</button>
+                <button onClick={handleExportExcel} title="Download show order as formatted Excel file">📊 Excel</button>
+                <button onClick={handleOpenImport} title="Import/export group orders as CSV">📥 Import/Export</button>
+                <button onClick={() => setBookmarkOpen(o => !o)} className={bookmarkOpen ? 'btn-bookmark-active' : ''} title="Bookmarks">⭐</button>
               </div>
             }
           />
         </div>
         {compareData && (
           <div className="report-pane report-pane--compare">
-            <ReportArea
-              shows={compareData}
-              dancerLastNames={DANCER_LAST_NAMES}
-              compact
-              label={compareBookmark ?? 'Bookmark'}
-            />
+            <ReportArea shows={compareData} dancerLastNames={dancerLastNames} compact label={compareBookmark ?? 'Bookmark'} />
           </div>
         )}
       </div>
@@ -331,51 +503,34 @@ export const App = () => {
         <div className="bookmark-sidebar">
           <div className="bookmark-sidebar-header">
             <h3>Bookmarks</h3>
-            <button onClick={() => setBookmarkOpen(false)} title="Close">
-              ✕
-            </button>
+            <button onClick={() => setBookmarkOpen(false)} title="Close">✕</button>
           </div>
           <div className="bookmark-save">
-            <input
-              type="text"
-              placeholder="Bookmark name"
-              value={bookmarkName}
-              onChange={e => {
-                setBookmarkName(e.target.value);
-                setBookmarkError('');
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleSaveBookmark();
-              }}
-            />
+            <input type="text" placeholder="Bookmark name" value={bookmarkName}
+              onChange={e => { setBookmarkName(e.target.value); setBookmarkError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveBookmark(); }} />
             <button onClick={handleSaveBookmark}>Save</button>
           </div>
           {bookmarkError && <div className="import-error">{bookmarkError}</div>}
           <ul className="bookmark-list">
             {bookmarks.toReversed().map(b => (
               <li key={b.name} className="bookmark-item">
-                <input
-                  type="checkbox"
-                  className="bookmark-compare"
+                <input type="checkbox" className="bookmark-compare"
                   checked={compareBookmark === b.name}
-                  onChange={() => setCompareBookmark(compareBookmark === b.name ? null : b.name)}
-                  title="Compare"
-                />
+                  onChange={() => setCompareBookmark(compareBookmark === b.name ? null : b.name)} title="Compare" />
                 <div className="bookmark-info">
-                  <button
-                    className="bookmark-name"
-                    onClick={() => handleLoadBookmark(b)}
-                    title="Load this bookmark">
-                    {b.name}
-                  </button>
+                  {renamingBookmark === b.name ? (
+                    <input className="bookmark-rename-input" autoFocus value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleRenameBookmark(b.name); if (e.key === 'Escape') setRenamingBookmark(null); }}
+                      onBlur={() => handleRenameBookmark(b.name)} />
+                  ) : (
+                    <button className="bookmark-name" onClick={() => handleLoadBookmark(b)} title="Load this bookmark">{b.name}</button>
+                  )}
                   <span className="bookmark-stats">{bookmarkStats(b)}</span>
                 </div>
-                <button
-                  className="bookmark-delete"
-                  onClick={() => handleDeleteBookmark(b.name)}
-                  title="Delete">
-                  ✕
-                </button>
+                <button className="bookmark-rename" onClick={() => { setRenamingBookmark(b.name); setRenameValue(b.name); }} title="Rename">✏️</button>
+                <button className="bookmark-delete" onClick={() => handleDeleteBookmark(b.name)} title="Delete">✕</button>
               </li>
             ))}
             {bookmarks.length === 0 && <li className="bookmark-empty">No bookmarks yet</li>}
@@ -386,14 +541,7 @@ export const App = () => {
         <div className="modal-overlay" onClick={() => setImportOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3>Import / Export Group Orders</h3>
-            <textarea
-              rows={8}
-              value={importText}
-              onChange={e => {
-                setImportText(e.target.value);
-                setImportError('');
-              }}
-            />
+            <textarea rows={8} value={importText} onChange={e => { setImportText(e.target.value); setImportError(''); }} />
             {importError && <div className="import-error">{importError}</div>}
             <div className="modal-actions">
               <button onClick={handleApplyImport}>Apply</button>

@@ -1,22 +1,37 @@
-import { DANCES, DANCERS_BY_DANCE } from './data.generated';
 import type { DanceData, AnnealConfig } from './optimizer/types';
 import { buildScoringContext } from './optimizer/score';
 import { anneal } from './optimizer/anneal';
-import type { GroupOrders } from './types';
+import type { DanceRow, GroupOrders } from './types';
 
-const optimizerDances: DanceData[] = DANCES.map(d => ({
-  danceId: d.dance_id,
-  danceName: d.dance_name,
-  danceStyle: d.dance_style,
-  choreography: d.choreography,
-}));
-const optimizerDancerMap = new Map(
-  Object.entries(DANCERS_BY_DANCE).map(([k, v]) => [Number(k), v])
-);
-const scoringCtx = buildScoringContext(optimizerDances, optimizerDancerMap);
+let scoringCtx: ReturnType<typeof buildScoringContext> | null = null;
 
 self.onmessage = (e: MessageEvent) => {
-  const { groups, config } = e.data as { groups: GroupOrders; config: AnnealConfig };
+  const { groups, config, dances, dancersByDance } = e.data as {
+    groups: GroupOrders;
+    config: AnnealConfig;
+    dances?: DanceRow[];
+    dancersByDance?: Record<number, string[]>;
+  };
+
+  // Initialize scoring context on first message (or when data is provided)
+  if (dances && dancersByDance) {
+    const optimizerDances: DanceData[] = dances.map(d => ({
+      danceId: d.dance_id,
+      danceName: d.dance_name,
+      danceStyle: d.dance_style,
+      choreography: d.choreography,
+    }));
+    const optimizerDancerMap = new Map(
+      Object.entries(dancersByDance).map(([k, v]) => [Number(k), v])
+    );
+    scoringCtx = buildScoringContext(optimizerDances, optimizerDancerMap);
+  }
+
+  if (!scoringCtx) {
+    self.postMessage({ type: 'error', message: 'No data provided to optimizer' });
+    return;
+  }
+
   try {
     const { topSolutions } = anneal(groups, scoringCtx, config, 1);
     if (topSolutions.length > 0) {

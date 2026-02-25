@@ -642,6 +642,27 @@ h3 {
   white-space: nowrap;
 }
 
+.bookmark-rename {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 0.8rem;
+  padding: 0 0.2rem;
+}
+
+.bookmark-rename:hover {
+  color: #888;
+}
+
+.bookmark-rename-input {
+  font-size: 0.85rem;
+  padding: 0.1rem 0.3rem;
+  border: 1px solid #888;
+  border-radius: 3px;
+  width: 100%;
+}
+
 .bookmark-delete {
   background: none;
   border: none;
