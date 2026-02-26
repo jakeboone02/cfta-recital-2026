@@ -1,9 +1,8 @@
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
-import type { GroupName } from './types';
-import type { AnnealConfig, DanceData, Solution } from './optimizer/types';
-import { FIXED } from './optimizer/types';
-import { buildScoringContext, scoreSolution } from './optimizer/score';
 import { anneal } from './optimizer/anneal';
+import { buildScoringContext, scoreSolution } from './optimizer/score';
+import type { AnnealConfig, DanceData, Solution } from './optimizer/types';
+import type { GroupName } from './types';
 
 // ── Load data from database ──────────────────────────────────────────────
 

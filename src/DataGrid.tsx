@@ -8,18 +8,19 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  getTableRows,
   upsertTableRow,
-  deleteTableRow,
   type TableData,
 } from './api-client';
+import { useTableRows, useDeleteRow, queryKeys } from './queries';
 
 // ── Column override types ────────────────────────────────────────────────
 
 interface SelectConfig {
   table: string;        // lookup table to fetch options from
   labelColumn: string;  // column to display as option label
+  labelFn?: (row: Record<string, any>) => string; // custom label formatter (overrides labelColumn)
   valueColumn?: string; // column to use as value (defaults to labelColumn)
   saveTo?: string;      // column to actually save to (for virtual columns)
 }
@@ -124,6 +125,7 @@ const SelectCell = ({
   onSave,
   options,
   labels,
+  loading,
 }: {
   value: any;
   rowIndex: number;
@@ -131,13 +133,15 @@ const SelectCell = ({
   onSave: (rowIndex: number, columnId: string, value: any) => void;
   options: string[];
   labels?: string[];
+  loading?: boolean;
 }) => (
   <select
-    className="dg-cell-select"
+    className={`dg-cell-select${loading ? ' dg-cell-select--loading' : ''}`}
     value={value ?? ''}
     onChange={e => onSave(rowIndex, columnId, e.target.value)}
+    disabled={loading}
   >
-    <option value="">--</option>
+    <option value="">{loading ? 'Loading…' : '--'}</option>
     {options.map((opt, i) => (
       <option key={opt} value={opt}>{labels ? labels[i] : opt}</option>
     ))}
@@ -197,106 +201,110 @@ const DateTimeLocalCell = ({
 // ── DataGrid component ───────────────────────────────────────────────────
 
 export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
-  const [data, setData] = useState<Record<string, any>[]>([]);
-  const [meta, setMeta] = useState<Omit<TableData, 'rows'> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: tableData, isLoading: loading, error: queryError } = useTableRows(instanceId, tableName);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [lookupData, setLookupData] = useState<Record<string, Record<string, any>[]>>({});
+  const [filterText, setFilterText] = useState('');
+  const [savingCell, setSavingCell] = useState<string | null>(null);
+  const filterTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Determine which lookup tables need to be fetched (stable key to avoid unnecessary refetches)
-  const lookupKey = useMemo(() => {
-    if (!columnOverrides) return '';
+  // Debounce filter input
+  const handleFilterChange = useCallback((value: string) => {
+    setFilterText(value);
+    clearTimeout(filterTimer.current);
+    filterTimer.current = setTimeout(() => setGlobalFilter(value), 200);
+  }, []);
+
+  const data = tableData?.rows ?? [];
+  const meta = tableData ? { columns: tableData.columns, pk: tableData.pk, editableColumns: tableData.editableColumns } : null;
+  const error = queryError?.message ?? '';
+
+  // Collect lookup table names from overrides
+  const lookupTableNames = useMemo(() => {
+    if (!columnOverrides) return [] as string[];
     const tables = new Set<string>();
     for (const override of Object.values(columnOverrides)) {
       if (override.select?.table) tables.add(override.select.table);
     }
-    return Array.from(tables).sort().join(',');
+    return Array.from(tables).sort();
   }, [columnOverrides]);
 
-  const lookupTables = useMemo(() => lookupKey ? lookupKey.split(',') : [], [lookupKey]);
+  // Fetch each lookup table via shared query cache
+  const lookupQueries = lookupTableNames.map(t => useTableRows(instanceId, t));
+  const lookupsLoading = lookupQueries.some(q => q.isLoading);
+  const lookupData = useMemo(() => {
+    const result: Record<string, Record<string, any>[]> = {};
+    lookupTableNames.forEach((t, i) => {
+      if (lookupQueries[i].data) result[t] = lookupQueries[i].data!.rows;
+    });
+    return result;
+  }, [lookupTableNames, ...lookupQueries.map(q => q.data)]);
 
-  // Fetch lookup data with cleanup for stale requests
-  useEffect(() => {
-    if (lookupTables.length === 0) return;
-    let cancelled = false;
-    for (const table of lookupTables) {
-      getTableRows(instanceId, table)
-        .then(result => {
-          if (!cancelled) setLookupData(prev => ({ ...prev, [table]: result.rows }));
-        })
-        .catch(e => {
-          if (!cancelled) {
-            console.error(`Failed to load lookup table "${table}":`, e);
-            setError(`Failed to load lookup data for ${table}`);
-          }
-        });
+  // Pre-build value→label maps for fast lookup in accessorFn, sorting, and filtering
+  const lookupMaps = useMemo(() => {
+    const overrides = columnOverrides ?? {};
+    const maps: Record<string, Record<string, string>> = {};
+    for (const [colId, ov] of Object.entries(overrides)) {
+      if (!ov.select) continue;
+      const rows = lookupData[ov.select.table] ?? [];
+      const valueCol = ov.select.valueColumn ?? ov.select.labelColumn;
+      const getLabel = ov.select.labelFn
+        ? (r: Record<string, any>) => ov.select!.labelFn!(r)
+        : (r: Record<string, any>) => String(r[ov.select!.labelColumn] ?? '');
+      const map: Record<string, string> = {};
+      for (const r of rows) map[String(r[valueCol])] = getLabel(r);
+      maps[colId] = map;
     }
-    return () => { cancelled = true; };
-  }, [lookupTables, instanceId]);
+    return maps;
+  }, [columnOverrides, lookupData]);
 
-  const loadData = useCallback(async () => {
-    try {
-      const result = await getTableRows(instanceId, tableName);
-      setData(result.rows);
-      setMeta({ columns: result.columns, pk: result.pk, editableColumns: result.editableColumns });
-      setError('');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [instanceId, tableName]);
-
-  useEffect(() => { loadData(); }, [loadData]);
+  const deleteMutation = useDeleteRow(instanceId, tableName);
 
   const handleSave = useCallback(async (rowIndex: number, columnId: string, value: any) => {
     if (!meta) return;
     const row = data[rowIndex];
     const pkValue = row[meta.pk];
-    setSaving(`${rowIndex}-${columnId}`);
+    setSavingCell(`${rowIndex}-${columnId}`);
     try {
       await upsertTableRow(instanceId, tableName, { [meta.pk]: pkValue, [columnId]: value });
-      setData(prev => prev.map((r, i) => i === rowIndex ? { ...r, [columnId]: value } : r));
+      // Optimistic update in cache
+      queryClient.setQueryData<TableData>(queryKeys.table(instanceId, tableName), old => {
+        if (!old) return old;
+        return { ...old, rows: old.rows.map((r, i) => i === rowIndex ? { ...r, [columnId]: value } : r) };
+      });
     } catch (e: any) {
-      setError(e.message);
+      // Error will show via queryError on next refetch
     } finally {
-      setSaving(null);
+      setSavingCell(null);
     }
-  }, [data, meta, instanceId, tableName]);
+  }, [data, meta, instanceId, tableName, queryClient]);
 
   const handleDelete = useCallback(async (rowIndex: number) => {
     if (!meta) return;
     const row = data[rowIndex];
     const pkValue = row[meta.pk];
-    try {
-      await deleteTableRow(instanceId, tableName, pkValue);
-      setData(prev => prev.filter((_, i) => i !== rowIndex));
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }, [data, meta, instanceId, tableName]);
+    deleteMutation.mutate(pkValue);
+  }, [data, meta, deleteMutation]);
 
   const handleAddRow = useCallback(async () => {
     if (!meta) return;
-    // Insert a row with empty values for editable columns
     const newRow: Record<string, any> = {};
     for (const col of meta.editableColumns) newRow[col] = '';
     try {
-      const result = await upsertTableRow(instanceId, tableName, newRow);
-      newRow[meta.pk] = result.id;
-      // Reload to get generated columns (like dancer_name)
-      await loadData();
+      await upsertTableRow(instanceId, tableName, newRow);
+      // Refetch to get generated columns (like dancer_name)
+      queryClient.invalidateQueries({ queryKey: queryKeys.table(instanceId, tableName) });
     } catch (e: any) {
-      setError(e.message);
+      // Error handled by query refetch
     }
-  }, [meta, instanceId, tableName, loadData]);
+  }, [meta, instanceId, tableName, queryClient]);
 
   const columns: ColumnDef<Record<string, any>, any>[] = useMemo(() => {
     if (!meta) return [];
     const overrides = columnOverrides ?? {};
+    const getLabel = (sel: SelectConfig, row: Record<string, any>) =>
+      sel.labelFn ? sel.labelFn(row) : String(row[sel.labelColumn] ?? '');
 
     // Build columns from meta
     const cols: ColumnDef<Record<string, any>, any>[] = meta.columns.map(col => {
@@ -315,7 +323,8 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
           if (ov?.type === 'select' && ov.select) {
             const opts = lookupData[ov.select.table] ?? [];
             const options = [...new Set(opts.map(r => r[ov.select!.labelColumn]).filter(Boolean))];
-            return <SelectCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} options={options} />;
+            const optLabels = ov.select.labelFn ? opts.map(r => getLabel(ov.select!, r)) : undefined;
+            return <SelectCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} options={options} labels={optLabels} loading={lookupsLoading} />;
           }
           if (ov?.type === 'datetime-local') {
             return <DateTimeLocalCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} />;
@@ -342,11 +351,9 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
         header: ov.header ?? colId,
         enableSorting: true,
         accessorFn: (row) => {
-          if (ov.select && ov.deriveFrom) {
-            const lookup = lookupData[ov.select.table] ?? [];
-            const valueCol = ov.select.valueColumn ?? ov.select.labelColumn;
-            const match = lookup.find(r => r[valueCol] == row[ov.deriveFrom!]);
-            return match ? match[ov.select.labelColumn] : '';
+          if (ov.deriveFrom) {
+            const map = lookupMaps[colId] ?? {};
+            return map[String(row[ov.deriveFrom])] ?? '';
           }
           return '';
         },
@@ -358,7 +365,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
           const currentValue = info.row.original[saveTo];
 
           const options = lookup.map(item => String(item[valueCol]));
-          const labels = lookup.map(item => String(item[ov.select!.labelColumn]));
+          const labels = lookup.map(item => getLabel(ov.select!, item));
 
           return (
             <SelectCell
@@ -372,6 +379,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
               }}
               options={options}
               labels={labels}
+              loading={lookupsLoading}
             />
           );
         },
@@ -395,21 +403,32 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
           className="dg-delete-btn"
           onClick={() => handleDelete(info.row.index)}
           title="Delete row"
-        >&#10005;</button>
+        >✕</button>
       ),
     });
 
     return cols;
-  }, [meta, columnOverrides, lookupData, handleSave, handleDelete]);
+  }, [meta, columnOverrides, lookupData, lookupMaps, lookupsLoading, handleSave, handleDelete]);
 
   const globalFilterFn = useCallback(
     (row: any, _columnId: string, filterValue: string) => {
       const search = filterValue.toLowerCase();
-      return Object.values(row.original).some(
-        v => v != null && String(v).toLowerCase().includes(search)
-      );
+      // Search raw column values
+      if (Object.values(row.original).some(
+        (v: any) => v != null && String(v).toLowerCase().includes(search)
+      )) return true;
+      // Search resolved lookup labels
+      for (const [colId, map] of Object.entries(lookupMaps)) {
+        const sourceCol = columnOverrides?.[colId]?.deriveFrom ?? colId;
+        const rawVal = row.original[sourceCol];
+        if (rawVal != null) {
+          const label = map[String(rawVal)];
+          if (label && label.toLowerCase().includes(search)) return true;
+        }
+      }
+      return false;
     },
-    []
+    [lookupMaps, columnOverrides]
   );
 
   const table = useReactTable({
@@ -424,7 +443,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (loading) return <div className="dg-loading">Loading...</div>;
+  if (loading) return <div className="dg-loading">Loading…</div>;
   if (error) return <div className="dg-error">{error}</div>;
   if (!meta) return null;
 
@@ -434,13 +453,13 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
         <input
           className="dg-filter-input"
           type="text"
-          placeholder="Filter..."
-          value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
+          placeholder="Filter…"
+          value={filterText}
+          onChange={e => handleFilterChange(e.target.value)}
         />
         <span className="dg-count">{table.getFilteredRowModel().rows.length} of {data.length} rows</span>
         <button className="dg-add-btn" onClick={handleAddRow}>+ Add Row</button>
-        <button className="dg-refresh-btn" onClick={loadData} title="Refresh">&#8635;</button>
+        <button className="dg-refresh-btn" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.table(instanceId, tableName) })} title="Refresh">↻</button>
       </div>
       <div className="dg-table-wrapper">
         <table className="dg-table">
@@ -457,7 +476,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {header.column.getCanSort() && (
                         <span className={`dg-sort-icon${header.column.getIsSorted() ? ' dg-sort-active' : ''}`}>
-                          {{ asc: '\u25B2', desc: '\u25BC' }[header.column.getIsSorted() as string] ?? '\u21C5'}
+                          {{ asc: '▲', desc: '▼' }[header.column.getIsSorted() as string] ?? '⇅'}
                         </span>
                       )}
                     </span>
@@ -470,7 +489,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
             {table.getRowModel().rows.map(row => (
               <tr key={row.id}>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={saving === `${row.index}-${cell.column.id}` ? 'dg-saving' : ''}>
+                  <td key={cell.id} className={savingCell === `${row.index}-${cell.column.id}` ? 'dg-saving' : ''}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

@@ -714,21 +714,23 @@ h3 {
   min-width: 300px;
 }
 
-.login-page input[type="password"] {
+.login-page input[type='password'] {
   padding: 0.65rem 0.9rem;
   border: 1.5px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
-.login-page input[type="password"]:focus {
+.login-page input[type='password']:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.login-page button[type="submit"] {
+.login-page button[type='submit'] {
   padding: 0.65rem;
   background: #3b82f6;
   color: #fff;
@@ -740,7 +742,7 @@ h3 {
   transition: background 0.15s;
 }
 
-.login-page button[type="submit"]:hover {
+.login-page button[type='submit']:hover {
   background: #2563eb;
 }
 
@@ -779,7 +781,9 @@ h3 {
   transition: background 0.15s;
 }
 
-.btn-create:hover { background: #2563eb; }
+.btn-create:hover {
+  background: #2563eb;
+}
 
 .create-form {
   display: flex;
@@ -802,7 +806,9 @@ h3 {
   outline: none;
 }
 
-.create-form input:focus { border-color: #3b82f6; }
+.create-form input:focus {
+  border-color: #3b82f6;
+}
 
 .create-form button {
   padding: 0.5rem 1rem;
@@ -812,8 +818,14 @@ h3 {
   cursor: pointer;
 }
 
-.create-form button[type="submit"] { background: #3b82f6; color: #fff; }
-.create-form button[type="button"] { background: #e2e8f0; color: #475569; }
+.create-form button[type='submit'] {
+  background: #3b82f6;
+  color: #fff;
+}
+.create-form button[type='button'] {
+  background: #e2e8f0;
+  color: #475569;
+}
 
 .instance-list {
   list-style: none;
@@ -833,7 +845,9 @@ h3 {
   border-radius: 8px;
   text-decoration: none;
   color: #1e293b;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .instance-list li a:hover {
@@ -867,7 +881,7 @@ h3 {
    ══════════════════════════════════════════════════════════════════════════ */
 
 .setup-page {
-  max-width: 900px;
+  max-width: 1214px;
   margin: 2rem auto;
   padding: 0 1.5rem;
 }
@@ -892,7 +906,9 @@ h3 {
   font-size: 0.9rem;
 }
 
-.setup-back:hover { text-decoration: underline; }
+.setup-back:hover {
+  text-decoration: underline;
+}
 
 .csv-upload-grid {
   display: flex;
@@ -955,8 +971,12 @@ h3 {
   transition: background 0.15s;
 }
 
-.csv-file-label:hover { background: #e2e8f0; }
-.csv-file-label input[type="file"] { display: none; }
+.csv-file-label:hover {
+  background: #e2e8f0;
+}
+.csv-file-label input[type='file'] {
+  display: none;
+}
 
 .csv-ready {
   font-size: 0.75rem;
@@ -985,7 +1005,9 @@ h3 {
   transition: background 0.15s;
 }
 
-.btn-edit-table:hover { background: #e2e8f0; }
+.btn-edit-table:hover {
+  background: #e2e8f0;
+}
 
 .btn-edit-table--active {
   background: #dbeafe;
@@ -1010,8 +1032,13 @@ h3 {
   transition: background 0.15s;
 }
 
-.btn-upload-all:hover { background: #2563eb; }
-.btn-upload-all:disabled { background: #94a3b8; cursor: not-allowed; }
+.btn-upload-all:hover {
+  background: #2563eb;
+}
+.btn-upload-all:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    DataGrid
@@ -1180,6 +1207,11 @@ h3 {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
+.dg-cell-select--loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .dg-cell-datetime {
   width: 100%;
   padding: 0.2rem 0.25rem;
@@ -1206,7 +1238,9 @@ h3 {
   line-height: 1;
 }
 
-.dg-delete-btn:hover { color: #dc2626; }
+.dg-delete-btn:hover {
+  color: #dc2626;
+}
 
 .dg-loading {
   color: #64748b;

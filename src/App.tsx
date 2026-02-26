@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import type { DanceRow, GroupOrders } from './types';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { GroupOrders } from './types';
 import { buildComboSiblingMap } from './types';
 import { WORKER_CODE } from './optimizer-worker-code.generated';
 import { WorkingArea } from './WorkingArea';
@@ -18,21 +19,20 @@ import {
   undo,
   redo,
 } from './utils';
-import type { Bookmark, ShowData } from './utils';
+import type { Bookmark } from './utils';
 import type { AnnealConfig } from './optimizer/types';
 import {
-  login as apiLogin,
-  getInstances,
-  createInstance,
-  getInstanceData,
-  getOrder,
-  saveOrder,
-  saveBookmark as apiSaveBookmark,
-  deleteBookmarkApi,
-  renameBookmarkApi,
-  type RecitalInstance,
-  type InstanceData,
-} from './api-client';
+  useInstances,
+  useCreateInstance,
+  useLogin,
+  useInstanceData,
+  useOrder,
+  useSaveOrder,
+  useSaveBookmark,
+  useDeleteBookmark,
+  useRenameBookmark,
+  queryKeys,
+} from './queries';
 
 const OPTIMIZE_CONFIG: AnnealConfig = {
   initialTemp: 5000,
@@ -52,14 +52,11 @@ export const App = () => {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  // Check auth on load
-  const [authed, setAuthed] = useState<boolean | null>(null);
-  useEffect(() => {
-    getInstances().then(() => setAuthed(true)).catch(() => setAuthed(false));
-  }, []);
+  // Auth check: if instances query succeeds, user is authenticated
+  const { isSuccess: authed, isError: notAuthed, isLoading: authLoading } = useInstances();
 
-  if (authed === null) return <div className="loading">Loading…</div>;
-  if (!authed || route === '/login') return <LoginPage onLogin={() => { setAuthed(true); window.location.hash = '#/'; }} />;
+  if (authLoading) return <div className="loading">Loading…</div>;
+  if (notAuthed || route === '/login') return <LoginPage onLogin={() => window.location.hash = '#/'} />;
 
   const instanceMatch = route.match(/^\/instances\/(\d+)/);
   if (instanceMatch) {
@@ -75,16 +72,11 @@ export const App = () => {
 
 const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const loginMutation = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await apiLogin(password);
-      onLogin();
-    } catch {
-      setError('Invalid password');
-    }
+    loginMutation.mutate(password, { onSuccess: onLogin });
   };
 
   return (
@@ -95,11 +87,11 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => { setPassword(e.target.value); setError(''); }}
+          onChange={e => { setPassword(e.target.value); loginMutation.reset(); }}
           autoFocus
         />
         <button type="submit">Log In</button>
-        {error && <div className="login-error">{error}</div>}
+        {loginMutation.isError && <div className="login-error">Invalid password</div>}
       </form>
     </div>
   );
@@ -108,24 +100,22 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
 // ── Instance List Page ───────────────────────────────────────────────────
 
 const InstanceListPage = () => {
-  const [instances, setInstances] = useState<RecitalInstance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: instances, isLoading: loading } = useInstances();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newYear, setNewYear] = useState(new Date().getFullYear());
-
-  useEffect(() => {
-    getInstances().then(setInstances).finally(() => setLoading(false));
-  }, []);
+  const createMutation = useCreateInstance();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    const inst = await createInstance(newName.trim(), newYear);
-    setInstances(prev => [inst, ...prev]);
-    setShowCreate(false);
-    setNewName('');
-    window.location.hash = `#/instances/${inst.id}/setup`;
+    createMutation.mutate({ name: newName.trim(), year: newYear }, {
+      onSuccess: (inst) => {
+        setShowCreate(false);
+        setNewName('');
+        window.location.hash = `#/instances/${inst.id}/setup`;
+      },
+    });
   };
 
   if (loading) return <div className="loading">Loading…</div>;
@@ -143,7 +133,7 @@ const InstanceListPage = () => {
         </form>
       )}
       <ul className="instance-list">
-        {instances.map(inst => (
+        {(instances ?? []).map(inst => (
           <li key={inst.id}>
             <a href={`#/instances/${inst.id}`}>
               <strong>{inst.name}</strong>
@@ -152,7 +142,7 @@ const InstanceListPage = () => {
             </a>
           </li>
         ))}
-        {instances.length === 0 && <li className="empty">No dance recitals yet. Create one to get started.</li>}
+        {(instances ?? []).length === 0 && <li className="empty">No dance recitals yet. Create one to get started.</li>}
       </ul>
     </div>
   );
@@ -177,6 +167,21 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
     is_teacher: { type: 'checkbox' },
   },
   dancer_classes: {
+    class_id: { readOnly: true },
+    class_name: {
+      type: 'select',
+      virtual: true,
+      header: 'Class Name',
+      deriveFrom: 'class_id',
+      insertAfter: 'class_id',
+      select: {
+        table: 'classes',
+        labelColumn: 'class_name',
+        labelFn: (r) => `${r.class_name} (${r.teacher})`,
+        valueColumn: 'class_id',
+        saveTo: 'class_id',
+      },
+    },
     dancer_name: {
       type: 'select',
       select: { table: 'dancers', labelColumn: 'dancer_name' },
@@ -190,7 +195,28 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
       header: 'Class Name',
       deriveFrom: 'class_id',
       insertAfter: 'class_id',
-      select: { table: 'classes', labelColumn: 'class_name', valueColumn: 'class_id', saveTo: 'class_id' },
+      select: {
+        table: 'classes',
+        labelColumn: 'class_name',
+        labelFn: (r) => `${r.class_name} (${r.teacher})`,
+        valueColumn: 'class_id',
+        saveTo: 'class_id',
+      },
+    },
+    dance_id: { readOnly: true },
+    dance_name: {
+      type: 'select',
+      virtual: true,
+      header: 'Dance Name',
+      deriveFrom: 'dance_id',
+      insertAfter: 'dance_id',
+      select: {
+        table: 'dances',
+        labelColumn: 'dance_name',
+        labelFn: (r) => `${r.dance_name} (${r.choreography})`,
+        valueColumn: 'dance_id',
+        saveTo: 'dance_id',
+      },
     },
   },
   recitals: {
@@ -282,11 +308,11 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
 // ── Planner Page (main working area) ─────────────────────────────────────
 
 const PlannerPage = ({ instanceId }: { instanceId: number }) => {
-  const [data, setData] = useState<InstanceData | null>(null);
+  const { data: instanceData, isLoading: dataLoading, error: dataError } = useInstanceData(instanceId);
+  const { data: orderData, isLoading: orderLoading, error: orderError } = useOrder(instanceId);
+  const queryClient = useQueryClient();
+
   const [groups, setGroups] = useState<GroupOrders | null>(null);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importCopied, setImportCopied] = useState(false);
@@ -300,21 +326,26 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const [renamingBookmark, setRenamingBookmark] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
-  // Load data + saved order
+  // Initialize groups from query data
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
+    if (!instanceData || !orderData || initialized) return;
     initUndoSession();
-    Promise.all([getInstanceData(instanceId), getOrder(instanceId)])
-      .then(([instanceData, orderData]) => {
-        setData(instanceData);
-        const initialGroups: GroupOrders = { A: [], B: [], C: [] };
-        for (const row of instanceData.groups) initialGroups[row.recital_group] = row.show_order;
-        setGroups(orderData.groupOrders ?? initialGroups);
-        setBookmarks(orderData.bookmarks);
-      })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [instanceId]);
+    const initialGroups: GroupOrders = { A: [], B: [], C: [] };
+    for (const row of instanceData.groups) initialGroups[row.recital_group] = row.show_order;
+    setGroups(orderData.groupOrders ?? initialGroups);
+    setInitialized(true);
+  }, [instanceData, orderData, initialized]);
 
+  // Derive bookmarks from query cache
+  const bookmarks = orderData?.bookmarks ?? [];
+
+  const debouncedSave = useSaveOrder(instanceId);
+  const saveBookmarkMutation = useSaveBookmark(instanceId);
+  const deleteBookmarkMutation = useDeleteBookmark(instanceId);
+  const renameBookmarkMutation = useRenameBookmark(instanceId);
+
+  const data = instanceData ?? null;
   const danceMap = useMemo(() => (data ? buildDanceMap(data.dances) : {}), [data]);
   const comboSiblingMap = useMemo(() => (data ? buildComboSiblingMap(data.comboPairs) : {}), [data]);
   const dancersByDance = data?.dancersByDance ?? {};
@@ -339,22 +370,10 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure);
   }, [compareBookmark, bookmarks, danceMap, dancersByDance, showStructure, data]);
 
-  // Debounced save to server
-  const saveToServer = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>;
-      return (newGroups: GroupOrders) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => saveOrder(instanceId, newGroups).catch(() => {}), 500);
-      };
-    })(),
-    [instanceId]
-  );
-
   const handleGroupChange = (newGroups: GroupOrders) => {
     if (groups) pushUndo(groups);
     setGroups(newGroups);
-    saveToServer(newGroups);
+    debouncedSave(newGroups);
     setUndoVer(v => v + 1);
   };
 
@@ -404,13 +423,13 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const handleUndo = () => {
     if (!groups) return;
     const prev = undo(groups);
-    if (prev) { setGroups(prev); saveToServer(prev); setUndoVer(v => v + 1); }
+    if (prev) { setGroups(prev); debouncedSave(prev); setUndoVer(v => v + 1); }
   };
 
   const handleRedo = () => {
     if (!groups) return;
     const next = redo(groups);
-    if (next) { setGroups(next); saveToServer(next); setUndoVer(v => v + 1); }
+    if (next) { setGroups(next); debouncedSave(next); setUndoVer(v => v + 1); }
   };
 
   const handleReset = () => {
@@ -433,9 +452,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
         const now = new Date();
         const base = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
           now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-        apiSaveBookmark(instanceId, base, newGroups)
-          .then(() => getOrder(instanceId).then(o => setBookmarks(o.bookmarks)))
-          .catch(() => {});
+        saveBookmarkMutation.mutate({ name: base, groups: newGroups });
       }
       setOptimizing(false);
       worker.terminate();
@@ -454,34 +471,29 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     const name = bookmarkName.trim();
     if (!name) { setBookmarkError('Name is required.'); return; }
     if (!groups) return;
-    apiSaveBookmark(instanceId, name, groups)
-      .then(() => {
-        setBookmarks(prev => [...prev, { name, groups: groups!, savedAt: new Date().toISOString() }]);
-        setBookmarkName('');
-        setBookmarkError('');
-      })
-      .catch(e => setBookmarkError(e.message));
+    saveBookmarkMutation.mutate({ name, groups }, {
+      onSuccess: () => { setBookmarkName(''); setBookmarkError(''); },
+      onError: (e) => setBookmarkError(e.message),
+    });
   };
 
   const handleLoadBookmark = (b: Bookmark) => handleGroupChange(b.groups);
 
   const handleDeleteBookmark = (name: string) => {
     if (compareBookmark === name) setCompareBookmark(null);
-    deleteBookmarkApi(instanceId, name)
-      .then(() => setBookmarks(prev => prev.filter(b => b.name !== name)))
-      .catch(() => {});
+    deleteBookmarkMutation.mutate(name);
   };
 
   const handleRenameBookmark = (oldName: string) => {
     const newName = renameValue.trim();
     if (!newName || newName === oldName) { setRenamingBookmark(null); return; }
-    renameBookmarkApi(instanceId, oldName, newName)
-      .then(() => {
-        setBookmarks(prev => prev.map(b => b.name === oldName ? { ...b, name: newName } : b));
+    renameBookmarkMutation.mutate({ oldName, newName }, {
+      onSuccess: () => {
         if (compareBookmark === oldName) setCompareBookmark(newName);
         setRenamingBookmark(null);
-      })
-      .catch(() => setBookmarkError('Name already exists'));
+      },
+      onError: () => setBookmarkError('Name already exists'),
+    });
   };
 
   const bookmarkStats = (b: Bookmark): string => {
@@ -506,6 +518,9 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   });
+
+  const loading = dataLoading || orderLoading;
+  const error = dataError?.message || orderError?.message || '';
 
   if (loading) return <div className="loading">Loading…</div>;
   if (error) return <div className="error">Error: {error} <a href={`#/instances/${instanceId}/setup`}>Upload data</a></div>;

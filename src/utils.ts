@@ -9,27 +9,11 @@ import type {
 } from './types';
 import { SPECTAPULAR_ID, HIPHOP_ID, FINALE_ID } from './types';
 
-const LS_KEY = 'cfta-recital-2026-group-orders';
-const LS_BOOKMARKS_KEY = 'cfta-recital-2026-bookmarks';
-
 export interface Bookmark {
   name: string;
   groups: GroupOrders;
   savedAt: string;
 }
-
-export const loadGroupOrders = (): GroupOrders | null => {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
-
-export const saveGroupOrders = (orders: GroupOrders) => {
-  localStorage.setItem(LS_KEY, JSON.stringify(orders));
-};
 
 // ── Undo/Redo history (session-scoped, stored in localStorage) ──────────
 
@@ -104,35 +88,6 @@ export const redo = (current: GroupOrders): GroupOrders | null => {
 /** Check if undo/redo are available */
 export const canUndo = (): boolean => loadStack(LS_UNDO_KEY).length > 0;
 export const canRedo = (): boolean => loadStack(LS_REDO_KEY).length > 0;
-
-// ── Bookmarks ───────────────────────────────────────────────────────────
-
-export const loadBookmarks = (): Bookmark[] => {
-  try {
-    const raw = localStorage.getItem(LS_BOOKMARKS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveBookmarks = (bookmarks: Bookmark[]) => {
-  localStorage.setItem(LS_BOOKMARKS_KEY, JSON.stringify(bookmarks));
-};
-
-/** Save a bookmark. Returns false if the name already exists. */
-export const addBookmark = (name: string, groups: GroupOrders): boolean => {
-  const bookmarks = loadBookmarks();
-  if (bookmarks.some(b => b.name === name)) return false;
-  bookmarks.push({ name, groups, savedAt: new Date().toISOString() });
-  saveBookmarks(bookmarks);
-  return true;
-};
-
-export const deleteBookmark = (name: string) => {
-  const bookmarks = loadBookmarks().filter(b => b.name !== name);
-  saveBookmarks(bookmarks);
-};
 
 export const buildDanceMap = (dances: DanceRow[]): DanceMap =>
   Object.fromEntries(dances.map(d => [d.dance_id, d]));
