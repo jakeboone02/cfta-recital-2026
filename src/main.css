@@ -1157,6 +1157,45 @@ h3 {
   background: #fffbeb;
 }
 
+.dg-cell-checkbox {
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+}
+
+.dg-cell-select {
+  width: 100%;
+  padding: 0.2rem 0.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.dg-cell-select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.dg-cell-datetime {
+  width: 100%;
+  padding: 0.2rem 0.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.dg-cell-datetime:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
 .dg-delete-btn {
   background: none;
   border: none;

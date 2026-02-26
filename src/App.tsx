@@ -160,6 +160,8 @@ const InstanceListPage = () => {
 
 // ── CSV Setup Page ──────────────────────────────────────────────────────
 
+import type { ColumnOverride } from './DataGrid';
+
 const CSV_TABLES = [
   { name: 'dancers', label: 'Dancers', cols: 'first_name, last_name, is_teacher' },
   { name: 'classes', label: 'Classes', cols: 'class_id, teacher, class_name, class_time' },
@@ -169,6 +171,32 @@ const CSV_TABLES = [
   { name: 'recitals', label: 'Recitals', cols: 'recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time' },
   { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
 ];
+
+const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
+  dancers: {
+    is_teacher: { type: 'checkbox' },
+  },
+  dancer_classes: {
+    dancer_name: {
+      type: 'select',
+      select: { table: 'dancers', labelColumn: 'dancer_name' },
+    },
+  },
+  class_dances: {
+    class_id: { readOnly: true },
+    class_name: {
+      type: 'select',
+      virtual: true,
+      header: 'Class Name',
+      deriveFrom: 'class_id',
+      insertAfter: 'class_id',
+      select: { table: 'classes', labelColumn: 'class_name', valueColumn: 'class_id', saveTo: 'class_id' },
+    },
+  },
+  recitals: {
+    recital_time: { type: 'datetime-local' },
+  },
+};
 
 const SetupPage = ({ instanceId }: { instanceId: number }) => {
   const [files, setFiles] = useState<Record<string, string>>({});
@@ -200,7 +228,7 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
   };
 
   // Lazy-load DataGrid only when needed
-  const [DataGrid, setDataGrid] = useState<React.ComponentType<{ instanceId: number; tableName: string }> | null>(null);
+  const [DataGrid, setDataGrid] = useState<React.ComponentType<{ instanceId: number; tableName: string; columnOverrides?: Record<string, ColumnOverride> }> | null>(null);
   useEffect(() => {
     if (editingTable && !DataGrid) {
       import('./DataGrid').then(m => setDataGrid(() => m.DataGrid));
@@ -238,7 +266,7 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
             </div>
             {editingTable === table.name && DataGrid && (
               <div className="csv-upload-editor">
-                <DataGrid instanceId={instanceId} tableName={table.name} />
+                <DataGrid instanceId={instanceId} tableName={table.name} columnOverrides={TABLE_COLUMN_OVERRIDES[table.name]} />
               </div>
             )}
           </div>
