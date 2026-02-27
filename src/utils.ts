@@ -2,10 +2,9 @@ import Papa from 'papaparse';
 import type {
   DanceMap,
   DanceRow,
-  GroupName,
   GroupOrders,
   RecitalDanceInstance,
-  SHOW_STRUCTURE,
+  ShowStructureEntry,
 } from './types';
 import { SPECTAPULAR_ID, HIPHOP_ID, FINALE_ID } from './types';
 
@@ -110,9 +109,9 @@ export interface ShowDance {
   choreography: string;
   song: string;
   artist: string;
-  group: GroupName | 'SpecTAPular' | 'Hip Hop' | 'Finale';
+  group: string;
   recital_id: number;
-  part: 1 | 2;
+  part: number;
   dancers: string[];
   common_with_next: string[];
   common_with_next2: string[];
@@ -129,13 +128,13 @@ export const computeShowOrder = (
   groups: GroupOrders,
   danceMap: DanceMap,
   dancerLookup: Record<number, string[]>,
-  showStructure: typeof SHOW_STRUCTURE
+  showStructure: ShowStructureEntry[]
 ): ShowData[] => {
   const makeDance = (
     id: number | null,
-    group: ShowDance['group'],
+    group: string,
     recitalId: number,
-    part: 1 | 2
+    part: number
   ): ShowDance => {
     const d = id != null ? danceMap[id] : null;
     return {
@@ -155,13 +154,15 @@ export const computeShowOrder = (
   };
 
   return showStructure.map(show => {
-    const [g1, g2] = show.parts;
     const dances: ShowDance[] = [
-      makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.recital_id, 1),
-      ...groups[g1].map(id => makeDance(id === 'PRE' ? null : id, g1, show.recital_id, 1)),
-      ...groups[g2].map(id => makeDance(id === 'PRE' ? null : id, g2, show.recital_id, 2)),
-      makeDance(HIPHOP_ID, 'Hip Hop', show.recital_id, 2),
-      makeDance(FINALE_ID, 'Finale', show.recital_id, 2),
+      makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.recital_id, 0),
+      ...show.parts.flatMap((g, partIdx) =>
+        (groups[g] ?? []).map(id =>
+          makeDance(id === 'PRE' ? null : id, g, show.recital_id, partIdx + 1)
+        )
+      ),
+      makeDance(HIPHOP_ID, 'Hip Hop', show.recital_id, show.parts.length),
+      makeDance(FINALE_ID, 'Finale', show.recital_id, show.parts.length),
     ];
 
     // Compute dancer overlap (Finale excluded from "next" calculations)
@@ -208,10 +209,12 @@ export const exportCSV = (shows: ShowData[]): string => {
 
 /** Export group orders as CSV in the same format as recital_groups.csv */
 export const exportGroupOrdersCSV = (groups: GroupOrders): string => {
-  const rows = (['A', 'B', 'C'] as GroupName[]).map(g => ({
-    recital_group: g,
-    show_order: JSON.stringify(groups[g]).replace(/"/g, '""'),
-  }));
+  const rows = Object.keys(groups)
+    .sort()
+    .map(g => ({
+      recital_group: g,
+      show_order: JSON.stringify(groups[g]).replace(/"/g, '""'),
+    }));
   return (
     'recital_group,show_order\n' +
     rows.map(r => `${r.recital_group},"${r.show_order}"`).join('\n') +
@@ -226,14 +229,14 @@ export const parseGroupOrdersCSV = (csv: string): GroupOrders | null => {
       header: true,
       skipEmptyLines: true,
     });
-    const groups: GroupOrders = { A: [], B: [], C: [] };
+    const groups: GroupOrders = {};
     for (const row of result.data) {
-      const g = row.recital_group?.trim() as GroupName;
-      if (g !== 'A' && g !== 'B' && g !== 'C') continue;
+      const g = row.recital_group?.trim();
+      if (!g) continue;
       const arr = JSON.parse(row.show_order) as (number | string)[];
       groups[g] = arr.map(v => (v === 'PRE' ? 'PRE' : Number(v)));
     }
-    if (!groups.A.length && !groups.B.length && !groups.C.length) return null;
+    if (Object.keys(groups).length === 0) return null;
     return groups;
   } catch {
     return null;
@@ -242,7 +245,8 @@ export const parseGroupOrdersCSV = (csv: string): GroupOrders | null => {
 
 /** Generate SQL UPDATE statements for syncing group orders back to the database */
 export const exportSQL = (groups: GroupOrders): string => {
-  return (['A', 'B', 'C'] as GroupName[])
+  return Object.keys(groups)
+    .sort()
     .map(g => {
       const order = JSON.stringify(groups[g]);
       return `UPDATE recital_groups SET show_order = '${order}' WHERE recital_group = '${g}';`;

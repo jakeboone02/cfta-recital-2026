@@ -1,17 +1,14 @@
-import type { GroupName } from '../types';
 import type { ScoringContext } from './score';
 import { scoreSolution } from './score';
 import type { AnnealConfig, Solution } from './types';
 import { COMBO_PAIRS, FIXED, FIXED_GROUP } from './types';
 
 /** Deep-clone a solution */
-const cloneSolution = (s: Solution): Solution => ({
-  A: [...s.A],
-  B: [...s.B],
-  C: [...s.C],
-});
-
-const GROUPS: GroupName[] = ['A', 'B', 'C'];
+const cloneSolution = (s: Solution, groupNames: string[]): Solution => {
+  const out: Solution = {};
+  for (const g of groupNames) out[g] = [...s[g]];
+  return out;
+};
 
 /** Set of dance IDs that are fixed to a specific group */
 const fixedDanceIds = new Set(Object.keys(FIXED_GROUP).map(Number));
@@ -30,7 +27,7 @@ const canLeaveGroup = (danceId: number | 'PRE'): boolean => {
 };
 
 /** Get the fixed group for a dance ID, if any */
-const getFixedGroup = (id: number | 'PRE'): GroupName | undefined =>
+const getFixedGroup = (id: number | 'PRE'): string | undefined =>
   typeof id === 'number' ? FIXED_GROUP[id] : undefined;
 
 /** Pick a random int in [0, max) */
@@ -48,7 +45,8 @@ const randPick = <T>(arr: T[]): T => arr[randInt(arr.length)];
  * 4. Insert: remove and reinsert within same group
  */
 const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
-  const next = cloneSolution(current);
+  const GROUPS = ctx.groupNames;
+  const next = cloneSolution(current, GROUPS);
   const moveType = Math.random();
 
   if (moveType < 0.55) {
@@ -89,7 +87,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
       );
 
     // Filter: can move to the other group (check fixed group constraints)
-    const canMoveTo = (id: number | 'PRE', targetGroup: GroupName): boolean => {
+    const canMoveTo = (id: number | 'PRE', targetGroup: string): boolean => {
       if (id === 'PRE') return false;
       if (typeof id === 'number' && FIXED_GROUP[id] && FIXED_GROUP[id] !== targetGroup)
         return false;
@@ -191,20 +189,17 @@ const shuffle = <T>(arr: T[]): T[] => {
  * - Each group gets the same number of PRE placeholders as the original
  * - Group sizes match the original distribution
  */
-const randomizeSolution = (original: Solution): Solution => {
-  const groupSizes: Record<GroupName, number> = {
-    A: original.A.length,
-    B: original.B.length,
-    C: original.C.length,
-  };
-  const preCounts: Record<GroupName, number> = { A: 0, B: 0, C: 0 };
-  for (const g of GROUPS) {
+const randomizeSolution = (original: Solution, groupNames: string[]): Solution => {
+  const groupSizes: Record<string, number> = {};
+  const preCounts: Record<string, number> = {};
+  for (const g of groupNames) {
+    groupSizes[g] = original[g].length;
     preCounts[g] = original[g].filter(id => id === 'PRE').length;
   }
 
   // Collect all non-PRE dance IDs
   const allDances: number[] = [];
-  for (const g of GROUPS) {
+  for (const g of groupNames) {
     for (const id of original[g]) {
       if (id !== 'PRE') allDances.push(id);
     }
@@ -222,7 +217,7 @@ const randomizeSolution = (original: Solution): Solution => {
   }
 
   // Separate fixed and free dances (excluding combo-paired ones handled separately)
-  const fixedDances: { id: number; group: GroupName }[] = [];
+  const fixedDances: { id: number; group: string }[] = [];
   const freeDances: number[] = [];
   for (const id of allDances) {
     if (pairedDances.has(id)) continue; // handled as combo unit
@@ -235,8 +230,9 @@ const randomizeSolution = (original: Solution): Solution => {
   }
 
   // Start building groups with PREs and fixed dances
-  const result: Solution = { A: [], B: [], C: [] };
-  for (const g of GROUPS) {
+  const result: Solution = {};
+  for (const g of groupNames) result[g] = [];
+  for (const g of groupNames) {
     for (let i = 0; i < preCounts[g]; i++) result[g].push('PRE');
   }
   for (const { id, group } of fixedDances) {
@@ -244,11 +240,8 @@ const randomizeSolution = (original: Solution): Solution => {
   }
 
   // Remaining capacity per group
-  const capacity: Record<GroupName, number> = {
-    A: groupSizes.A - result.A.length,
-    B: groupSizes.B - result.B.length,
-    C: groupSizes.C - result.C.length,
-  };
+  const capacity: Record<string, number> = {};
+  for (const g of groupNames) capacity[g] = groupSizes[g] - result[g].length;
 
   // Place combo units randomly (need 2 slots in same group)
   shuffle(comboUnits);
@@ -257,10 +250,12 @@ const randomizeSolution = (original: Solution): Solution => {
     const fgA = FIXED_GROUP[a];
     const fgB = FIXED_GROUP[b];
     const forced = fgA ?? fgB;
-    const candidates = forced ? [forced] : shuffle([...GROUPS]).filter(g => capacity[g] >= 2);
+    const candidates = forced ? [forced] : shuffle([...groupNames]).filter(g => capacity[g] >= 2);
     if (candidates.length === 0) {
       // Fallback: put in group with most capacity
-      candidates.push(GROUPS.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), 'A'));
+      candidates.push(
+        groupNames.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), groupNames[0])
+      );
     }
     const g = candidates[0];
     result[g].push(a, b);
@@ -270,10 +265,13 @@ const randomizeSolution = (original: Solution): Solution => {
   // Distribute remaining free dances randomly across groups with capacity
   shuffle(freeDances);
   for (const id of freeDances) {
-    const candidates = GROUPS.filter(g => capacity[g] > 0);
+    const candidates = groupNames.filter(g => capacity[g] > 0);
     if (candidates.length === 0) {
       // Overflow: pick group with most capacity (shouldn't happen with correct sizes)
-      const g = GROUPS.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), 'A');
+      const g = groupNames.reduce(
+        (best, g) => (capacity[g] > capacity[best] ? g : best),
+        groupNames[0]
+      );
       result[g].push(id);
       capacity[g]--;
     } else {
@@ -284,7 +282,7 @@ const randomizeSolution = (original: Solution): Solution => {
   }
 
   // Shuffle the order within each group
-  for (const g of GROUPS) shuffle(result[g]);
+  for (const g of groupNames) shuffle(result[g]);
 
   return result;
 };
@@ -296,7 +294,8 @@ export interface RankedSolution {
 }
 
 /** Serialize a solution for deduplication */
-const solutionKey = (s: Solution): string => JSON.stringify([s.A, s.B, s.C]);
+const solutionKey = (s: Solution, groupNames: string[]): string =>
+  JSON.stringify(groupNames.map(g => s[g]));
 
 /** Run simulated annealing, tracking top-N unique solutions */
 export const anneal = (
@@ -305,36 +304,37 @@ export const anneal = (
   config: AnnealConfig,
   topN: number = 10
 ): { topSolutions: RankedSolution[]; history: number[] } => {
+  const groupNames = ctx.groupNames;
   // Start from a fully randomized solution for diversity
-  let current = randomizeSolution(initial);
+  let current = randomizeSolution(initial, groupNames);
   let currentScore = scoreSolution(current, ctx).total;
-  let best = cloneSolution(current);
+  let best = cloneSolution(current, groupNames);
   let bestScore = currentScore;
   const history: number[] = [currentScore];
 
   // Top-N tracking
   const topSolutions: RankedSolution[] = [
-    { solution: cloneSolution(current), score: currentScore },
+    { solution: cloneSolution(current, groupNames), score: currentScore },
   ];
-  const seenKeys = new Set<string>([solutionKey(current)]);
+  const seenKeys = new Set<string>([solutionKey(current, groupNames)]);
 
   const maybeAddToTop = (s: Solution, score: number) => {
-    const key = solutionKey(s);
+    const key = solutionKey(s, groupNames);
     if (seenKeys.has(key)) return;
     // Only add if it's better than the worst in the list, or list isn't full
     if (topSolutions.length < topN || score < topSolutions[topSolutions.length - 1].score) {
       seenKeys.add(key);
-      topSolutions.push({ solution: cloneSolution(s), score });
+      topSolutions.push({ solution: cloneSolution(s, groupNames), score });
       topSolutions.sort((a, b) => a.score - b.score);
       // Trim to topN
       while (topSolutions.length > topN) {
         const removed = topSolutions.pop()!;
-        seenKeys.delete(solutionKey(removed.solution));
+        seenKeys.delete(solutionKey(removed.solution, groupNames));
       }
     }
   };
 
-  let globalBest = cloneSolution(best);
+  let globalBest = cloneSolution(best, groupNames);
   let globalBestScore = bestScore;
 
   for (let restart = 0; restart <= config.restarts; restart++) {
@@ -342,9 +342,9 @@ export const anneal = (
 
     if (restart > 0) {
       // Each restart gets a fresh random solution for maximum diversity
-      current = randomizeSolution(initial);
+      current = randomizeSolution(initial, groupNames);
       currentScore = scoreSolution(current, ctx).total;
-      best = cloneSolution(current);
+      best = cloneSolution(current, groupNames);
       bestScore = currentScore;
     }
 
@@ -358,7 +358,7 @@ export const anneal = (
         currentScore = neighborScore;
 
         if (currentScore < bestScore) {
-          best = cloneSolution(current);
+          best = cloneSolution(current, groupNames);
           bestScore = currentScore;
         }
 
@@ -373,7 +373,7 @@ export const anneal = (
     }
 
     if (bestScore < globalBestScore) {
-      globalBest = cloneSolution(best);
+      globalBest = cloneSolution(best, groupNames);
       globalBestScore = bestScore;
     }
   }

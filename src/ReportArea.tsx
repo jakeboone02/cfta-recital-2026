@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import type { GroupName } from './types';
 import type { ShowData, ShowDance } from './utils';
 import { styleSlug } from './utils';
 
 interface Props {
   shows: ShowData[];
+  groupNames: string[];
   actions?: React.ReactNode;
   dancerLastNames: Record<string, string>;
   compact?: boolean;
@@ -54,10 +54,12 @@ const DanceRow = ({
   dance,
   idx,
   compact,
+  groupNames,
 }: {
   dance: ShowDance;
   idx: number;
   compact?: boolean;
+  groupNames: string[];
 }) => {
   const color = styleSlug(dance.dance_style);
   const isSpec = dance.group === 'SpecTAPular';
@@ -65,7 +67,7 @@ const DanceRow = ({
     <tr className="report-dance-row">
       {/* <td className="report-order">{idx + 1}</td> */}
       <td>
-        {['A', 'B', 'C'].includes(dance.group) ? (
+        {groupNames.includes(dance.group) ? (
           <span className="report-group-badge">{dance.group}</span>
         ) : (
           ' '
@@ -170,7 +172,14 @@ const OverlapCount = ({ dances }: { dances: ShowDance[] }) => {
   );
 };
 
-export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: Props) => {
+export const ReportArea = ({
+  shows,
+  groupNames,
+  actions,
+  dancerLastNames,
+  compact,
+  label,
+}: Props) => {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -198,7 +207,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
         // Group the dances by their group name for style counts
         const groupDances: Record<string, ShowDance[]> = {};
         for (const d of show.dances) {
-          if (['A', 'B', 'C'].includes(d.group)) {
+          if (groupNames.includes(d.group)) {
             (groupDances[d.group] ??= []).push(d);
           }
         }
@@ -245,6 +254,7 @@ export const ReportArea = ({ shows, actions, dancerLastNames, compact, label }: 
                       dance={dance}
                       idx={idx}
                       compact={compact}
+                      groupNames={groupNames}
                     />
                   ))}
                 </tbody>

@@ -7,7 +7,7 @@ export async function handleData(
 ): Promise<Response> {
   if (request.method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
 
-  const [dances, groups, comboPairs, dancerRows, dancerLastNames] = await Promise.all([
+  const [dances, groups, comboPairs, dancerRows, dancerLastNames, recitalRows] = await Promise.all([
     env.DB.prepare(
       'SELECT dance_id, dance_style, dance_name, choreography, song, artist FROM dances WHERE recital_instance_id = ?'
     )
@@ -41,6 +41,11 @@ export async function handleData(
     env.DB.prepare(`SELECT dancer_name, last_name FROM dancers WHERE recital_instance_id = ?`)
       .bind(instanceId)
       .all(),
+    env.DB.prepare(
+      'SELECT csv_recital_id AS recital_id, group_order, recital_description, recital_time FROM recitals WHERE recital_instance_id = ? ORDER BY csv_recital_id'
+    )
+      .bind(instanceId)
+      .all(),
   ]);
 
   // Build dancers-by-dance lookup
@@ -61,6 +66,14 @@ export async function handleData(
     show_order: JSON.parse(g.show_order),
   }));
 
+  // Parse recitals group_order JSON
+  const parsedRecitals = recitalRows.results.map((r: any) => ({
+    recital_id: r.recital_id,
+    group_order: JSON.parse(r.group_order),
+    recital_description: r.recital_description,
+    recital_time: r.recital_time,
+  }));
+
   // Get instance config
   const instance = await env.DB.prepare('SELECT config FROM recital_instances WHERE id = ?')
     .bind(instanceId)
@@ -69,6 +82,7 @@ export async function handleData(
   return Response.json({
     dances: dances.results,
     groups: parsedGroups,
+    recitals: parsedRecitals,
     comboPairs: comboPairs.results,
     dancersByDance,
     dancerLastNames: dancerLastNameMap,

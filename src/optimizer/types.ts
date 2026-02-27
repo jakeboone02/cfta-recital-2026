@@ -1,11 +1,12 @@
-import type { GroupName } from '../types';
+import type { GroupOrders } from '../types';
 
 /** A candidate solution: group assignments + orderings */
-export interface Solution {
-  /** Ordered dance IDs (or 'PRE') for each group */
-  A: (number | 'PRE')[];
-  B: (number | 'PRE')[];
-  C: (number | 'PRE')[];
+export type Solution = GroupOrders;
+
+/** Show structure entry for scoring: which groups compose each show */
+export interface ShowPart {
+  recitalId: number;
+  groups: string[];
 }
 
 /** Per-constraint breakdown of penalty scores */
@@ -54,13 +55,6 @@ export interface AnnealConfig {
   restarts: number;
 }
 
-/** Show structure: which groups compose each show */
-export const SHOW_PARTS: { recitalId: number; part1: GroupName; part2: GroupName }[] = [
-  { recitalId: 1, part1: 'A', part2: 'B' },
-  { recitalId: 2, part1: 'C', part2: 'A' },
-  { recitalId: 3, part1: 'B', part2: 'C' },
-];
-
 /** Fixed dances that appear in every show */
 export const FIXED = {
   SPECTAPULAR: 1,
@@ -69,7 +63,7 @@ export const FIXED = {
 } as const;
 
 /** Hard group constraints: dance_id → required group */
-export const FIXED_GROUP: Partial<Record<number, GroupName>> = {
+export const FIXED_GROUP: Partial<Record<number, string>> = {
   11: 'C', // Adult Tap 1
   17: 'B', // Adult Tap 2
 };

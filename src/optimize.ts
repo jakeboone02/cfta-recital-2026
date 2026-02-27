@@ -1,8 +1,7 @@
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { anneal } from './optimizer/anneal';
 import { buildScoringContext, scoreSolution } from './optimizer/score';
-import type { AnnealConfig, DanceData, Solution } from './optimizer/types';
-import type { GroupName } from './types';
+import type { AnnealConfig, DanceData, ShowPart, Solution } from './optimizer/types';
 
 // ── Load data from database ──────────────────────────────────────────────
 
@@ -45,24 +44,41 @@ const loadDancersByDance = (): Map<number, string[]> => {
 
 const loadCurrentGroups = (): Solution => {
   const rows = db
-    .query<{ recital_group: GroupName; show_order: string }, SQLQueryBindings[]>(
+    .query<{ recital_group: string; show_order: string }, SQLQueryBindings[]>(
       'SELECT recital_group, show_order FROM recital_groups'
     )
     .all();
 
-  const solution: Solution = { A: [], B: [], C: [] };
+  const solution: Solution = {};
   for (const r of rows) {
     solution[r.recital_group] = JSON.parse(r.show_order);
   }
   return solution;
 };
 
+const loadShowParts = (): { groupNames: string[]; showParts: ShowPart[] } => {
+  const rows = db
+    .query<{ recital_id: number; group_order: string }, SQLQueryBindings[]>(
+      'SELECT recital_id, group_order FROM recitals ORDER BY recital_id'
+    )
+    .all();
+
+  const showParts: ShowPart[] = rows.map(r => ({
+    recitalId: r.recital_id,
+    groups: JSON.parse(r.group_order),
+  }));
+
+  const groupNames = [...new Set(showParts.flatMap(s => s.groups))].sort();
+  return { groupNames, showParts };
+};
+
 // ── Main ─────────────────────────────────────────────────────────────────
 
 const dances = loadDances();
 const dancersByDance = loadDancersByDance();
-const ctx = buildScoringContext(dances, dancersByDance);
 const currentSolution = loadCurrentGroups();
+const { groupNames, showParts } = loadShowParts();
+const ctx = buildScoringContext(dances, dancersByDance, groupNames, showParts);
 
 db.close();
 
@@ -110,7 +126,7 @@ const danceMap = new Map(dances.map(d => [d.danceId, d]));
 const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) => {
   // Print CSV (same format as recital_groups.csv)
   console.log('recital_group,show_order');
-  for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  for (const g of groupNames) {
     const order = JSON.stringify(sol[g]).replace(/"/g, '""');
     console.log(`${g},"${order}"`);
   }
@@ -154,7 +170,7 @@ console.log('══════════════════════�
 console.log('  #1 DETAILED VIEW');
 console.log('════════════════════════════════════════════════════════════════\n');
 
-for (const g of ['A', 'B', 'C'] as GroupName[]) {
+for (const g of groupNames) {
   console.log(`── Group ${g} (${best[g].length} dances) ──`);
   best[g].forEach((id, idx) => {
     if (id === 'PRE') {
@@ -170,13 +186,7 @@ for (const g of ['A', 'B', 'C'] as GroupName[]) {
 }
 
 for (const detail of bestResult.details) {
-  const showLabel =
-    detail.recitalId === 1
-      ? 'Friday Evening'
-      : detail.recitalId === 2
-        ? 'Saturday Morning'
-        : 'Saturday Afternoon';
-  console.log(`── Show ${detail.recitalId}: ${showLabel} ──`);
+  console.log(`── Show ${detail.recitalId} ──`);
   if (detail.consecutivePairs.length > 0) {
     console.log('  ⚠ Consecutive dancer conflicts:');
     for (const p of detail.consecutivePairs) {
@@ -211,7 +221,7 @@ console.log('══════════════════════�
 console.log('  CSV — PASTE INTO IMPORT (#1)');
 console.log('════════════════════════════════════════════════════════════════\n');
 console.log('recital_group,show_order');
-for (const g of ['A', 'B', 'C'] as GroupName[]) {
+for (const g of groupNames) {
   const order = JSON.stringify(best[g]).replace(/"/g, '""');
   console.log(`${g},"${order}"`);
 }

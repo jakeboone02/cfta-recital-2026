@@ -1,6 +1,12 @@
-import type { GroupName } from '../types';
-import type { DanceData, ScoreBreakdown, ScoreResult, ShowScoreDetail, Solution } from './types';
-import { COMBO_MIN_GAP, COMBO_PREFERRED_GAP, COMBO_PAIRS, FIXED, SHOW_PARTS } from './types';
+import type {
+  DanceData,
+  ScoreBreakdown,
+  ScoreResult,
+  ShowPart,
+  ShowScoreDetail,
+  Solution,
+} from './types';
+import { COMBO_MIN_GAP, COMBO_PREFERRED_GAP, COMBO_PAIRS, FIXED } from './types';
 
 // Penalty weights
 const W_INVALID_SIZE = 100_000; // hard constraint: groups must be 10-11
@@ -24,11 +30,17 @@ export interface ScoringContext {
   comboSiblings: Map<number, number>;
   /** Set of combo dance IDs */
   comboDanceIds: Set<number>;
+  /** Dynamic group names (e.g. ['A', 'B', 'C']) */
+  groupNames: string[];
+  /** Show structure: which groups compose each show */
+  showParts: ShowPart[];
 }
 
 export const buildScoringContext = (
   dances: DanceData[],
-  dancersByDance: Map<number, string[]>
+  dancersByDance: Map<number, string[]>,
+  groupNames: string[],
+  showParts: ShowPart[]
 ): ScoringContext => {
   const dancerSets = new Map<number, Set<string>>();
   for (const [id, dancers] of dancersByDance) {
@@ -47,7 +59,7 @@ export const buildScoringContext = (
     comboDanceIds.add(b);
   }
 
-  return { dancerSets, danceInfo, comboSiblings, comboDanceIds };
+  return { dancerSets, danceInfo, comboSiblings, comboDanceIds, groupNames, showParts };
 };
 
 /** Get the style of a dance entry */
@@ -83,12 +95,9 @@ const isCombo = (id: number | 'PRE', ctx: ScoringContext): boolean => {
 };
 
 /** Build full show dance sequence for one show */
-const buildShowSequence = (
-  solution: Solution,
-  part1: GroupName,
-  part2: GroupName
-): (number | 'PRE')[] => {
-  return [FIXED.SPECTAPULAR, ...solution[part1], ...solution[part2], FIXED.HIPHOP, FIXED.FINALE];
+const buildShowSequence = (solution: Solution, groups: string[]): (number | 'PRE')[] => {
+  const groupDances = groups.flatMap(g => solution[g] ?? []);
+  return [FIXED.SPECTAPULAR, ...groupDances, FIXED.HIPHOP, FIXED.FINALE];
 };
 
 /** Score a solution against all constraints */
@@ -108,7 +117,7 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   const details: ShowScoreDetail[] = [];
 
   // --- Group size constraint (hard: 10-11 dances per group) ---
-  for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  for (const g of ctx.groupNames) {
     const size = solution[g].length;
     if (size < 10 || size > 11) {
       breakdown.invalidGroupSize += Math.abs(size < 10 ? 10 - size : size - 11);
@@ -116,8 +125,8 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   }
 
   // --- Per-show constraints (consecutive dancers, style adjacency) ---
-  for (const show of SHOW_PARTS) {
-    const seq = buildShowSequence(solution, show.part1, show.part2);
+  for (const show of ctx.showParts) {
+    const seq = buildShowSequence(solution, show.groups);
     const detail: ShowScoreDetail = {
       recitalId: show.recitalId,
       consecutivePairs: [],
@@ -179,7 +188,7 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   }
 
   // --- Per-group constraints ---
-  for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  for (const g of ctx.groupNames) {
     const order = solution[g];
 
     // Constraint 4a: Any baby dance (PRE or combo) adjacent to another baby dance
@@ -226,8 +235,10 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   }
 
   // --- Constraint 5: Family balance ---
-  const familyCounts: Record<GroupName, Set<string>> = { A: new Set(), B: new Set(), C: new Set() };
-  for (const g of ['A', 'B', 'C'] as GroupName[]) {
+  const familyCounts: Record<string, Set<string>> = Object.fromEntries(
+    ctx.groupNames.map(g => [g, new Set<string>()])
+  );
+  for (const g of ctx.groupNames) {
     for (const id of solution[g]) {
       if (id === 'PRE') continue;
       const dancers = ctx.dancerSets.get(id);
@@ -238,18 +249,19 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
       }
     }
   }
-  const sizes = [familyCounts.A.size, familyCounts.B.size, familyCounts.C.size];
+  const sizes = ctx.groupNames.map(g => familyCounts[g].size);
   breakdown.familyImbalance = Math.max(...sizes) - Math.min(...sizes);
 
   // --- Constraint 7: Style distribution across groups ---
+  const numGroups = ctx.groupNames.length;
   const styleCounts: Record<string, number[]> = {};
-  for (let gi = 0; gi < 3; gi++) {
-    const g = (['A', 'B', 'C'] as GroupName[])[gi];
+  for (let gi = 0; gi < numGroups; gi++) {
+    const g = ctx.groupNames[gi];
     for (const id of solution[g]) {
       if (id === 'PRE') continue;
       const style = ctx.danceInfo.get(id)?.danceStyle;
       if (!style || style === 'PREDANCE' || style === 'All') continue;
-      if (!styleCounts[style]) styleCounts[style] = [0, 0, 0];
+      if (!styleCounts[style]) styleCounts[style] = new Array(numGroups).fill(0);
       styleCounts[style][gi]++;
     }
   }

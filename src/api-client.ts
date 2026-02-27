@@ -1,4 +1,4 @@
-import type { DanceRow, RecitalGroupRow, ComboPair, GroupOrders } from './types';
+import type { DanceRow, RecitalGroupRow, RecitalRow, ComboPair, GroupOrders } from './types';
 import type { Bookmark } from './utils';
 
 const API_BASE = '/api';
@@ -50,6 +50,7 @@ export const createInstance = (name: string, year: number) =>
 export interface InstanceData {
   dances: DanceRow[];
   groups: RecitalGroupRow[];
+  recitals: RecitalRow[];
   comboPairs: ComboPair[];
   dancersByDance: Record<number, string[]>;
   dancerLastNames: Record<string, string>;

@@ -1,10 +1,11 @@
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useState } from 'react';
-import type { DanceMap, GroupName, GroupOrders } from './types';
+import type { DanceMap, GroupOrders } from './types';
 import { styleSlug } from './utils';
 
 interface Props {
   groups: GroupOrders;
+  groupNames: string[];
   danceMap: DanceMap;
   comboSiblingMap: Record<number, number>;
   onChange: (groups: GroupOrders) => void;
@@ -44,16 +45,17 @@ const DanceCard = ({
   );
 };
 
-const allGroups: GroupName[] = ['A', 'B', 'C'];
-
-export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actions }: Props) => {
-  const [collapsed, setCollapsed] = useState<Record<GroupName, boolean>>({
-    A: false,
-    B: false,
-    C: false,
-  });
+export const WorkingArea = ({
+  groups,
+  groupNames,
+  danceMap,
+  comboSiblingMap,
+  onChange,
+  actions,
+}: Props) => {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
-  const toggleCollapse = (g: GroupName) => setCollapsed(prev => ({ ...prev, [g]: !prev[g] }));
+  const toggleCollapse = (g: string) => setCollapsed(prev => ({ ...prev, [g]: !prev[g] }));
 
   // Clear flash after timeout
   useEffect(() => {
@@ -66,8 +68,8 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
     const { source, destination } = result;
     if (!destination) return;
 
-    const srcGroup = source.droppableId as GroupName;
-    const dstGroup = destination.droppableId as GroupName;
+    const srcGroup = source.droppableId;
+    const dstGroup = destination.droppableId;
     const srcIdx = source.index;
     const dstIdx = destination.index;
 
@@ -78,11 +80,9 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
     // PREDANCE cannot move between groups
     if (srcGroup !== dstGroup && movedDanceId === 'PRE') return;
 
-    const newGroups: GroupOrders = {
-      A: [...groups.A],
-      B: [...groups.B],
-      C: [...groups.C],
-    };
+    const newGroups: GroupOrders = Object.fromEntries(
+      groupNames.map(g => [g, [...(groups[g] ?? [])]])
+    );
 
     if (srcGroup === dstGroup) {
       // Within-group reorder — no combo logic
@@ -116,16 +116,16 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
     onChange(newGroups);
   };
 
-  const groupedDanceCount = groups.A.length + groups.B.length + groups.C.length;
-  const groupDanceCountFloor = Math.floor(groupedDanceCount / 3);
-  const groupDanceCountCeil = Math.ceil(groupedDanceCount / 3);
+  const groupedDanceCount = groupNames.reduce((n, g) => n + (groups[g]?.length ?? 0), 0);
+  const groupDanceCountFloor = Math.floor(groupedDanceCount / groupNames.length);
+  const groupDanceCountCeil = Math.ceil(groupedDanceCount / groupNames.length);
 
   return (
     <div className="working-area">
       <div className="panel-header">{actions}</div>
       <DragDropContext onDragEnd={handleDragEnd}>
-        {allGroups.map(g => {
-          const count = groups[g].length;
+        {groupNames.map(g => {
+          const count = (groups[g] ?? []).length;
           const warn = count < groupDanceCountFloor || count > groupDanceCountCeil;
           const isCollapsed = collapsed[g];
           return (
@@ -147,7 +147,7 @@ export const WorkingArea = ({ groups, danceMap, comboSiblingMap, onChange, actio
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={`group-drop-zone ${snapshot.isDraggingOver ? 'drag-over' : ''} ${isCollapsed ? 'hidden' : ''}`}>
-                    {groups[g].map((danceId, idx) => (
+                    {(groups[g] ?? []).map((danceId, idx) => (
                       <Draggable
                         key={`${g}-${idx}`}
                         draggableId={`${g}-${idx}-${danceId}`}

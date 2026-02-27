@@ -74,7 +74,7 @@ The app runs in two modes:
 - `auth.ts` — Cookie-based password authentication (password stored in `RECITAL_PASSWORD` env var)
 - `instances.ts` — CRUD for recital instances (multi-year support)
 - `csv-upload.ts` — Bulk CSV data import
-- `data.ts` — Read recital data (dances, dancers, groups, etc.)
+- `data.ts` — Read recital data (dances, dancers, groups, recitals, etc.)
 - `order.ts` — Save/load/bookmark show orders
 - `tables.ts` — Generic table CRUD for admin data management
 
@@ -88,6 +88,13 @@ A simulated-annealing optimizer that finds the best show order to minimize:
 - Baby/predance class placement issues
 - Combo class sibling separation
 - Style and family imbalance across shows
+
+The optimizer is **fully data-driven** — it accepts dynamic group names and show structure (derived from the `recitals` table's `group_order` column) rather than hard-coding any specific group layout. Key types:
+
+- `GroupOrders = Record<string, (number | 'PRE')[]>` — maps group names to dance order arrays
+- `Solution = GroupOrders` — optimizer solution is the same type
+- `ShowPart = { recitalId: number; groups: string[] }` — describes which groups appear in each show
+- `ScoringContext` includes `groupNames: string[]` and `showParts: ShowPart[]`
 
 Can run **client-side** (via Web Worker, `src/optimizer.worker.ts`) or **server-side** (`src/optimize.ts` CLI, `server.ts`).
 
@@ -113,19 +120,25 @@ bunx wrangler d1 execute cfta-dance-recital-2026 --local --file=src/schema.sql
 
 - Each dancer is in one or more classes
 - Each class participates in one or more dances
-- Each dance is assigned to a recital group (A, B, or C), except three "every show" dances: SpecTAPular (first), Hip Hop (second-to-last), Finale (last)
+- Each dance is assigned to a recital group (e.g. A, B, or C), except "every show" dances: SpecTAPular (first), Hip Hop (second-to-last), Finale (last)
 - Show order within each group is a JSON array of dance IDs and `"PRE"` placeholders in `recital_groups.show_order`
 - Teachers (`dancers.is_teacher = 1`) do not participate in SpecTAPular
 
-### Show Structure
+### Show Structure (Data-Driven)
 
-| Show               | Part 1  | Part 2  |
-| ------------------ | ------- | ------- |
-| Friday Evening     | Group A | Group B |
-| Saturday Morning   | Group C | Group A |
-| Saturday Afternoon | Group B | Group C |
+Show structure is **defined in the database**, not hard-coded. Each row in the `recitals` table has a `group_order` JSON array column that specifies which groups appear in that show and in what order.
 
-Every show: SpecTAPular → [Part 1 group] → [Part 2 group] → Hip Hop → Finale
+For the 2026 recital, the data is:
+
+| Show               | `group_order` |
+| ------------------ | ------------- |
+| Friday Evening     | `["A","B"]`   |
+| Saturday Morning   | `["C","A"]`   |
+| Saturday Afternoon | `["B","C"]`   |
+
+Every show sequence: SpecTAPular → [groups from `group_order`] → Hip Hop → Finale
+
+The frontend derives `showStructure` and `groupNames` from `instanceData.recitals` at runtime — no constants need updating when group layout changes. The `recital_group_order` SQL view expands `group_order` via `json_each()` for query convenience.
 
 ## CI/CD
 

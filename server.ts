@@ -2,8 +2,14 @@ import { Database, SQLQueryBindings } from 'bun:sqlite';
 import indexHTML from './src/index.html';
 import { anneal } from './src/optimizer/anneal';
 import { buildScoringContext } from './src/optimizer/score';
-import type { AnnealConfig, DanceData, Solution } from './src/optimizer/types';
-import { DanceRow, GroupOrders, RecitalDanceInstance, RecitalGroupRow } from './src/types';
+import type { AnnealConfig, DanceData, ShowPart, Solution } from './src/optimizer/types';
+import {
+  DanceRow,
+  GroupOrders,
+  RecitalDanceInstance,
+  RecitalGroupRow,
+  RecitalRow,
+} from './src/types';
 
 const db = new Database(`./build/database.db`);
 
@@ -25,6 +31,22 @@ const getGroups = () =>
     .query<RecitalGroupRow, SQLQueryBindings[]>('SELECT * FROM recital_groups')
     .all()
     .map(g => ({ ...g, show_order: JSON.parse(g.show_order as unknown as string) }));
+
+const getRecitals = (): RecitalRow[] =>
+  db
+    .query<
+      {
+        recital_id: number;
+        group_order: string;
+        recital_description: string;
+        recital_time: string;
+      },
+      SQLQueryBindings[]
+    >(
+      'SELECT recital_id, group_order, recital_description, recital_time FROM recitals ORDER BY recital_id'
+    )
+    .all()
+    .map(r => ({ ...r, group_order: JSON.parse(r.group_order) }));
 
 const getComboPairs = () =>
   db
@@ -67,7 +89,19 @@ for (const r of db
   optimizerDancersByDance.get(r.dance_id)!.push(r.dancer_name);
 }
 
-const scoringCtx = buildScoringContext(optimizerDances, optimizerDancersByDance);
+const recitalRows = getRecitals();
+const optimizerShowParts: ShowPart[] = recitalRows.map(r => ({
+  recitalId: r.recital_id,
+  groups: r.group_order,
+}));
+const optimizerGroupNames = [...new Set(optimizerShowParts.flatMap(s => s.groups))].sort();
+
+const scoringCtx = buildScoringContext(
+  optimizerDances,
+  optimizerDancersByDance,
+  optimizerGroupNames,
+  optimizerShowParts
+);
 
 const OPTIMIZE_CONFIG: AnnealConfig = {
   initialTemp: 5000,
@@ -86,15 +120,14 @@ const server = Bun.serve({
     if (path === '/api/data') return Response.json(getRecitalOrderData());
     if (path === '/api/dances') return Response.json(getDances());
     if (path === '/api/groups') return Response.json(getGroups());
+    if (path === '/api/recitals') return Response.json(getRecitals());
     if (path === '/api/combo-pairs') return Response.json(getComboPairs());
 
     if (path === '/api/optimize' && req.method === 'POST') {
       const body = (await req.json()) as GroupOrders;
-      const solution: Solution = { A: body.A, B: body.B, C: body.C };
-      const { topSolutions } = anneal(solution, scoringCtx, OPTIMIZE_CONFIG, 1);
+      const { topSolutions } = anneal(body, scoringCtx, OPTIMIZE_CONFIG, 1);
       if (topSolutions.length === 0) return Response.json(body);
-      const best = topSolutions[0].solution;
-      return Response.json({ A: best.A, B: best.B, C: best.C } satisfies GroupOrders);
+      return Response.json(topSolutions[0].solution satisfies GroupOrders);
     }
 
     return new Response('Page not found', { status: 404 });

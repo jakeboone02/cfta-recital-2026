@@ -1,20 +1,22 @@
 import { anneal } from './optimizer/anneal';
 import { buildScoringContext } from './optimizer/score';
-import type { DanceData, AnnealConfig } from './optimizer/types';
+import type { DanceData, AnnealConfig, ShowPart } from './optimizer/types';
 import type { DanceRow, GroupOrders } from './types';
 
 let scoringCtx: ReturnType<typeof buildScoringContext> | null = null;
 
 self.onmessage = (e: MessageEvent) => {
-  const { groups, config, dances, dancersByDance } = e.data as {
+  const { groups, config, dances, dancersByDance, groupNames, showParts } = e.data as {
     groups: GroupOrders;
     config: AnnealConfig;
     dances?: DanceRow[];
     dancersByDance?: Record<number, string[]>;
+    groupNames?: string[];
+    showParts?: ShowPart[];
   };
 
   // Initialize scoring context on first message (or when data is provided)
-  if (dances && dancersByDance) {
+  if (dances && dancersByDance && groupNames && showParts) {
     const optimizerDances: DanceData[] = dances.map(d => ({
       danceId: d.dance_id,
       danceName: d.dance_name,
@@ -24,7 +26,7 @@ self.onmessage = (e: MessageEvent) => {
     const optimizerDancerMap = new Map(
       Object.entries(dancersByDance).map(([k, v]) => [Number(k), v])
     );
-    scoringCtx = buildScoringContext(optimizerDances, optimizerDancerMap);
+    scoringCtx = buildScoringContext(optimizerDances, optimizerDancerMap, groupNames, showParts);
   }
 
   if (!scoringCtx) {
@@ -35,8 +37,7 @@ self.onmessage = (e: MessageEvent) => {
   try {
     const { topSolutions } = anneal(groups, scoringCtx, config, 1);
     if (topSolutions.length > 0) {
-      const best = topSolutions[0].solution;
-      self.postMessage({ type: 'result', groups: { A: best.A, B: best.B, C: best.C } });
+      self.postMessage({ type: 'result', groups: topSolutions[0].solution });
     } else {
       self.postMessage({ type: 'error', message: 'No solutions found' });
     }

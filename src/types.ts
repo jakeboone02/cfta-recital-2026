@@ -7,7 +7,6 @@ export type DanceStyle =
   | 'Musical Theater'
   | 'Tap'
   | 'PREDANCE';
-export type GroupName = 'A' | 'B' | 'C';
 
 export interface DanceRow {
   dance_id: number;
@@ -19,15 +18,22 @@ export interface DanceRow {
 }
 
 export interface RecitalGroupRow {
-  recital_group: GroupName;
+  recital_group: string;
   show_order: (number | 'PRE')[];
+}
+
+export interface RecitalRow {
+  recital_id: number;
+  group_order: string[];
+  recital_description: string;
+  recital_time: string;
 }
 
 export interface RecitalDanceInstance {
   overall_show_order: number;
-  recital_id: 1 | 2 | 3;
-  recital_part: 1 | 2;
-  recital_group: GroupName | 'Finale' | 'Hip Hop' | 'SpecTAPular';
+  recital_id: number;
+  recital_part: number;
+  recital_group: string;
   order_in_group: number;
   dance_id: number | null;
   dance_style: DanceStyle;
@@ -44,22 +50,13 @@ export interface RecitalDanceInstance {
 
 export type DanceMap = Record<number, DanceRow>;
 
-export interface GroupOrders {
-  A: (number | 'PRE')[];
-  B: (number | 'PRE')[];
-  C: (number | 'PRE')[];
-}
+export type GroupOrders = Record<string, (number | 'PRE')[]>;
 
-// Show structure: which groups are in each show
-export const SHOW_STRUCTURE: {
+export interface ShowStructureEntry {
   recital_id: number;
   label: string;
-  parts: [GroupName, GroupName];
-}[] = [
-  { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] },
-  { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] },
-  { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] },
-];
+  parts: string[];
+}
 
 // Fixed dance IDs
 export const SPECTAPULAR_ID = 1;

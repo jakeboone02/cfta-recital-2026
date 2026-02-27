@@ -15,7 +15,7 @@ import {
   queryKeys,
 } from './queries';
 import { ReportArea } from './ReportArea';
-import type { GroupOrders } from './types';
+import type { GroupOrders, ShowStructureEntry } from './types';
 import { buildComboSiblingMap } from './types';
 import {
   buildDanceMap,
@@ -386,25 +386,6 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const [renamingBookmark, setRenamingBookmark] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
-  // Initialize groups from query data
-  const [initialized, setInitialized] = useState(false);
-  useEffect(() => {
-    if (!instanceData || !orderData || initialized) return;
-    initUndoSession();
-    const initialGroups: GroupOrders = { A: [], B: [], C: [] };
-    for (const row of instanceData.groups) initialGroups[row.recital_group] = row.show_order;
-    setGroups(orderData.groupOrders ?? initialGroups);
-    setInitialized(true);
-  }, [instanceData, orderData, initialized]);
-
-  // Derive bookmarks from query cache
-  const bookmarks = orderData?.bookmarks ?? [];
-
-  const debouncedSave = useSaveOrder(instanceId);
-  const saveBookmarkMutation = useSaveBookmark(instanceId);
-  const deleteBookmarkMutation = useDeleteBookmark(instanceId);
-  const renameBookmarkMutation = useRenameBookmark(instanceId);
-
   const data = instanceData ?? null;
   const danceMap = useMemo(() => (data ? buildDanceMap(data.dances) : {}), [data]);
   const comboSiblingMap = useMemo(
@@ -414,15 +395,40 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const dancersByDance = data?.dancersByDance ?? {};
   const dancerLastNames = data?.dancerLastNames ?? {};
 
-  // TODO: make this configurable via instance config (Phase 5)
-  const showStructure = useMemo(
-    () => [
-      { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] as ['A', 'B'] },
-      { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] as ['C', 'A'] },
-      { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] as ['B', 'C'] },
-    ],
-    []
+  // Derive show structure and group names from recitals data
+  const showStructure: ShowStructureEntry[] = useMemo(
+    () =>
+      (data?.recitals ?? []).map(r => ({
+        recital_id: r.recital_id,
+        label: r.recital_description,
+        parts: r.group_order,
+      })),
+    [data]
   );
+
+  const groupNames = useMemo(
+    () => [...new Set(showStructure.flatMap(s => s.parts))].sort(),
+    [showStructure]
+  );
+
+  // Initialize groups from query data
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!instanceData || !orderData || initialized) return;
+    initUndoSession();
+    const initialGroups: GroupOrders = Object.fromEntries(groupNames.map(g => [g, []]));
+    for (const row of instanceData.groups) initialGroups[row.recital_group] = row.show_order;
+    setGroups(orderData.groupOrders ?? initialGroups);
+    setInitialized(true);
+  }, [instanceData, orderData, initialized, groupNames]);
+
+  // Derive bookmarks from query cache
+  const bookmarks = orderData?.bookmarks ?? [];
+
+  const debouncedSave = useSaveOrder(instanceId);
+  const saveBookmarkMutation = useSaveBookmark(instanceId);
+  const deleteBookmarkMutation = useDeleteBookmark(instanceId);
+  const renameBookmarkMutation = useRenameBookmark(instanceId);
 
   const shows = useMemo(
     () => (groups && data ? computeShowOrder(groups, danceMap, dancersByDance, showStructure) : []),
@@ -511,7 +517,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const handleReset = () => {
     if (!groups || !data) return;
-    const initial: GroupOrders = { A: [], B: [], C: [] };
+    const initial: GroupOrders = Object.fromEntries(groupNames.map(g => [g, []]));
     for (const row of data.groups) initial[row.recital_group] = row.show_order;
     handleGroupChange(initial);
   };
@@ -547,6 +553,8 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
       config: OPTIMIZE_CONFIG,
       dances: data.dances,
       dancersByDance: data.dancersByDance,
+      groupNames,
+      showParts: showStructure.map(s => ({ recitalId: s.recital_id, groups: s.parts })),
     });
   };
 
@@ -645,6 +653,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
       <div className="left-panel">
         <WorkingArea
           groups={groups}
+          groupNames={groupNames}
           danceMap={danceMap}
           comboSiblingMap={comboSiblingMap}
           onChange={handleGroupChange}
@@ -684,6 +693,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
         <div className="report-pane">
           <ReportArea
             shows={shows}
+            groupNames={groupNames}
             dancerLastNames={dancerLastNames}
             compact={!!compareData}
             label="Current"
@@ -714,6 +724,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
           <div className="report-pane report-pane--compare">
             <ReportArea
               shows={compareData}
+              groupNames={groupNames}
               dancerLastNames={dancerLastNames}
               compact
               label={compareBookmark ?? 'Bookmark'}
