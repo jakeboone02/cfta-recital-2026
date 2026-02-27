@@ -37,13 +37,7 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   recitals: {
     pk: 'recital_id',
-    columns: [
-      'csv_recital_id',
-      'recital_group_part_1',
-      'recital_group_part_2',
-      'recital_description',
-      'recital_time',
-    ],
+    columns: ['csv_recital_id', 'group_order', 'recital_description', 'recital_time'],
     orderBy: 'recital_id',
   },
   recital_groups: {

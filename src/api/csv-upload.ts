@@ -115,15 +115,14 @@ const CSV_TABLES: CsvTable[] = [
     requiredColumns: ['recital_id', 'recital_description', 'recital_time'],
     insert: async (env, instanceId, rows) => {
       const stmt = env.DB.prepare(
-        'INSERT INTO recitals (recital_instance_id, csv_recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO recitals (recital_instance_id, csv_recital_id, group_order, recital_description, recital_time) VALUES (?, ?, ?, ?, ?)'
       );
       await env.DB.batch(
         rows.map(r =>
           stmt.bind(
             instanceId,
             r.recital_id,
-            r.recital_group_part_1 ?? null,
-            r.recital_group_part_2 ?? null,
+            r.group_order ?? null,
             r.recital_description,
             r.recital_time
           )

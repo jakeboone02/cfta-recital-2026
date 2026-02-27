@@ -47,8 +47,7 @@ CREATE TABLE recital_groups (
 
 CREATE TABLE recitals (
   recital_id int PRIMARY KEY check (recital_id IN (1, 2, 3)),
-  recital_group_part_1 int check (recital_group_part_1 IN ('A', 'B', 'C')) null,
-  recital_group_part_2 int check (recital_group_part_2 IN ('A', 'B', 'C')) null,
+  group_order text not null, -- JSON array of group names, e.g. '["A","B"]'
   recital_description text not null,
   recital_time text not null
 );
@@ -63,7 +62,7 @@ SELECT r.recital_id,
        json_each.value as recital_group,
        r.recital_description,
        r.recital_time
-  FROM recitals r, json_each('["' || r.recital_group_part_1 || '","' || r.recital_group_part_2 || '"]')
+  FROM recitals r, json_each(r.group_order)
  ORDER BY r.recital_time, json_each.key;
 
 CREATE VIEW IF NOT EXISTS group_dance_order AS

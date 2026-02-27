@@ -188,7 +188,7 @@ const CSV_TABLES = [
   {
     name: 'recitals',
     label: 'Recitals',
-    cols: 'recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time',
+    cols: 'recital_id, group_order, recital_description, recital_time',
   },
   { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
 ];

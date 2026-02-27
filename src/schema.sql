@@ -81,8 +81,7 @@ CREATE TABLE IF NOT EXISTS recitals (
   recital_id INTEGER PRIMARY KEY AUTOINCREMENT,
   recital_instance_id INTEGER NOT NULL REFERENCES recital_instances(id),
   csv_recital_id INTEGER, -- original 1/2/3 from CSV
-  recital_group_part_1 TEXT,
-  recital_group_part_2 TEXT,
+  group_order TEXT, -- JSON array of group names, e.g. '["A","B"]'
   recital_description TEXT NOT NULL,
   recital_time TEXT NOT NULL
 );
