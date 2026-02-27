@@ -537,12 +537,14 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
           actions={
             <>
               <a href="#/" className="btn-nav" title="All recitals">🏠</a>
-              <a href={`#/instances/${instanceId}/setup`} className="btn-nav" title="Upload data">📂</a>
+              <a href={`#/instances/${instanceId}/setup`} className="btn-nav" title="Upload/manage data">📂</a>
+              <span style={{ marginRight: 'auto'}}>{`\u00A0`}</span>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
+              <span style={{ marginRight: 'auto'}}>{`\u00A0`}</span>
               <button onClick={handleOptimize} disabled={optimizing} title="Run optimizer">
                 {optimizing ? '⏳ Optimizing…' : '⚡ Optimize'}
               </button>
-              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
-              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
               <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">Reset</button>
             </>
           }
