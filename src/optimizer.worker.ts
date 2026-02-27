@@ -1,6 +1,6 @@
-import type { DanceData, AnnealConfig } from './optimizer/types';
-import { buildScoringContext } from './optimizer/score';
 import { anneal } from './optimizer/anneal';
+import { buildScoringContext } from './optimizer/score';
+import type { DanceData, AnnealConfig } from './optimizer/types';
 import type { DanceRow, GroupOrders } from './types';
 
 let scoringCtx: ReturnType<typeof buildScoringContext> | null = null;

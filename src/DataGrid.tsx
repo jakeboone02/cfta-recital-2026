@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,21 +8,18 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  upsertTableRow,
-  type TableData,
-} from './api-client';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { upsertTableRow, type TableData } from './api-client';
 import { useTableRows, useDeleteRow, queryKeys } from './queries';
 
 // ── Column override types ────────────────────────────────────────────────
 
 interface SelectConfig {
-  table: string;        // lookup table to fetch options from
-  labelColumn: string;  // column to display as option label
+  table: string; // lookup table to fetch options from
+  labelColumn: string; // column to display as option label
   labelFn?: (row: Record<string, any>) => string; // custom label formatter (overrides labelColumn)
   valueColumn?: string; // column to use as value (defaults to labelColumn)
-  saveTo?: string;      // column to actually save to (for virtual columns)
+  saveTo?: string; // column to actually save to (for virtual columns)
 }
 
 export interface ColumnOverride {
@@ -32,7 +29,7 @@ export interface ColumnOverride {
   // Virtual column support (column not in original data)
   virtual?: boolean;
   header?: string;
-  deriveFrom?: string;  // derive value by looking up this column
+  deriveFrom?: string; // derive value by looking up this column
   insertAfter?: string; // position after this column
 }
 
@@ -61,9 +58,13 @@ const EditableCell = ({
   const [value, setValue] = useState(initialValue ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setValue(initialValue ?? ''); }, [initialValue]);
+  useEffect(() => {
+    setValue(initialValue ?? '');
+  }, [initialValue]);
 
-  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
   if (!isEditable) return <span className="dg-cell-readonly">{String(initialValue ?? '')}</span>;
 
@@ -89,7 +90,10 @@ const EditableCell = ({
       onBlur={commit}
       onKeyDown={e => {
         if (e.key === 'Enter') commit();
-        if (e.key === 'Escape') { setValue(initialValue ?? ''); setEditing(false); }
+        if (e.key === 'Escape') {
+          setValue(initialValue ?? '');
+          setEditing(false);
+        }
       }}
     />
   );
@@ -139,11 +143,12 @@ const SelectCell = ({
     className={`dg-cell-select${loading ? ' dg-cell-select--loading' : ''}`}
     value={value ?? ''}
     onChange={e => onSave(rowIndex, columnId, e.target.value)}
-    disabled={loading}
-  >
+    disabled={loading}>
     <option value="">{loading ? 'Loading…' : '--'}</option>
     {options.map((opt, i) => (
-      <option key={opt} value={opt}>{labels ? labels[i] : opt}</option>
+      <option key={opt} value={opt}>
+        {labels ? labels[i] : opt}
+      </option>
     ))}
   </select>
 );
@@ -180,7 +185,9 @@ const DateTimeLocalCell = ({
 
   const initial = toLocal(initialValue);
   const [value, setValue] = useState(initial);
-  useEffect(() => { setValue(toLocal(initialValue)); }, [initialValue]);
+  useEffect(() => {
+    setValue(toLocal(initialValue));
+  }, [initialValue]);
 
   return (
     <input
@@ -202,7 +209,11 @@ const DateTimeLocalCell = ({
 
 export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
   const queryClient = useQueryClient();
-  const { data: tableData, isLoading: loading, error: queryError } = useTableRows(instanceId, tableName);
+  const {
+    data: tableData,
+    isLoading: loading,
+    error: queryError,
+  } = useTableRows(instanceId, tableName);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [filterText, setFilterText] = useState('');
@@ -217,7 +228,9 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
   }, []);
 
   const data = tableData?.rows ?? [];
-  const meta = tableData ? { columns: tableData.columns, pk: tableData.pk, editableColumns: tableData.editableColumns } : null;
+  const meta = tableData
+    ? { columns: tableData.columns, pk: tableData.pk, editableColumns: tableData.editableColumns }
+    : null;
   const error = queryError?.message ?? '';
 
   // Collect lookup table names from overrides
@@ -261,31 +274,40 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
 
   const deleteMutation = useDeleteRow(instanceId, tableName);
 
-  const handleSave = useCallback(async (rowIndex: number, columnId: string, value: any) => {
-    if (!meta) return;
-    const row = data[rowIndex];
-    const pkValue = row[meta.pk];
-    setSavingCell(`${rowIndex}-${columnId}`);
-    try {
-      await upsertTableRow(instanceId, tableName, { [meta.pk]: pkValue, [columnId]: value });
-      // Optimistic update in cache
-      queryClient.setQueryData<TableData>(queryKeys.table(instanceId, tableName), old => {
-        if (!old) return old;
-        return { ...old, rows: old.rows.map((r, i) => i === rowIndex ? { ...r, [columnId]: value } : r) };
-      });
-    } catch (e: any) {
-      // Error will show via queryError on next refetch
-    } finally {
-      setSavingCell(null);
-    }
-  }, [data, meta, instanceId, tableName, queryClient]);
+  const handleSave = useCallback(
+    async (rowIndex: number, columnId: string, value: any) => {
+      if (!meta) return;
+      const row = data[rowIndex];
+      const pkValue = row[meta.pk];
+      setSavingCell(`${rowIndex}-${columnId}`);
+      try {
+        await upsertTableRow(instanceId, tableName, { [meta.pk]: pkValue, [columnId]: value });
+        // Optimistic update in cache
+        queryClient.setQueryData<TableData>(queryKeys.table(instanceId, tableName), old => {
+          if (!old) return old;
+          return {
+            ...old,
+            rows: old.rows.map((r, i) => (i === rowIndex ? { ...r, [columnId]: value } : r)),
+          };
+        });
+      } catch (e: any) {
+        // Error will show via queryError on next refetch
+      } finally {
+        setSavingCell(null);
+      }
+    },
+    [data, meta, instanceId, tableName, queryClient]
+  );
 
-  const handleDelete = useCallback(async (rowIndex: number) => {
-    if (!meta) return;
-    const row = data[rowIndex];
-    const pkValue = row[meta.pk];
-    deleteMutation.mutate(pkValue);
-  }, [data, meta, deleteMutation]);
+  const handleDelete = useCallback(
+    async (rowIndex: number) => {
+      if (!meta) return;
+      const row = data[rowIndex];
+      const pkValue = row[meta.pk];
+      deleteMutation.mutate(pkValue);
+    },
+    [data, meta, deleteMutation]
+  );
 
   const handleAddRow = useCallback(async () => {
     if (!meta) return;
@@ -318,16 +340,42 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
         enableSorting: true,
         cell: (info: any) => {
           if (ov?.type === 'checkbox') {
-            return <CheckboxCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} />;
+            return (
+              <CheckboxCell
+                value={info.getValue()}
+                rowIndex={info.row.index}
+                columnId={col}
+                onSave={handleSave}
+              />
+            );
           }
           if (ov?.type === 'select' && ov.select) {
             const opts = lookupData[ov.select.table] ?? [];
             const options = [...new Set(opts.map(r => r[ov.select!.labelColumn]).filter(Boolean))];
-            const optLabels = ov.select.labelFn ? opts.map(r => getLabel(ov.select!, r)) : undefined;
-            return <SelectCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} options={options} labels={optLabels} loading={lookupsLoading} />;
+            const optLabels = ov.select.labelFn
+              ? opts.map(r => getLabel(ov.select!, r))
+              : undefined;
+            return (
+              <SelectCell
+                value={info.getValue()}
+                rowIndex={info.row.index}
+                columnId={col}
+                onSave={handleSave}
+                options={options}
+                labels={optLabels}
+                loading={lookupsLoading}
+              />
+            );
           }
           if (ov?.type === 'datetime-local') {
-            return <DateTimeLocalCell value={info.getValue()} rowIndex={info.row.index} columnId={col} onSave={handleSave} />;
+            return (
+              <DateTimeLocalCell
+                value={info.getValue()}
+                rowIndex={info.row.index}
+                columnId={col}
+                onSave={handleSave}
+              />
+            );
           }
           return (
             <EditableCell
@@ -350,7 +398,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
         id: colId,
         header: ov.header ?? colId,
         enableSorting: true,
-        accessorFn: (row) => {
+        accessorFn: row => {
           if (ov.deriveFrom) {
             const map = lookupMaps[colId] ?? {};
             return map[String(row[ov.deriveFrom])] ?? '';
@@ -374,7 +422,7 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
               columnId={saveTo}
               onSave={(rowIdx, colName, v) => {
                 // Match the type of the existing value
-                const typed = v === '' ? '' : (typeof currentValue === 'number' ? Number(v) : v);
+                const typed = v === '' ? '' : typeof currentValue === 'number' ? Number(v) : v;
                 handleSave(rowIdx, colName, typed);
               }}
               options={options}
@@ -402,8 +450,9 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
         <button
           className="dg-delete-btn"
           onClick={() => handleDelete(info.row.index)}
-          title="Delete row"
-        >✕</button>
+          title="Delete row">
+          ✕
+        </button>
       ),
     });
 
@@ -414,9 +463,12 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
     (row: any, _columnId: string, filterValue: string) => {
       const search = filterValue.toLowerCase();
       // Search raw column values
-      if (Object.values(row.original).some(
-        (v: any) => v != null && String(v).toLowerCase().includes(search)
-      )) return true;
+      if (
+        Object.values(row.original).some(
+          (v: any) => v != null && String(v).toLowerCase().includes(search)
+        )
+      )
+        return true;
       // Search resolved lookup labels
       for (const [colId, map] of Object.entries(lookupMaps)) {
         const sourceCol = columnOverrides?.[colId]?.deriveFrom ?? colId;
@@ -457,9 +509,20 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
           value={filterText}
           onChange={e => handleFilterChange(e.target.value)}
         />
-        <span className="dg-count">{table.getFilteredRowModel().rows.length} of {data.length} rows</span>
-        <button className="dg-add-btn" onClick={handleAddRow}>+ Add Row</button>
-        <button className="dg-refresh-btn" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.table(instanceId, tableName) })} title="Refresh">↻</button>
+        <span className="dg-count">
+          {table.getFilteredRowModel().rows.length} of {data.length} rows
+        </span>
+        <button className="dg-add-btn" onClick={handleAddRow}>
+          + Add Row
+        </button>
+        <button
+          className="dg-refresh-btn"
+          onClick={() =>
+            queryClient.invalidateQueries({ queryKey: queryKeys.table(instanceId, tableName) })
+          }
+          title="Refresh">
+          ↻
+        </button>
       </div>
       <div className="dg-table-wrapper">
         <table className="dg-table">
@@ -470,12 +533,12 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
                   <th
                     key={header.id}
                     className={header.column.getCanSort() ? 'dg-sortable' : ''}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
+                    onClick={header.column.getToggleSortingHandler()}>
                     <span className="dg-header-content">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {header.column.getCanSort() && (
-                        <span className={`dg-sort-icon${header.column.getIsSorted() ? ' dg-sort-active' : ''}`}>
+                        <span
+                          className={`dg-sort-icon${header.column.getIsSorted() ? ' dg-sort-active' : ''}`}>
                           {{ asc: '▲', desc: '▼' }[header.column.getIsSorted() as string] ?? '⇅'}
                         </span>
                       )}
@@ -489,7 +552,9 @@ export const DataGrid = ({ instanceId, tableName, columnOverrides }: Props) => {
             {table.getRowModel().rows.map(row => (
               <tr key={row.id}>
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={savingCell === `${row.index}-${cell.column.id}` ? 'dg-saving' : ''}>
+                  <td
+                    key={cell.id}
+                    className={savingCell === `${row.index}-${cell.column.id}` ? 'dg-saving' : ''}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

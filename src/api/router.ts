@@ -1,10 +1,9 @@
 import type { Env } from '../env';
 import { checkAuth, handleLogin } from './auth';
-import { handleInstances } from './instances';
 import { handleCsvUpload } from './csv-upload';
 import { handleData } from './data';
+import { handleInstances } from './instances';
 import { handleOrder } from './order';
-
 import { handleTables } from './tables';
 
 export async function handleApiRequest(request: Request, env: Env): Promise<Response> {

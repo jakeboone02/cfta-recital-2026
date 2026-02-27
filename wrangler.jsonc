@@ -9,13 +9,13 @@
     "directory": "build",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*"],
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "cfta-dance-recital-2026",
-      "database_id": "501afc66-a5b6-4759-9db9-d84dc77b600b"
-    }
-  ]
+      "database_id": "501afc66-a5b6-4759-9db9-d84dc77b600b",
+    },
+  ],
 }

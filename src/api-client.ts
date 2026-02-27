@@ -120,6 +120,7 @@ export const upsertTableRow = (instanceId: number, table: string, row: Record<st
   });
 
 export const deleteTableRow = (instanceId: number, table: string, id: string | number) =>
-  apiFetch<{ ok: boolean }>(`/instances/${instanceId}/tables/${table}?id=${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-  });
+  apiFetch<{ ok: boolean }>(
+    `/instances/${instanceId}/tables/${table}?id=${encodeURIComponent(id)}`,
+    { method: 'DELETE' }
+  );

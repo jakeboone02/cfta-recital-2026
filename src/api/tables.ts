@@ -37,7 +37,13 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   recitals: {
     pk: 'recital_id',
-    columns: ['csv_recital_id', 'recital_group_part_1', 'recital_group_part_2', 'recital_description', 'recital_time'],
+    columns: [
+      'csv_recital_id',
+      'recital_group_part_1',
+      'recital_group_part_2',
+      'recital_description',
+      'recital_time',
+    ],
     orderBy: 'recital_id',
   },
   recital_groups: {
@@ -81,7 +87,8 @@ export async function handleTables(
     if (pkValue != null) {
       // Update existing row — only update provided editable columns
       const setCols = def.columns.filter(c => c in body);
-      if (setCols.length === 0) return Response.json({ error: 'No editable columns provided' }, { status: 400 });
+      if (setCols.length === 0)
+        return Response.json({ error: 'No editable columns provided' }, { status: 400 });
       const setClause = setCols.map(c => `${c} = ?`).join(', ');
       const values = setCols.map(c => body[c] ?? null);
       await env.DB.prepare(
@@ -109,9 +116,7 @@ export async function handleTables(
     const url = new URL(request.url);
     const pkValue = url.searchParams.get('id');
     if (!pkValue) return Response.json({ error: 'id query param required' }, { status: 400 });
-    await env.DB.prepare(
-      `DELETE FROM ${tableName} WHERE ${def.pk} = ? AND recital_instance_id = ?`
-    )
+    await env.DB.prepare(`DELETE FROM ${tableName} WHERE ${def.pk} = ? AND recital_instance_id = ?`)
       .bind(pkValue, instanceId)
       .run();
     return Response.json({ ok: true });

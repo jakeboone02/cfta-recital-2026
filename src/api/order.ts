@@ -1,6 +1,10 @@
 import type { Env } from '../env';
 
-export async function handleOrder(request: Request, env: Env, instanceId: number): Promise<Response> {
+export async function handleOrder(
+  request: Request,
+  env: Env,
+  instanceId: number
+): Promise<Response> {
   if (request.method === 'GET') {
     const order = await env.DB.prepare(
       'SELECT group_orders FROM saved_orders WHERE recital_instance_id = ?'
@@ -52,7 +56,8 @@ export async function handleOrder(request: Request, env: Env, instanceId: number
 
   if (request.method === 'PATCH') {
     const body = (await request.json()) as { oldName: string; newName: string };
-    if (!body.oldName || !body.newName) return Response.json({ error: 'oldName and newName required' }, { status: 400 });
+    if (!body.oldName || !body.newName)
+      return Response.json({ error: 'oldName and newName required' }, { status: 400 });
     try {
       await env.DB.prepare(
         'UPDATE bookmarks SET name = ? WHERE recital_instance_id = ? AND name = ?'
@@ -69,9 +74,7 @@ export async function handleOrder(request: Request, env: Env, instanceId: number
     const url = new URL(request.url);
     const name = url.searchParams.get('name');
     if (!name) return Response.json({ error: 'name query param required' }, { status: 400 });
-    await env.DB.prepare(
-      'DELETE FROM bookmarks WHERE recital_instance_id = ? AND name = ?'
-    )
+    await env.DB.prepare('DELETE FROM bookmarks WHERE recital_instance_id = ? AND name = ?')
       .bind(instanceId, name)
       .run();
     return Response.json({ ok: true });

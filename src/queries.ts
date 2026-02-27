@@ -1,9 +1,5 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useCallback, useRef } from 'react';
 import {
   login as apiLogin,
   getInstances,
@@ -24,7 +20,6 @@ import {
 } from './api-client';
 import type { GroupOrders } from './types';
 import type { Bookmark } from './utils';
-import { useCallback, useRef } from 'react';
 
 // ── Query key factory ────────────────────────────────────────────────────
 
@@ -68,7 +63,9 @@ export const useLogin = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (password: string) => apiLogin(password),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.instances }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.instances });
+    },
   });
 };
 
@@ -76,8 +73,10 @@ export const useCreateInstance = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ name, year }: { name: string; year: number }) => apiCreateInstance(name, year),
-    onSuccess: (inst) => {
-      qc.setQueryData<RecitalInstance[]>(queryKeys.instances, prev => prev ? [inst, ...prev] : [inst]);
+    onSuccess: inst => {
+      qc.setQueryData<RecitalInstance[]>(queryKeys.instances, prev =>
+        prev ? [inst, ...prev] : [inst]
+      );
     },
   });
 };
@@ -88,10 +87,13 @@ export const useSaveOrder = (instanceId: number) => {
     mutationFn: (groups: GroupOrders) => apiSaveOrder(instanceId, groups),
   });
 
-  const debouncedSave = useCallback((groups: GroupOrders) => {
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => mutation.mutate(groups), 500);
-  }, [mutation]);
+  const debouncedSave = useCallback(
+    (groups: GroupOrders) => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => mutation.mutate(groups), 500);
+    },
+    [mutation]
+  );
 
   return debouncedSave;
 };
@@ -115,7 +117,7 @@ export const useDeleteBookmark = (instanceId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (name: string) => deleteBookmarkApi(instanceId, name),
-    onMutate: async (name) => {
+    onMutate: async name => {
       await qc.cancelQueries({ queryKey: queryKeys.order(instanceId) });
       const prev = qc.getQueryData<OrderData>(queryKeys.order(instanceId));
       qc.setQueryData<OrderData>(queryKeys.order(instanceId), old => {
@@ -140,7 +142,10 @@ export const useRenameBookmark = (instanceId: number) => {
       const prev = qc.getQueryData<OrderData>(queryKeys.order(instanceId));
       qc.setQueryData<OrderData>(queryKeys.order(instanceId), old => {
         if (!old) return old;
-        return { ...old, bookmarks: old.bookmarks.map(b => b.name === oldName ? { ...b, name: newName } : b) };
+        return {
+          ...old,
+          bookmarks: old.bookmarks.map(b => (b.name === oldName ? { ...b, name: newName } : b)),
+        };
       });
       return { prev };
     },
@@ -164,7 +169,7 @@ export const useDeleteRow = (instanceId: number, tableName: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (pkValue: string | number) => deleteTableRow(instanceId, tableName, pkValue),
-    onMutate: async (pkValue) => {
+    onMutate: async pkValue => {
       await qc.cancelQueries({ queryKey: queryKeys.table(instanceId, tableName) });
       const prev = qc.getQueryData<TableData>(queryKeys.table(instanceId, tableName));
       qc.setQueryData<TableData>(queryKeys.table(instanceId, tableName), old => {

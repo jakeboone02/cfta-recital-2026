@@ -1,5 +1,5 @@
-import type { Env } from '../env';
 import Papa from 'papaparse';
+import type { Env } from '../env';
 
 interface CsvTable {
   name: string;
@@ -15,7 +15,9 @@ const CSV_TABLES: CsvTable[] = [
       const stmt = env.DB.prepare(
         'INSERT INTO dancers (recital_instance_id, first_name, last_name, is_teacher) VALUES (?, ?, ?, ?)'
       );
-      await env.DB.batch(rows.map(r => stmt.bind(instanceId, r.first_name, r.last_name, r.is_teacher ?? 0)));
+      await env.DB.batch(
+        rows.map(r => stmt.bind(instanceId, r.first_name, r.last_name, r.is_teacher ?? 0))
+      );
     },
   },
   {
@@ -25,7 +27,9 @@ const CSV_TABLES: CsvTable[] = [
       const stmt = env.DB.prepare(
         'INSERT INTO classes (recital_instance_id, csv_class_id, teacher, class_name, class_time) VALUES (?, ?, ?, ?, ?)'
       );
-      await env.DB.batch(rows.map(r => stmt.bind(instanceId, r.class_id, r.teacher, r.class_name, r.class_time)));
+      await env.DB.batch(
+        rows.map(r => stmt.bind(instanceId, r.class_id, r.teacher, r.class_name, r.class_time))
+      );
     },
   },
   {
@@ -37,7 +41,15 @@ const CSV_TABLES: CsvTable[] = [
       );
       await env.DB.batch(
         rows.map(r =>
-          stmt.bind(instanceId, r.dance_id, r.dance_style, r.dance_name, r.choreography ?? null, r.song ?? null, r.artist ?? null)
+          stmt.bind(
+            instanceId,
+            r.dance_id,
+            r.dance_style,
+            r.dance_name,
+            r.choreography ?? null,
+            r.song ?? null,
+            r.artist ?? null
+          )
         )
       );
     },
@@ -47,8 +59,16 @@ const CSV_TABLES: CsvTable[] = [
     requiredColumns: ['class_id', 'dance_id'],
     insert: async (env, instanceId, rows) => {
       // Map CSV IDs to D1 auto-generated IDs
-      const classes = await env.DB.prepare('SELECT class_id, csv_class_id FROM classes WHERE recital_instance_id = ?').bind(instanceId).all();
-      const dances = await env.DB.prepare('SELECT dance_id, csv_dance_id FROM dances WHERE recital_instance_id = ?').bind(instanceId).all();
+      const classes = await env.DB.prepare(
+        'SELECT class_id, csv_class_id FROM classes WHERE recital_instance_id = ?'
+      )
+        .bind(instanceId)
+        .all();
+      const dances = await env.DB.prepare(
+        'SELECT dance_id, csv_dance_id FROM dances WHERE recital_instance_id = ?'
+      )
+        .bind(instanceId)
+        .all();
       const classMap = new Map(classes.results.map((c: any) => [c.csv_class_id, c.class_id]));
       const danceMap = new Map(dances.results.map((d: any) => [d.csv_dance_id, d.dance_id]));
 
@@ -59,7 +79,9 @@ const CSV_TABLES: CsvTable[] = [
         .map(r => {
           const classId = classMap.get(r.class_id);
           const danceId = danceMap.get(r.dance_id);
-          return classId != null && danceId != null ? stmt.bind(instanceId, classId, danceId) : null;
+          return classId != null && danceId != null
+            ? stmt.bind(instanceId, classId, danceId)
+            : null;
         })
         .filter(Boolean) as D1PreparedStatement[];
       if (bindings.length) await env.DB.batch(bindings);
@@ -69,7 +91,11 @@ const CSV_TABLES: CsvTable[] = [
     name: 'dancer_classes',
     requiredColumns: ['class_id', 'dancer_name'],
     insert: async (env, instanceId, rows) => {
-      const classes = await env.DB.prepare('SELECT class_id, csv_class_id FROM classes WHERE recital_instance_id = ?').bind(instanceId).all();
+      const classes = await env.DB.prepare(
+        'SELECT class_id, csv_class_id FROM classes WHERE recital_instance_id = ?'
+      )
+        .bind(instanceId)
+        .all();
       const classMap = new Map(classes.results.map((c: any) => [c.csv_class_id, c.class_id]));
 
       const stmt = env.DB.prepare(
@@ -93,7 +119,14 @@ const CSV_TABLES: CsvTable[] = [
       );
       await env.DB.batch(
         rows.map(r =>
-          stmt.bind(instanceId, r.recital_id, r.recital_group_part_1 ?? null, r.recital_group_part_2 ?? null, r.recital_description, r.recital_time)
+          stmt.bind(
+            instanceId,
+            r.recital_id,
+            r.recital_group_part_1 ?? null,
+            r.recital_group_part_2 ?? null,
+            r.recital_description,
+            r.recital_time
+          )
         )
       );
     },
@@ -103,7 +136,11 @@ const CSV_TABLES: CsvTable[] = [
     requiredColumns: ['recital_group', 'show_order'],
     insert: async (env, instanceId, rows) => {
       // show_order contains CSV dance_ids — remap to D1 dance_ids
-      const dances = await env.DB.prepare('SELECT dance_id, csv_dance_id FROM dances WHERE recital_instance_id = ?').bind(instanceId).all();
+      const dances = await env.DB.prepare(
+        'SELECT dance_id, csv_dance_id FROM dances WHERE recital_instance_id = ?'
+      )
+        .bind(instanceId)
+        .all();
       const danceMap = new Map(dances.results.map((d: any) => [d.csv_dance_id, d.dance_id]));
 
       const stmt = env.DB.prepare(
@@ -112,7 +149,9 @@ const CSV_TABLES: CsvTable[] = [
       await env.DB.batch(
         rows.map(r => {
           const order: (number | string)[] = JSON.parse(r.show_order);
-          const remapped = order.map(id => (id === 'PRE' ? 'PRE' : danceMap.get(id as number) ?? id));
+          const remapped = order.map(id =>
+            id === 'PRE' ? 'PRE' : (danceMap.get(id as number) ?? id)
+          );
           return stmt.bind(instanceId, r.recital_group, JSON.stringify(remapped));
         })
       );
@@ -121,12 +160,26 @@ const CSV_TABLES: CsvTable[] = [
 ];
 
 // Required upload order (dependencies must come first)
-const UPLOAD_ORDER = ['dancers', 'classes', 'dances', 'class_dances', 'dancer_classes', 'recitals', 'recital_groups'];
+const UPLOAD_ORDER = [
+  'dancers',
+  'classes',
+  'dances',
+  'class_dances',
+  'dancer_classes',
+  'recitals',
+  'recital_groups',
+];
 
-export async function handleCsvUpload(request: Request, env: Env, instanceId: number): Promise<Response> {
+export async function handleCsvUpload(
+  request: Request,
+  env: Env,
+  instanceId: number
+): Promise<Response> {
   if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
 
-  const body = (await request.json()) as { table: string; csv: string } | { tables: Record<string, string> };
+  const body = (await request.json()) as
+    | { table: string; csv: string }
+    | { tables: Record<string, string> };
 
   // Single table upload
   if ('table' in body && 'csv' in body) {
@@ -154,7 +207,12 @@ export async function handleCsvUpload(request: Request, env: Env, instanceId: nu
   return Response.json({ error: 'Invalid request body' }, { status: 400 });
 }
 
-async function uploadSingleTable(env: Env, instanceId: number, tableName: string, csv: string): Promise<Response> {
+async function uploadSingleTable(
+  env: Env,
+  instanceId: number,
+  tableName: string,
+  csv: string
+): Promise<Response> {
   const tableConfig = CSV_TABLES.find(t => t.name === tableName);
   if (!tableConfig) {
     return Response.json({ error: `Unknown table: ${tableName}` }, { status: 400 });
@@ -167,7 +225,10 @@ async function uploadSingleTable(env: Env, instanceId: number, tableName: string
   });
 
   if (parsed.errors.length > 0) {
-    return Response.json({ error: `CSV parse errors: ${parsed.errors.map(e => e.message).join('; ')}` }, { status: 400 });
+    return Response.json(
+      { error: `CSV parse errors: ${parsed.errors.map(e => e.message).join('; ')}` },
+      { status: 400 }
+    );
   }
 
   // Validate required columns

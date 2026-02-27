@@ -4,7 +4,17 @@
 
 A dance recital show-order planning tool for Copper Hills Center for the Arts (CFTA). The app helps organize dozens of dances across multiple shows, optimizing order to minimize dancer conflicts between consecutive dances.
 
-**Stack:** Bun, TypeScript, React, Cloudflare Workers, D1 (SQLite), TanStack React Query, TanStack React Table, `@hello-pangea/dnd` (drag-and-drop).
+**Stack:**
+
+- Bun
+- TypeScript
+- React
+- Cloudflare Workers
+- D1 (SQLite)
+- TanStack React Query
+- TanStack React Table
+- `@hello-pangea/dnd` (drag-and-drop)
+- Oxfmt
 
 ## Tooling — Always Use Bun
 
@@ -20,10 +30,13 @@ This project uses **Bun** as its runtime, package manager, bundler, and test run
 | `node script.ts`   | `bun script.ts`     |
 | Vite build         | `bun run build`     |
 
+Run `bun fmt` after every edit to ensure proper formatting.
+
 ### Key Commands
 
 ```sh
 bun install              # Install dependencies
+bun fmt                  # Format all code
 bun run build            # Build the React SPA into build/ (uses Bun.build, NOT Vite)
 bun run dev              # Build + start local Wrangler dev server
 bun ./src/optimize.ts    # Run the show-order optimizer CLI

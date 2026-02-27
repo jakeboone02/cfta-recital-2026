@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "bracketSameLine": true,
+  "arrowParens": "avoid",
+  "embeddedLanguageFormatting": "auto",
+  "experimentalSortImports": {
+    "newlinesBetween": false,
+    "sortSideEffects": false,
+    "customGroups": [
+      { "groupName": "bun", "elementNamePattern": ["bun"] },
+      { "groupName": "bun:", "elementNamePattern": ["bun:*"] },
+      { "groupName": "node:", "elementNamePattern": ["node:*"] }
+    ],
+    "groups": [
+      ["bun", "bun:", "node:"],
+      ["type-builtin", "value-builtin"],
+      ["type-external", "value-external"],
+      ["type-parent", "value-parent", "type-sibling", "value-sibling", "type-index", "value-index"],
+      "type-import",
+      "unknown"
+    ]
+  },
+  "experimentalSortPackageJson": false,
+  "ignorePatterns": ["src_202*/**/*.*", "**/*.generated.ts", "build/**/*.*", "**/*.db"]
+}

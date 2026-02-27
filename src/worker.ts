@@ -1,5 +1,5 @@
-import type { Env } from './env';
 import { handleApiRequest } from './api/router';
+import type { Env } from './env';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

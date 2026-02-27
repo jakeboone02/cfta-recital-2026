@@ -1,10 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { WORKER_CODE } from './optimizer-worker-code.generated';
+import type { AnnealConfig } from './optimizer/types';
+import {
+  useInstances,
+  useCreateInstance,
+  useLogin,
+  useInstanceData,
+  useOrder,
+  useSaveOrder,
+  useSaveBookmark,
+  useDeleteBookmark,
+  useRenameBookmark,
+  queryKeys,
+} from './queries';
+import { ReportArea } from './ReportArea';
 import type { GroupOrders } from './types';
 import { buildComboSiblingMap } from './types';
-import { WORKER_CODE } from './optimizer-worker-code.generated';
-import { WorkingArea } from './WorkingArea';
-import { ReportArea } from './ReportArea';
 import {
   buildDanceMap,
   computeShowOrder,
@@ -20,19 +32,7 @@ import {
   redo,
 } from './utils';
 import type { Bookmark } from './utils';
-import type { AnnealConfig } from './optimizer/types';
-import {
-  useInstances,
-  useCreateInstance,
-  useLogin,
-  useInstanceData,
-  useOrder,
-  useSaveOrder,
-  useSaveBookmark,
-  useDeleteBookmark,
-  useRenameBookmark,
-  queryKeys,
-} from './queries';
+import { WorkingArea } from './WorkingArea';
 
 const OPTIMIZE_CONFIG: AnnealConfig = {
   initialTemp: 5000,
@@ -56,7 +56,8 @@ export const App = () => {
   const { isSuccess: authed, isError: notAuthed, isLoading: authLoading } = useInstances();
 
   if (authLoading) return <div className="loading">Loading…</div>;
-  if (notAuthed || route === '/login') return <LoginPage onLogin={() => window.location.hash = '#/'} />;
+  if (notAuthed || route === '/login')
+    return <LoginPage onLogin={() => (window.location.hash = '#/')} />;
 
   const instanceMatch = route.match(/^\/instances\/(\d+)/);
   if (instanceMatch) {
@@ -87,7 +88,10 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => { setPassword(e.target.value); loginMutation.reset(); }}
+          onChange={e => {
+            setPassword(e.target.value);
+            loginMutation.reset();
+          }}
           autoFocus
         />
         <button type="submit">Log In</button>
@@ -109,13 +113,16 @@ const InstanceListPage = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    createMutation.mutate({ name: newName.trim(), year: newYear }, {
-      onSuccess: (inst) => {
-        setShowCreate(false);
-        setNewName('');
-        window.location.hash = `#/instances/${inst.id}/setup`;
-      },
-    });
+    createMutation.mutate(
+      { name: newName.trim(), year: newYear },
+      {
+        onSuccess: inst => {
+          setShowCreate(false);
+          setNewName('');
+          window.location.hash = `#/instances/${inst.id}/setup`;
+        },
+      }
+    );
   };
 
   if (loading) return <div className="loading">Loading…</div>;
@@ -123,13 +130,27 @@ const InstanceListPage = () => {
   return (
     <div className="instance-list-page">
       <h1>CFTA Dance Recitals</h1>
-      <button className="btn-create" onClick={() => setShowCreate(true)}>+ New Dance Recital</button>
+      <button className="btn-create" onClick={() => setShowCreate(true)}>
+        + New Dance Recital
+      </button>
       {showCreate && (
         <form className="create-form" onSubmit={handleCreate}>
-          <input placeholder="Name (e.g., 2027 Spring Dance Recital)" value={newName} onChange={e => setNewName(e.target.value)} autoFocus />
-          <input type="number" placeholder="Year" value={newYear} onChange={e => setNewYear(parseInt(e.target.value, 10))} />
+          <input
+            placeholder="Name (e.g., 2027 Spring Dance Recital)"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            autoFocus
+          />
+          <input
+            type="number"
+            placeholder="Year"
+            value={newYear}
+            onChange={e => setNewYear(parseInt(e.target.value, 10))}
+          />
           <button type="submit">Create</button>
-          <button type="button" onClick={() => setShowCreate(false)}>Cancel</button>
+          <button type="button" onClick={() => setShowCreate(false)}>
+            Cancel
+          </button>
         </form>
       )}
       <ul className="instance-list">
@@ -142,7 +163,9 @@ const InstanceListPage = () => {
             </a>
           </li>
         ))}
-        {(instances ?? []).length === 0 && <li className="empty">No dance recitals yet. Create one to get started.</li>}
+        {(instances ?? []).length === 0 && (
+          <li className="empty">No dance recitals yet. Create one to get started.</li>
+        )}
       </ul>
     </div>
   );
@@ -155,10 +178,18 @@ import type { ColumnOverride } from './DataGrid';
 const CSV_TABLES = [
   { name: 'dancers', label: 'Dancers', cols: 'first_name, last_name, is_teacher' },
   { name: 'classes', label: 'Classes', cols: 'class_id, teacher, class_name, class_time' },
-  { name: 'dances', label: 'Dances', cols: 'dance_id, dance_style, dance_name, choreography, song, artist' },
+  {
+    name: 'dances',
+    label: 'Dances',
+    cols: 'dance_id, dance_style, dance_name, choreography, song, artist',
+  },
   { name: 'class_dances', label: 'Class→Dance', cols: 'class_id, dance_id' },
   { name: 'dancer_classes', label: 'Dancer→Class', cols: 'class_id, dancer_name' },
-  { name: 'recitals', label: 'Recitals', cols: 'recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time' },
+  {
+    name: 'recitals',
+    label: 'Recitals',
+    cols: 'recital_id, recital_group_part_1, recital_group_part_2, recital_description, recital_time',
+  },
   { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
 ];
 
@@ -177,7 +208,7 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
       select: {
         table: 'classes',
         labelColumn: 'class_name',
-        labelFn: (r) => `${r.class_name} (${r.teacher})`,
+        labelFn: r => `${r.class_name} (${r.teacher})`,
         valueColumn: 'class_id',
         saveTo: 'class_id',
       },
@@ -198,7 +229,7 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
       select: {
         table: 'classes',
         labelColumn: 'class_name',
-        labelFn: (r) => `${r.class_name} (${r.teacher})`,
+        labelFn: r => `${r.class_name} (${r.teacher})`,
         valueColumn: 'class_id',
         saveTo: 'class_id',
       },
@@ -213,7 +244,7 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
       select: {
         table: 'dances',
         labelColumn: 'dance_name',
-        labelFn: (r) => `${r.dance_name} (${r.choreography})`,
+        labelFn: r => `${r.dance_name} (${r.choreography})`,
         valueColumn: 'dance_id',
         saveTo: 'dance_id',
       },
@@ -241,7 +272,10 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
     setStatus({});
     for (const table of CSV_TABLES) {
       const csv = files[table.name];
-      if (!csv) { setStatus(prev => ({ ...prev, [table.name]: 'skipped' })); continue; }
+      if (!csv) {
+        setStatus(prev => ({ ...prev, [table.name]: 'skipped' }));
+        continue;
+      }
       try {
         const { uploadCsv } = await import('./api-client');
         const result = await uploadCsv(instanceId, table.name, csv);
@@ -254,7 +288,11 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
   };
 
   // Lazy-load DataGrid only when needed
-  const [DataGrid, setDataGrid] = useState<React.ComponentType<{ instanceId: number; tableName: string; columnOverrides?: Record<string, ColumnOverride> }> | null>(null);
+  const [DataGrid, setDataGrid] = useState<React.ComponentType<{
+    instanceId: number;
+    tableName: string;
+    columnOverrides?: Record<string, ColumnOverride>;
+  }> | null>(null);
   useEffect(() => {
     if (editingTable && !DataGrid) {
       import('./DataGrid').then(m => setDataGrid(() => m.DataGrid));
@@ -265,11 +303,15 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
     <div className="setup-page">
       <div className="setup-header">
         <h2>Manage Data</h2>
-        <a href={`#/instances/${instanceId}`} className="setup-back">← Back to planner</a>
+        <a href={`#/instances/${instanceId}`} className="setup-back">
+          ← Back to planner
+        </a>
       </div>
       <div className="csv-upload-grid">
         {CSV_TABLES.map(table => (
-          <div key={table.name} className={`csv-upload-card ${editingTable === table.name ? 'csv-upload-card--editing' : ''}`}>
+          <div
+            key={table.name}
+            className={`csv-upload-card ${editingTable === table.name ? 'csv-upload-card--editing' : ''}`}>
             <div className="csv-upload-row">
               <div className="csv-upload-info">
                 <strong>{table.label}</strong>
@@ -278,27 +320,41 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
               <div className="csv-upload-actions">
                 <label className="csv-file-label">
                   📁 CSV
-                  <input type="file" accept=".csv" onChange={e => e.target.files?.[0] && handleFile(table.name, e.target.files[0])} />
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={e => e.target.files?.[0] && handleFile(table.name, e.target.files[0])}
+                  />
                 </label>
                 {files[table.name] && <span className="csv-ready">Ready</span>}
-                {status[table.name] && <span className={status[table.name].startsWith('✗') ? 'csv-error' : 'csv-ok'}>{status[table.name]}</span>}
+                {status[table.name] && (
+                  <span className={status[table.name].startsWith('✗') ? 'csv-error' : 'csv-ok'}>
+                    {status[table.name]}
+                  </span>
+                )}
                 <button
                   className={`btn-edit-table ${editingTable === table.name ? 'btn-edit-table--active' : ''}`}
-                  onClick={() => setEditingTable(editingTable === table.name ? null : table.name)}
-                >
+                  onClick={() => setEditingTable(editingTable === table.name ? null : table.name)}>
                   {editingTable === table.name ? '▲ Close' : '✏️ Edit'}
                 </button>
               </div>
             </div>
             {editingTable === table.name && DataGrid && (
               <div className="csv-upload-editor">
-                <DataGrid instanceId={instanceId} tableName={table.name} columnOverrides={TABLE_COLUMN_OVERRIDES[table.name]} />
+                <DataGrid
+                  instanceId={instanceId}
+                  tableName={table.name}
+                  columnOverrides={TABLE_COLUMN_OVERRIDES[table.name]}
+                />
               </div>
             )}
           </div>
         ))}
       </div>
-      <button className="btn-upload-all" onClick={handleUploadAll} disabled={uploading || Object.keys(files).length === 0}>
+      <button
+        className="btn-upload-all"
+        onClick={handleUploadAll}
+        disabled={uploading || Object.keys(files).length === 0}>
         {uploading ? 'Uploading…' : '⬆ Upload All CSVs'}
       </button>
     </div>
@@ -308,7 +364,11 @@ const SetupPage = ({ instanceId }: { instanceId: number }) => {
 // ── Planner Page (main working area) ─────────────────────────────────────
 
 const PlannerPage = ({ instanceId }: { instanceId: number }) => {
-  const { data: instanceData, isLoading: dataLoading, error: dataError } = useInstanceData(instanceId);
+  const {
+    data: instanceData,
+    isLoading: dataLoading,
+    error: dataError,
+  } = useInstanceData(instanceId);
   const { data: orderData, isLoading: orderLoading, error: orderError } = useOrder(instanceId);
   const queryClient = useQueryClient();
 
@@ -347,16 +407,22 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const data = instanceData ?? null;
   const danceMap = useMemo(() => (data ? buildDanceMap(data.dances) : {}), [data]);
-  const comboSiblingMap = useMemo(() => (data ? buildComboSiblingMap(data.comboPairs) : {}), [data]);
+  const comboSiblingMap = useMemo(
+    () => (data ? buildComboSiblingMap(data.comboPairs) : {}),
+    [data]
+  );
   const dancersByDance = data?.dancersByDance ?? {};
   const dancerLastNames = data?.dancerLastNames ?? {};
 
   // TODO: make this configurable via instance config (Phase 5)
-  const showStructure = useMemo(() => [
-    { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] as ['A', 'B'] },
-    { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] as ['C', 'A'] },
-    { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] as ['B', 'C'] },
-  ], []);
+  const showStructure = useMemo(
+    () => [
+      { recital_id: 1, label: 'Friday Evening', parts: ['A', 'B'] as ['A', 'B'] },
+      { recital_id: 2, label: 'Saturday Morning', parts: ['C', 'A'] as ['C', 'A'] },
+      { recital_id: 3, label: 'Saturday Afternoon', parts: ['B', 'C'] as ['B', 'C'] },
+    ],
+    []
+  );
 
   const shows = useMemo(
     () => (groups && data ? computeShowOrder(groups, danceMap, dancersByDance, showStructure) : []),
@@ -408,7 +474,10 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const handleApplyImport = () => {
     const parsed = parseGroupOrdersCSV(importText);
-    if (!parsed) { setImportError('Invalid CSV format. Expected recital_group,show_order columns.'); return; }
+    if (!parsed) {
+      setImportError('Invalid CSV format. Expected recital_group,show_order columns.');
+      return;
+    }
     handleGroupChange(parsed);
     setImportOpen(false);
   };
@@ -423,13 +492,21 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const handleUndo = () => {
     if (!groups) return;
     const prev = undo(groups);
-    if (prev) { setGroups(prev); debouncedSave(prev); setUndoVer(v => v + 1); }
+    if (prev) {
+      setGroups(prev);
+      debouncedSave(prev);
+      setUndoVer(v => v + 1);
+    }
   };
 
   const handleRedo = () => {
     if (!groups) return;
     const next = redo(groups);
-    if (next) { setGroups(next); debouncedSave(next); setUndoVer(v => v + 1); }
+    if (next) {
+      setGroups(next);
+      debouncedSave(next);
+      setUndoVer(v => v + 1);
+    }
   };
 
   const handleReset = () => {
@@ -450,7 +527,9 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
         const newGroups = e.data.groups;
         handleGroupChange(newGroups);
         const now = new Date();
-        const base = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+        const base =
+          now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+          ' ' +
           now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         saveBookmarkMutation.mutate({ name: base, groups: newGroups });
       }
@@ -458,7 +537,11 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
       worker.terminate();
       URL.revokeObjectURL(url);
     };
-    worker.onerror = () => { setOptimizing(false); worker.terminate(); URL.revokeObjectURL(url); };
+    worker.onerror = () => {
+      setOptimizing(false);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+    };
     worker.postMessage({
       groups,
       config: OPTIMIZE_CONFIG,
@@ -469,12 +552,21 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const handleSaveBookmark = () => {
     const name = bookmarkName.trim();
-    if (!name) { setBookmarkError('Name is required.'); return; }
+    if (!name) {
+      setBookmarkError('Name is required.');
+      return;
+    }
     if (!groups) return;
-    saveBookmarkMutation.mutate({ name, groups }, {
-      onSuccess: () => { setBookmarkName(''); setBookmarkError(''); },
-      onError: (e) => setBookmarkError(e.message),
-    });
+    saveBookmarkMutation.mutate(
+      { name, groups },
+      {
+        onSuccess: () => {
+          setBookmarkName('');
+          setBookmarkError('');
+        },
+        onError: e => setBookmarkError(e.message),
+      }
+    );
   };
 
   const handleLoadBookmark = (b: Bookmark) => handleGroupChange(b.groups);
@@ -486,34 +578,51 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const handleRenameBookmark = (oldName: string) => {
     const newName = renameValue.trim();
-    if (!newName || newName === oldName) { setRenamingBookmark(null); return; }
-    renameBookmarkMutation.mutate({ oldName, newName }, {
-      onSuccess: () => {
-        if (compareBookmark === oldName) setCompareBookmark(newName);
-        setRenamingBookmark(null);
-      },
-      onError: () => setBookmarkError('Name already exists'),
-    });
+    if (!newName || newName === oldName) {
+      setRenamingBookmark(null);
+      return;
+    }
+    renameBookmarkMutation.mutate(
+      { oldName, newName },
+      {
+        onSuccess: () => {
+          if (compareBookmark === oldName) setCompareBookmark(newName);
+          setRenamingBookmark(null);
+        },
+        onError: () => setBookmarkError('Name already exists'),
+      }
+    );
   };
 
   const bookmarkStats = (b: Bookmark): string => {
     if (!data) return '';
     const showOrders = computeShowOrder(b.groups, danceMap, dancersByDance, showStructure);
-    return 'Families: ' + showOrders.map(show => {
-      const lastNames = new Set<string>();
-      for (const d of show.dances) for (const dancer of d.dancers) {
-        const ln = dancerLastNames[dancer];
-        if (ln) lastNames.add(ln);
-      }
-      return lastNames.size;
-    }).join(' · ');
+    return (
+      'Families: ' +
+      showOrders
+        .map(show => {
+          const lastNames = new Set<string>();
+          for (const d of show.dances)
+            for (const dancer of d.dancers) {
+              const ln = dancerLastNames[dancer];
+              if (ln) lastNames.add(ln);
+            }
+          return lastNames.size;
+        })
+        .join(' · ')
+    );
   };
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
-      else if ((mod && e.key === 'y') || (e.metaKey && e.shiftKey && e.key === 'z')) { e.preventDefault(); handleRedo(); }
+      if (mod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if ((mod && e.key === 'y') || (e.metaKey && e.shiftKey && e.key === 'z')) {
+        e.preventDefault();
+        handleRedo();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -523,7 +632,12 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const error = dataError?.message || orderError?.message || '';
 
   if (loading) return <div className="loading">Loading…</div>;
-  if (error) return <div className="error">Error: {error} <a href={`#/instances/${instanceId}/setup`}>Upload data</a></div>;
+  if (error)
+    return (
+      <div className="error">
+        Error: {error} <a href={`#/instances/${instanceId}/setup`}>Upload data</a>
+      </div>
+    );
   if (!groups || !data) return <div className="loading">Loading…</div>;
 
   return (
@@ -536,16 +650,32 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
           onChange={handleGroupChange}
           actions={
             <>
-              <a href="#/" className="btn-nav" title="All recitals">🏠</a>
-              <a href={`#/instances/${instanceId}/setup`} className="btn-nav" title="Upload/manage data">📂</a>
-              <span style={{ marginRight: 'auto'}}>{`\u00A0`}</span>
-              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">↶</button>
-              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">↷</button>
-              <span style={{ marginRight: 'auto'}}>{`\u00A0`}</span>
+              <a href="#/" className="btn-nav" title="All recitals">
+                🏠
+              </a>
+              <a
+                href={`#/instances/${instanceId}/setup`}
+                className="btn-nav"
+                title="Upload/manage data">
+                📂
+              </a>
+              <span style={{ marginRight: 'auto' }}>{`\u00A0`}</span>
+              <button onClick={handleUndo} disabled={!canUndo()} title="Undo">
+                ↶
+              </button>
+              <button onClick={handleRedo} disabled={!canRedo()} title="Redo">
+                ↷
+              </button>
+              <span style={{ marginRight: 'auto' }}>{`\u00A0`}</span>
               <button onClick={handleOptimize} disabled={optimizing} title="Run optimizer">
                 {optimizing ? '⏳ Optimizing…' : '⚡ Optimize'}
               </button>
-              <button onClick={handleReset} className="btn-reset" title="Reset dance order to original database order">Reset</button>
+              <button
+                onClick={handleReset}
+                className="btn-reset"
+                title="Reset dance order to original database order">
+                Reset
+              </button>
             </>
           }
         />
@@ -559,17 +689,35 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
             label="Current"
             actions={
               <div className="header-actions">
-                <button onClick={handleExportCSV} title="Download show order as CSV file">💾 CSV</button>
-                <button onClick={handleExportExcel} title="Download show order as formatted Excel file">📊 Excel</button>
-                <button onClick={handleOpenImport} title="Import/export group orders as CSV">📥 Import/Export</button>
-                <button onClick={() => setBookmarkOpen(o => !o)} className={bookmarkOpen ? 'btn-bookmark-active' : ''} title="Bookmarks">⭐</button>
+                <button onClick={handleExportCSV} title="Download show order as CSV file">
+                  💾 CSV
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  title="Download show order as formatted Excel file">
+                  📊 Excel
+                </button>
+                <button onClick={handleOpenImport} title="Import/export group orders as CSV">
+                  📥 Import/Export
+                </button>
+                <button
+                  onClick={() => setBookmarkOpen(o => !o)}
+                  className={bookmarkOpen ? 'btn-bookmark-active' : ''}
+                  title="Bookmarks">
+                  ⭐
+                </button>
               </div>
             }
           />
         </div>
         {compareData && (
           <div className="report-pane report-pane--compare">
-            <ReportArea shows={compareData} dancerLastNames={dancerLastNames} compact label={compareBookmark ?? 'Bookmark'} />
+            <ReportArea
+              shows={compareData}
+              dancerLastNames={dancerLastNames}
+              compact
+              label={compareBookmark ?? 'Bookmark'}
+            />
           </div>
         )}
       </div>
@@ -577,34 +725,74 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
         <div className="bookmark-sidebar">
           <div className="bookmark-sidebar-header">
             <h3>Bookmarks</h3>
-            <button onClick={() => setBookmarkOpen(false)} title="Close">✕</button>
+            <button onClick={() => setBookmarkOpen(false)} title="Close">
+              ✕
+            </button>
           </div>
           <div className="bookmark-save">
-            <input type="text" placeholder="Bookmark name" value={bookmarkName}
-              onChange={e => { setBookmarkName(e.target.value); setBookmarkError(''); }}
-              onKeyDown={e => { if (e.key === 'Enter') handleSaveBookmark(); }} />
+            <input
+              type="text"
+              placeholder="Bookmark name"
+              value={bookmarkName}
+              onChange={e => {
+                setBookmarkName(e.target.value);
+                setBookmarkError('');
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleSaveBookmark();
+              }}
+            />
             <button onClick={handleSaveBookmark}>Save</button>
           </div>
           {bookmarkError && <div className="import-error">{bookmarkError}</div>}
           <ul className="bookmark-list">
             {bookmarks.toReversed().map(b => (
               <li key={b.name} className="bookmark-item">
-                <input type="checkbox" className="bookmark-compare"
+                <input
+                  type="checkbox"
+                  className="bookmark-compare"
                   checked={compareBookmark === b.name}
-                  onChange={() => setCompareBookmark(compareBookmark === b.name ? null : b.name)} title="Compare" />
+                  onChange={() => setCompareBookmark(compareBookmark === b.name ? null : b.name)}
+                  title="Compare"
+                />
                 <div className="bookmark-info">
                   {renamingBookmark === b.name ? (
-                    <input className="bookmark-rename-input" autoFocus value={renameValue}
+                    <input
+                      className="bookmark-rename-input"
+                      autoFocus
+                      value={renameValue}
                       onChange={e => setRenameValue(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleRenameBookmark(b.name); if (e.key === 'Escape') setRenamingBookmark(null); }}
-                      onBlur={() => handleRenameBookmark(b.name)} />
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleRenameBookmark(b.name);
+                        if (e.key === 'Escape') setRenamingBookmark(null);
+                      }}
+                      onBlur={() => handleRenameBookmark(b.name)}
+                    />
                   ) : (
-                    <button className="bookmark-name" onClick={() => handleLoadBookmark(b)} title="Load this bookmark">{b.name}</button>
+                    <button
+                      className="bookmark-name"
+                      onClick={() => handleLoadBookmark(b)}
+                      title="Load this bookmark">
+                      {b.name}
+                    </button>
                   )}
                   <span className="bookmark-stats">{bookmarkStats(b)}</span>
                 </div>
-                <button className="bookmark-rename" onClick={() => { setRenamingBookmark(b.name); setRenameValue(b.name); }} title="Rename">✏️</button>
-                <button className="bookmark-delete" onClick={() => handleDeleteBookmark(b.name)} title="Delete">✕</button>
+                <button
+                  className="bookmark-rename"
+                  onClick={() => {
+                    setRenamingBookmark(b.name);
+                    setRenameValue(b.name);
+                  }}
+                  title="Rename">
+                  ✏️
+                </button>
+                <button
+                  className="bookmark-delete"
+                  onClick={() => handleDeleteBookmark(b.name)}
+                  title="Delete">
+                  ✕
+                </button>
               </li>
             ))}
             {bookmarks.length === 0 && <li className="bookmark-empty">No bookmarks yet</li>}
@@ -615,7 +803,14 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
         <div className="modal-overlay" onClick={() => setImportOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3>Import / Export Group Orders</h3>
-            <textarea rows={8} value={importText} onChange={e => { setImportText(e.target.value); setImportError(''); }} />
+            <textarea
+              rows={8}
+              value={importText}
+              onChange={e => {
+                setImportText(e.target.value);
+                setImportError('');
+              }}
+            />
             {importError && <div className="import-error">{importError}</div>}
             <div className="modal-actions">
               <button onClick={handleApplyImport}>Apply</button>

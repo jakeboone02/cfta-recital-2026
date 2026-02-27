@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import type { GroupName } from './types';
 import type { ShowData, ShowDance } from './utils';
 import { styleSlug } from './utils';
-import type { GroupName } from './types';
 
 interface Props {
   shows: ShowData[];

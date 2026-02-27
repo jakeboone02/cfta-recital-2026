@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "fmt": "oxfmt",
     "build": "bun ./src/build.ts",
     "dev": "bun run build && npx wrangler dev",
     "seed-local": "npx wrangler d1 execute cfta-dance-recital-2026 --local --file=src/schema.sql"
@@ -23,6 +24,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "oxfmt": "^0.35.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.69.0"
   }

@@ -45,10 +45,9 @@ const loadDancersByDance = (): Map<number, string[]> => {
 
 const loadCurrentGroups = (): Solution => {
   const rows = db
-    .query<
-      { recital_group: GroupName; show_order: string },
-      SQLQueryBindings[]
-    >('SELECT recital_group, show_order FROM recital_groups')
+    .query<{ recital_group: GroupName; show_order: string }, SQLQueryBindings[]>(
+      'SELECT recital_group, show_order FROM recital_groups'
+    )
     .all();
 
   const solution: Solution = { A: [], B: [], C: [] };

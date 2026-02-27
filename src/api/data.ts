@@ -1,6 +1,10 @@
 import type { Env } from '../env';
 
-export async function handleData(request: Request, env: Env, instanceId: number): Promise<Response> {
+export async function handleData(
+  request: Request,
+  env: Env,
+  instanceId: number
+): Promise<Response> {
   if (request.method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
 
   const [dances, groups, comboPairs, dancerRows, dancerLastNames] = await Promise.all([
@@ -9,7 +13,9 @@ export async function handleData(request: Request, env: Env, instanceId: number)
     )
       .bind(instanceId)
       .all(),
-    env.DB.prepare('SELECT recital_group, show_order FROM recital_groups WHERE recital_instance_id = ?')
+    env.DB.prepare(
+      'SELECT recital_group, show_order FROM recital_groups WHERE recital_instance_id = ?'
+    )
       .bind(instanceId)
       .all(),
     env.DB.prepare(
@@ -32,9 +38,7 @@ export async function handleData(request: Request, env: Env, instanceId: number)
     )
       .bind(instanceId)
       .all(),
-    env.DB.prepare(
-      `SELECT dancer_name, last_name FROM dancers WHERE recital_instance_id = ?`
-    )
+    env.DB.prepare(`SELECT dancer_name, last_name FROM dancers WHERE recital_instance_id = ?`)
       .bind(instanceId)
       .all(),
   ]);
@@ -58,9 +62,7 @@ export async function handleData(request: Request, env: Env, instanceId: number)
   }));
 
   // Get instance config
-  const instance = await env.DB.prepare(
-    'SELECT config FROM recital_instances WHERE id = ?'
-  )
+  const instance = await env.DB.prepare('SELECT config FROM recital_instances WHERE id = ?')
     .bind(instanceId)
     .first();
 
