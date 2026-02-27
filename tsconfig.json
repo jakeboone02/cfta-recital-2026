@@ -24,6 +24,5 @@
     "src/optimize.ts",
     "src/data.generated.ts",
     "src/server.ts"
-  ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  ]
 }
