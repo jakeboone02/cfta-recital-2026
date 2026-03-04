@@ -1,16 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   flexRender,
-  type ColumnDef,
-  type SortingState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from '@tanstack/react-table';
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { upsertTableRow, type TableData } from './api-client';
-import { useTableRows, useDeleteRow, queryKeys } from './queries';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TableData } from './api-client';
+import { upsertTableRow } from './api-client';
+import { queryKeys, useDeleteRow, useTableRows } from './queries';
 
 // ── Column override types ────────────────────────────────────────────────
 

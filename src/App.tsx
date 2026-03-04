@@ -3,35 +3,34 @@ import { useEffect, useMemo, useState } from 'react';
 import { WORKER_CODE } from './optimizer-worker-code.generated';
 import type { AnnealConfig } from './optimizer/types';
 import {
-  useInstances,
   useCreateInstance,
-  useLogin,
-  useInstanceData,
-  useOrder,
-  useSaveOrder,
-  useSaveBookmark,
   useDeleteBookmark,
+  useInstanceData,
+  useInstances,
+  useLogin,
+  useOrder,
   useRenameBookmark,
-  queryKeys,
+  useSaveBookmark,
+  useSaveOrder,
 } from './queries';
 import { ReportArea } from './ReportArea';
 import type { GroupOrders, ShowStructureEntry } from './types';
 import { buildComboSiblingMap } from './types';
+import type { Bookmark } from './utils';
 import {
   buildDanceMap,
+  canRedo,
+  canUndo,
   computeShowOrder,
   exportCSV,
   exportExcel,
   exportGroupOrdersCSV,
-  parseGroupOrdersCSV,
   initUndoSession,
+  parseGroupOrdersCSV,
   pushUndo,
-  canUndo,
-  canRedo,
-  undo,
   redo,
+  undo,
 } from './utils';
-import type { Bookmark } from './utils';
 import { WorkingArea } from './WorkingArea';
 
 const OPTIMIZE_CONFIG: AnnealConfig = {

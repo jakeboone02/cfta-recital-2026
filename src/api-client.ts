@@ -1,4 +1,4 @@
-import type { DanceRow, RecitalGroupRow, ShowRow, ComboPair, GroupOrders } from './types';
+import type { ComboPair, DanceRow, GroupOrders, RecitalGroupRow, ShowRow } from './types';
 import type { Bookmark } from './utils';
 
 const API_BASE = '/api';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ShowData, ShowDance } from './utils';
+import type { ShowDance, ShowData } from './utils';
 import { styleSlug } from './utils';
 
 interface Props {

@@ -2,8 +2,8 @@ import { Database, SQLQueryBindings } from 'bun:sqlite';
 import indexHTML from './src/index.html';
 import { anneal } from './src/optimizer/anneal';
 import { buildScoringContext } from './src/optimizer/score';
-import type { AnnealConfig, DanceData, ShowPart, Solution } from './src/optimizer/types';
-import { DanceRow, GroupOrders, ShowDanceInstance, RecitalGroupRow, ShowRow } from './src/types';
+import type { AnnealConfig, DanceData, ShowPart } from './src/optimizer/types';
+import { DanceRow, GroupOrders, RecitalGroupRow, ShowDanceInstance, ShowRow } from './src/types';
 
 const db = new Database(`./build/database.db`);
 

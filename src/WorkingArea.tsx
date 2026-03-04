@@ -1,4 +1,5 @@
-import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useState } from 'react';
 import type { DanceMap, GroupOrders } from './types';
 import { styleSlug } from './utils';

@@ -6,7 +6,7 @@ import type {
   ShowDanceInstance,
   ShowStructureEntry,
 } from './types';
-import { SPECTAPULAR_ID, HIPHOP_ID, FINALE_ID } from './types';
+import { FINALE_ID, HIPHOP_ID, SPECTAPULAR_ID } from './types';
 
 export interface Bookmark {
   name: string;
