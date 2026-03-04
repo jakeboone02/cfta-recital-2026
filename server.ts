@@ -3,19 +3,13 @@ import indexHTML from './src/index.html';
 import { anneal } from './src/optimizer/anneal';
 import { buildScoringContext } from './src/optimizer/score';
 import type { AnnealConfig, DanceData, ShowPart, Solution } from './src/optimizer/types';
-import {
-  DanceRow,
-  GroupOrders,
-  RecitalDanceInstance,
-  RecitalGroupRow,
-  RecitalRow,
-} from './src/types';
+import { DanceRow, GroupOrders, ShowDanceInstance, RecitalGroupRow, ShowRow } from './src/types';
 
 const db = new Database(`./build/database.db`);
 
-const getRecitalOrderData = () =>
+const getShowOrderData = () =>
   db
-    .query<RecitalDanceInstance, SQLQueryBindings[]>('SELECT * FROM consecutive_dances_tracker')
+    .query<ShowDanceInstance, SQLQueryBindings[]>('SELECT * FROM consecutive_dances_tracker')
     .all()
     .map(d => ({
       ...d,
@@ -32,19 +26,17 @@ const getGroups = () =>
     .all()
     .map(g => ({ ...g, show_order: JSON.parse(g.show_order as unknown as string) }));
 
-const getRecitals = (): RecitalRow[] =>
+const getShows = (): ShowRow[] =>
   db
     .query<
       {
-        recital_id: number;
+        show_id: number;
         group_order: string;
-        recital_description: string;
-        recital_time: string;
+        show_description: string;
+        show_time: string;
       },
       SQLQueryBindings[]
-    >(
-      'SELECT recital_id, group_order, recital_description, recital_time FROM recitals ORDER BY recital_id'
-    )
+    >('SELECT show_id, group_order, show_description, show_time FROM shows ORDER BY show_id')
     .all()
     .map(r => ({ ...r, group_order: JSON.parse(r.group_order) }));
 
@@ -89,9 +81,9 @@ for (const r of db
   optimizerDancersByDance.get(r.dance_id)!.push(r.dancer_name);
 }
 
-const recitalRows = getRecitals();
-const optimizerShowParts: ShowPart[] = recitalRows.map(r => ({
-  recitalId: r.recital_id,
+const showRows = getShows();
+const optimizerShowParts: ShowPart[] = showRows.map(r => ({
+  showId: r.show_id,
   groups: r.group_order,
 }));
 const optimizerGroupNames = [...new Set(optimizerShowParts.flatMap(s => s.groups))].sort();
@@ -117,10 +109,10 @@ const server = Bun.serve({
   async fetch(req) {
     const path = new URL(req.url).pathname;
 
-    if (path === '/api/data') return Response.json(getRecitalOrderData());
+    if (path === '/api/data') return Response.json(getShowOrderData());
     if (path === '/api/dances') return Response.json(getDances());
     if (path === '/api/groups') return Response.json(getGroups());
-    if (path === '/api/recitals') return Response.json(getRecitals());
+    if (path === '/api/shows') return Response.json(getShows());
     if (path === '/api/combo-pairs') return Response.json(getComboPairs());
 
     if (path === '/api/optimize' && req.method === 'POST') {

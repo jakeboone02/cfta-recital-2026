@@ -35,10 +35,10 @@ const TABLE_DEFS: Record<string, TableDef> = {
     columns: ['class_id', 'dance_id'],
     orderBy: 'class_id, dance_id',
   },
-  recitals: {
-    pk: 'recital_id',
-    columns: ['csv_recital_id', 'group_order', 'recital_description', 'recital_time'],
-    orderBy: 'recital_id',
+  shows: {
+    pk: 'show_id',
+    columns: ['csv_show_id', 'group_order', 'show_description', 'show_time'],
+    orderBy: 'show_id',
   },
   recital_groups: {
     pk: 'id',

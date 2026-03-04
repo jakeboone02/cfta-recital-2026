@@ -58,13 +58,13 @@ const loadCurrentGroups = (): Solution => {
 
 const loadShowParts = (): { groupNames: string[]; showParts: ShowPart[] } => {
   const rows = db
-    .query<{ recital_id: number; group_order: string }, SQLQueryBindings[]>(
-      'SELECT recital_id, group_order FROM recitals ORDER BY recital_id'
+    .query<{ show_id: number; group_order: string }, SQLQueryBindings[]>(
+      'SELECT show_id, group_order FROM shows ORDER BY show_id'
     )
     .all();
 
   const showParts: ShowPart[] = rows.map(r => ({
-    recitalId: r.recital_id,
+    showId: r.show_id,
     groups: JSON.parse(r.group_order),
   }));
 
@@ -96,7 +96,7 @@ console.log();
 // Print current show details
 for (const detail of currentResult.details) {
   if (detail.consecutivePairs.length > 0) {
-    console.log(`Show ${detail.recitalId} — consecutive conflicts:`);
+    console.log(`Show ${detail.showId} — consecutive conflicts:`);
     for (const p of detail.consecutivePairs) {
       console.log(`  ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
     }
@@ -137,8 +137,7 @@ const printSolution = (sol: Solution, result: ReturnType<typeof scoreSolution>) 
   // Show conflicts if any
   for (const detail of result.details) {
     if (detail.consecutivePairs.length > 0) {
-      const showLabel =
-        detail.recitalId === 1 ? 'Fri' : detail.recitalId === 2 ? 'Sat AM' : 'Sat PM';
+      const showLabel = detail.showId === 1 ? 'Fri' : detail.showId === 2 ? 'Sat AM' : 'Sat PM';
       for (const p of detail.consecutivePairs) {
         console.log(`  ⚠ ${showLabel}: ${p.dance1} → ${p.dance2}: ${p.dancers.join(', ')}`);
       }
@@ -186,7 +185,7 @@ for (const g of groupNames) {
 }
 
 for (const detail of bestResult.details) {
-  console.log(`── Show ${detail.recitalId} ──`);
+  console.log(`── Show ${detail.showId} ──`);
   if (detail.consecutivePairs.length > 0) {
     console.log('  ⚠ Consecutive dancer conflicts:');
     for (const p of detail.consecutivePairs) {

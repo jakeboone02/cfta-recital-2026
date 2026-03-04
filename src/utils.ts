@@ -3,7 +3,7 @@ import type {
   DanceMap,
   DanceRow,
   GroupOrders,
-  RecitalDanceInstance,
+  ShowDanceInstance,
   ShowStructureEntry,
 } from './types';
 import { SPECTAPULAR_ID, HIPHOP_ID, FINALE_ID } from './types';
@@ -92,7 +92,7 @@ export const buildDanceMap = (dances: DanceRow[]): DanceMap =>
   Object.fromEntries(dances.map(d => [d.dance_id, d]));
 
 /** Build a lookup: dance_id → dancer_list from the API report data */
-export const buildDancerLookup = (reportData: RecitalDanceInstance[]): Record<number, string[]> => {
+export const buildDancerLookup = (reportData: ShowDanceInstance[]): Record<number, string[]> => {
   const map: Record<number, string[]> = {};
   for (const d of reportData) {
     if (d.dance_id != null && !map[d.dance_id]) {
@@ -110,7 +110,7 @@ export interface ShowDance {
   song: string;
   artist: string;
   group: string;
-  recital_id: number;
+  show_id: number;
   part: number;
   dancers: string[];
   common_with_next: string[];
@@ -118,7 +118,7 @@ export interface ShowDance {
 }
 
 export interface ShowData {
-  recital_id: number;
+  show_id: number;
   label: string;
   dances: ShowDance[];
 }
@@ -130,12 +130,7 @@ export const computeShowOrder = (
   dancerLookup: Record<number, string[]>,
   showStructure: ShowStructureEntry[]
 ): ShowData[] => {
-  const makeDance = (
-    id: number | null,
-    group: string,
-    recitalId: number,
-    part: number
-  ): ShowDance => {
+  const makeDance = (id: number | null, group: string, showId: number, part: number): ShowDance => {
     const d = id != null ? danceMap[id] : null;
     return {
       dance_id: id,
@@ -145,7 +140,7 @@ export const computeShowOrder = (
       song: d?.song ?? '???',
       artist: d?.artist ?? '???',
       group,
-      recital_id: recitalId,
+      show_id: showId,
       part,
       dancers: id != null ? (dancerLookup[id] ?? []) : [],
       common_with_next: [],
@@ -155,14 +150,14 @@ export const computeShowOrder = (
 
   return showStructure.map(show => {
     const dances: ShowDance[] = [
-      makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.recital_id, 0),
+      makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.show_id, 0),
       ...show.parts.flatMap((g, partIdx) =>
         (groups[g] ?? []).map(id =>
-          makeDance(id === 'PRE' ? null : id, g, show.recital_id, partIdx + 1)
+          makeDance(id === 'PRE' ? null : id, g, show.show_id, partIdx + 1)
         )
       ),
-      makeDance(HIPHOP_ID, 'Hip Hop', show.recital_id, show.parts.length),
-      makeDance(FINALE_ID, 'Finale', show.recital_id, show.parts.length),
+      makeDance(HIPHOP_ID, 'Hip Hop', show.show_id, show.parts.length),
+      makeDance(FINALE_ID, 'Finale', show.show_id, show.parts.length),
     ];
 
     // Compute dancer overlap (Finale excluded from "next" calculations)
@@ -183,7 +178,7 @@ export const computeShowOrder = (
       }
     }
 
-    return { recital_id: show.recital_id, label: show.label, dances };
+    return { show_id: show.show_id, label: show.label, dances };
   });
 };
 

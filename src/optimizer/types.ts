@@ -5,7 +5,7 @@ export type Solution = GroupOrders;
 
 /** Show structure entry for scoring: which groups compose each show */
 export interface ShowPart {
-  recitalId: number;
+  showId: number;
   groups: string[];
 }
 
@@ -32,7 +32,7 @@ export interface ScoreResult {
 }
 
 export interface ShowScoreDetail {
-  recitalId: number;
+  showId: number;
   consecutivePairs: { dance1: string; dance2: string; dancers: string[] }[];
   nearConsecutivePairs: { dance1: string; dance3: string; dancers: string[] }[];
   sameStylePairs: { dance1: string; dance2: string; style: string }[];

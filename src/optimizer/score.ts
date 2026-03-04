@@ -128,7 +128,7 @@ export const scoreSolution = (solution: Solution, ctx: ScoringContext): ScoreRes
   for (const show of ctx.showParts) {
     const seq = buildShowSequence(solution, show.groups);
     const detail: ShowScoreDetail = {
-      recitalId: show.recitalId,
+      showId: show.showId,
       consecutivePairs: [],
       nearConsecutivePairs: [],
       sameStylePairs: [],

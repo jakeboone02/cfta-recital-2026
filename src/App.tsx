@@ -186,9 +186,9 @@ const CSV_TABLES = [
   { name: 'class_dances', label: 'Class→Dance', cols: 'class_id, dance_id' },
   { name: 'dancer_classes', label: 'Dancer→Class', cols: 'class_id, dancer_name' },
   {
-    name: 'recitals',
-    label: 'Recitals',
-    cols: 'recital_id, group_order, recital_description, recital_time',
+    name: 'shows',
+    label: 'Shows',
+    cols: 'show_id, group_order, show_description, show_time',
   },
   { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
 ];
@@ -250,8 +250,8 @@ const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
       },
     },
   },
-  recitals: {
-    recital_time: { type: 'datetime-local' },
+  shows: {
+    show_time: { type: 'datetime-local' },
   },
 };
 
@@ -398,9 +398,9 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   // Derive show structure and group names from recitals data
   const showStructure: ShowStructureEntry[] = useMemo(
     () =>
-      (data?.recitals ?? []).map(r => ({
-        recital_id: r.recital_id,
-        label: r.recital_description,
+      (data?.shows ?? []).map(r => ({
+        show_id: r.show_id,
+        label: r.show_description,
         parts: r.group_order,
       })),
     [data]
@@ -554,7 +554,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
       dances: data.dances,
       dancersByDance: data.dancersByDance,
       groupNames,
-      showParts: showStructure.map(s => ({ recitalId: s.recital_id, groups: s.parts })),
+      showParts: showStructure.map(s => ({ showId: s.show_id, groups: s.parts })),
     });
   };
 

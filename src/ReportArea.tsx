@@ -183,10 +183,10 @@ export const ReportArea = ({
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const allCollapsed = shows.every(s => collapsed[s.recital_id]);
+  const allCollapsed = shows.every(s => collapsed[s.show_id]);
   const collapseExpandAll = () => {
     const val = !allCollapsed;
-    setCollapsed(Object.fromEntries(shows.map(s => [s.recital_id, val])));
+    setCollapsed(Object.fromEntries(shows.map(s => [s.show_id, val])));
   };
 
   return (
@@ -211,14 +211,14 @@ export const ReportArea = ({
             (groupDances[d.group] ??= []).push(d);
           }
         }
-        const isCollapsed = collapsed[show.recital_id] ?? false;
+        const isCollapsed = collapsed[show.show_id] ?? false;
 
         return (
-          <div key={show.recital_id} className="show-section">
-            <div className="show-header" onClick={() => toggle(show.recital_id)}>
+          <div key={show.show_id} className="show-section">
+            <div className="show-header" onClick={() => toggle(show.show_id)}>
               <h3>
                 <span className={`collapse-icon ${isCollapsed ? 'collapsed' : ''}`}>▼</span>
-                Show {show.recital_id}: {show.label}
+                Show {show.show_id}: {show.label}
               </h3>
               <div className="show-metrics">
                 <FamilyCount dances={show.dances} dancerLastNames={dancerLastNames} />
@@ -250,7 +250,7 @@ export const ReportArea = ({
                 <tbody>
                   {show.dances.map((dance, idx) => (
                     <DanceRow
-                      key={`${show.recital_id}-${idx}`}
+                      key={`${show.show_id}-${idx}`}
                       dance={dance}
                       idx={idx}
                       compact={compact}

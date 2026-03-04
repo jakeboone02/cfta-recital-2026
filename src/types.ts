@@ -22,17 +22,17 @@ export interface RecitalGroupRow {
   show_order: (number | 'PRE')[];
 }
 
-export interface RecitalRow {
-  recital_id: number;
+export interface ShowRow {
+  show_id: number;
   group_order: string[];
-  recital_description: string;
-  recital_time: string;
+  show_description: string;
+  show_time: string;
 }
 
-export interface RecitalDanceInstance {
+export interface ShowDanceInstance {
   overall_show_order: number;
-  recital_id: number;
-  recital_part: number;
+  show_id: number;
+  show_part: number;
   recital_group: string;
   order_in_group: number;
   dance_id: number | null;
@@ -53,7 +53,7 @@ export type DanceMap = Record<number, DanceRow>;
 export type GroupOrders = Record<string, (number | 'PRE')[]>;
 
 export interface ShowStructureEntry {
-  recital_id: number;
+  show_id: number;
   label: string;
   parts: string[];
 }

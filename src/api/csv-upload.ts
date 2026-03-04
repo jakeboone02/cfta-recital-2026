@@ -111,21 +111,15 @@ const CSV_TABLES: CsvTable[] = [
     },
   },
   {
-    name: 'recitals',
-    requiredColumns: ['recital_id', 'recital_description', 'recital_time'],
+    name: 'shows',
+    requiredColumns: ['show_id', 'show_description', 'show_time'],
     insert: async (env, instanceId, rows) => {
       const stmt = env.DB.prepare(
-        'INSERT INTO recitals (recital_instance_id, csv_recital_id, group_order, recital_description, recital_time) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO shows (recital_instance_id, csv_show_id, group_order, show_description, show_time) VALUES (?, ?, ?, ?, ?)'
       );
       await env.DB.batch(
         rows.map(r =>
-          stmt.bind(
-            instanceId,
-            r.recital_id,
-            r.group_order ?? null,
-            r.recital_description,
-            r.recital_time
-          )
+          stmt.bind(instanceId, r.show_id, r.group_order ?? null, r.show_description, r.show_time)
         )
       );
     },
@@ -165,7 +159,7 @@ const UPLOAD_ORDER = [
   'dances',
   'class_dances',
   'dancer_classes',
-  'recitals',
+  'shows',
   'recital_groups',
 ];
 

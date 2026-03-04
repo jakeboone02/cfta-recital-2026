@@ -1,4 +1,4 @@
-recital_id,group_order,recital_description,recital_time
+show_id,group_order,show_description,show_time
 1,"[""A"",""B""]",Friday Evening Recital,2026-04-24 18:00:00
 2,"[""C"",""A""]",Saturday Morning Recital,2026-04-25 10:00:00
 3,"[""B"",""C""]",Saturday Afternoon Recital,2026-04-25 13:00:00

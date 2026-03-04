@@ -45,25 +45,25 @@ CREATE TABLE recital_groups (
   show_order text not null
 );
 
-CREATE TABLE recitals (
-  recital_id int PRIMARY KEY check (recital_id IN (1, 2, 3)),
+CREATE TABLE shows (
+  show_id int PRIMARY KEY check (show_id IN (1, 2, 3)),
   group_order text not null, -- JSON array of group names, e.g. '["A","B"]'
-  recital_description text not null,
-  recital_time text not null
+  show_description text not null,
+  show_time text not null
 );
 
 --------------------------------------------------------------------------------
 -- Views
 --------------------------------------------------------------------------------
 
-CREATE VIEW IF NOT EXISTS recital_group_order AS
-SELECT r.recital_id,
-       ROW_NUMBER() OVER (PARTITION BY r.recital_time ORDER BY json_each.key) as recital_part,
+CREATE VIEW IF NOT EXISTS show_group_order AS
+SELECT r.show_id,
+       ROW_NUMBER() OVER (PARTITION BY r.show_time ORDER BY json_each.key) as show_part,
        json_each.value as recital_group,
-       r.recital_description,
-       r.recital_time
-  FROM recitals r, json_each(r.group_order)
- ORDER BY r.recital_time, json_each.key;
+       r.show_description,
+       r.show_time
+  FROM shows r, json_each(r.group_order)
+ ORDER BY r.show_time, json_each.key;
 
 CREATE VIEW IF NOT EXISTS group_dance_order AS
 SELECT recital_group,
@@ -84,25 +84,25 @@ SELECT gdo.recital_group,
        LEFT JOIN dances d ON gdo.dance_id = d.dance_id
  ORDER BY gdo.recital_group, order_in_group;
 
-CREATE VIEW IF NOT EXISTS recital_show_order AS
-SELECT ROW_NUMBER() OVER (ORDER BY base.recital_id, base.recital_part, base.order_in_group) AS overall_show_order,
+CREATE VIEW IF NOT EXISTS show_order_view AS
+SELECT ROW_NUMBER() OVER (ORDER BY base.show_id, base.show_part, base.order_in_group) AS overall_show_order,
        base.*
-  FROM (SELECT rgo.recital_id, rgo.recital_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, song, artist
-          FROM recital_group_order rgo INNER JOIN recital_group_dances rgd ON rgo.recital_group = rgd.recital_group
+  FROM (SELECT sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, song, artist
+          FROM show_group_order sgo INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
         UNION ALL
-        SELECT recital_id, 1 recital_part, dance_name AS recital_group, 0 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN recitals r
+        SELECT show_id, 1 show_part, dance_name AS recital_group, 0 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
+          FROM dances INNER JOIN shows r
         WHERE dance_name = 'SpecTAPular'
         UNION ALL
-        SELECT recital_id, 2 recital_part, dance_name AS recital_group, 98 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN recitals r
+        SELECT show_id, 2 show_part, dance_name AS recital_group, 98 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
+          FROM dances INNER JOIN shows r
         WHERE dance_name = 'Hip Hop'
         UNION ALL
-        SELECT recital_id, 2 recital_part, dance_name AS recital_group, 99 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN recitals r
+        SELECT show_id, 2 show_part, dance_name AS recital_group, 99 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
+          FROM dances INNER JOIN shows r
         WHERE dance_name = 'Finale'
        ) base
- ORDER BY base.recital_id, base.recital_part, base.order_in_group;
+ ORDER BY base.show_id, base.show_part, base.order_in_group;
 
 CREATE VIEW IF NOT EXISTS consecutive_dances_tracker AS
 SELECT
@@ -116,7 +116,7 @@ SELECT
 FROM (SELECT rso.*,
              LEAD(dance_id, 1) OVER (ORDER BY overall_show_order) AS next_dance_id,
              LEAD(dance_id, 2) OVER (ORDER BY overall_show_order) AS next2_dance_id
-        FROM recital_show_order rso
+        FROM show_order_view rso
      ) o
 ORDER BY o.overall_show_order;
 

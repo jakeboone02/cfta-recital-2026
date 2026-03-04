@@ -74,7 +74,7 @@ The app runs in two modes:
 - `auth.ts` — Cookie-based password authentication (password stored in `RECITAL_PASSWORD` env var)
 - `instances.ts` — CRUD for recital instances (multi-year support)
 - `csv-upload.ts` — Bulk CSV data import
-- `data.ts` — Read recital data (dances, dancers, groups, recitals, etc.)
+- `data.ts` — Read recital data (dances, dancers, groups, shows, etc.)
 - `order.ts` — Save/load/bookmark show orders
 - `tables.ts` — Generic table CRUD for admin data management
 
@@ -89,11 +89,11 @@ A simulated-annealing optimizer that finds the best show order to minimize:
 - Combo class sibling separation
 - Style and family imbalance across shows
 
-The optimizer is **fully data-driven** — it accepts dynamic group names and show structure (derived from the `recitals` table's `group_order` column) rather than hard-coding any specific group layout. Key types:
+The optimizer is **fully data-driven** — it accepts dynamic group names and show structure (derived from the `shows` table's `group_order` column) rather than hard-coding any specific group layout. Key types:
 
 - `GroupOrders = Record<string, (number | 'PRE')[]>` — maps group names to dance order arrays
 - `Solution = GroupOrders` — optimizer solution is the same type
-- `ShowPart = { recitalId: number; groups: string[] }` — describes which groups appear in each show
+- `ShowPart = { showId: number; groups: string[] }` — describes which groups appear in each show
 - `ScoringContext` includes `groupNames: string[]` and `showParts: ShowPart[]`
 
 Can run **client-side** (via Web Worker, `src/optimizer.worker.ts`) or **server-side** (`src/optimize.ts` CLI, `server.ts`).
@@ -104,7 +104,7 @@ Can run **client-side** (via Web Worker, `src/optimizer.worker.ts`) or **server-
 
 Schema defined in `src/create_database.sql`. Seed data lives in CSV files in `src/`:
 
-- `dances.csv`, `dancers.csv`, `classes.csv`, `dancer_classes.csv`, `class_dances.csv`, `recitals.csv`, `recital_groups.csv`
+- `dances.csv`, `dancers.csv`, `classes.csv`, `dancer_classes.csv`, `class_dances.csv`, `shows.csv`, `recital_groups.csv`
 
 Run `bun ./src/create_database.ts` to rebuild `src/database.db` from CSVs.
 
@@ -126,7 +126,7 @@ bunx wrangler d1 execute cfta-dance-recital-2026 --local --file=src/schema.sql
 
 ### Show Structure (Data-Driven)
 
-Show structure is **defined in the database**, not hard-coded. Each row in the `recitals` table has a `group_order` JSON array column that specifies which groups appear in that show and in what order.
+Show structure is **defined in the database**, not hard-coded. Each row in the `shows` table has a `group_order` JSON array column that specifies which groups appear in that show and in what order.
 
 For the 2026 recital, the data is:
 
@@ -138,7 +138,7 @@ For the 2026 recital, the data is:
 
 Every show sequence: SpecTAPular → [groups from `group_order`] → Hip Hop → Finale
 
-The frontend derives `showStructure` and `groupNames` from `instanceData.recitals` at runtime — no constants need updating when group layout changes. The `recital_group_order` SQL view expands `group_order` via `json_each()` for query convenience.
+The frontend derives `showStructure` and `groupNames` from `instanceData.shows` at runtime — no constants need updating when group layout changes. The `show_group_order` SQL view expands `group_order` via `json_each()` for query convenience.
 
 ## CI/CD
 

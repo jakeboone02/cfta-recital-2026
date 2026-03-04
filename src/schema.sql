@@ -77,15 +77,15 @@ CREATE TABLE IF NOT EXISTS recital_groups (
 );
 CREATE INDEX IF NOT EXISTS idx_recital_groups_instance ON recital_groups(recital_instance_id);
 
-CREATE TABLE IF NOT EXISTS recitals (
-  recital_id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS shows (
+  show_id INTEGER PRIMARY KEY AUTOINCREMENT,
   recital_instance_id INTEGER NOT NULL REFERENCES recital_instances(id),
-  csv_recital_id INTEGER, -- original 1/2/3 from CSV
+  csv_show_id INTEGER, -- original 1/2/3 from CSV
   group_order TEXT, -- JSON array of group names, e.g. '["A","B"]'
-  recital_description TEXT NOT NULL,
-  recital_time TEXT NOT NULL
+  show_description TEXT NOT NULL,
+  show_time TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_recitals_instance ON recitals(recital_instance_id);
+CREATE INDEX IF NOT EXISTS idx_shows_instance ON shows(recital_instance_id);
 
 --------------------------------------------------------------------------------
 -- Server-side state (show order + bookmarks)

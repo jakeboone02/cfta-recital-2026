@@ -19,7 +19,7 @@ const csvTables = [
   'dancer_classes',
   'dancers',
   'dances',
-  'recitals',
+  'shows',
   'recital_groups',
 ];
 
