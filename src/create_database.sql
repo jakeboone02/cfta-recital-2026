@@ -197,3 +197,13 @@ SELECT parents.dancer_name parent,
   FROM children INNER JOIN parents ON parents.last_name = children.last_name
  WHERE parents.dancer_name <> children.dancer_name
  ORDER BY parent, child;
+
+CREATE VIEW IF NOT EXISTS busy_dancers AS
+   SELECT dancer_name,
+          COUNT(*) dance_count,
+          GROUP_CONCAT(dance_name, '; ') dance_names
+     FROM dance_dancers
+ GROUP BY dancer_name
+   HAVING count(*) > 2
+ ORDER BY 2 DESC,
+          last_name;
