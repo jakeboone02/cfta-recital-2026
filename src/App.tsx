@@ -719,11 +719,13 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
                   title="Download show order as formatted Excel file">
                   📊 Excel
                 </button>
+                {/*
                 <button
                   onClick={handleExportFamilyReport}
                   title="Download family-oriented show order report as formatted Excel file">
                   👪 Family
                 </button>
+                */}
                 <button onClick={handleOpenImport} title="Import/export group orders as CSV">
                   📥 Import/Export
                 </button>
