@@ -12,6 +12,7 @@ CREATE TABLE dancers (
   dancer_name text GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
   first_name text not null,
   last_name text not null,
+  family_label text,
   is_teacher int check (is_teacher IN (0, 1)) not null
 );
 

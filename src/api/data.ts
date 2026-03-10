@@ -7,7 +7,7 @@ export async function handleData(
 ): Promise<Response> {
   if (request.method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
 
-  const [dances, groups, comboPairs, dancerRows, dancerLastNames, showRows] = await Promise.all([
+  const [dances, groups, comboPairs, dancerRows, dancerMetaRows, showRows] = await Promise.all([
     env.DB.prepare(
       'SELECT dance_id, dance_style, dance_name, choreography, song, artist FROM dances WHERE recital_instance_id = ?'
     )
@@ -38,7 +38,13 @@ export async function handleData(
     )
       .bind(instanceId)
       .all(),
-    env.DB.prepare(`SELECT dancer_name, last_name FROM dancers WHERE recital_instance_id = ?`)
+    env.DB.prepare(
+      `SELECT dancer_name,
+              last_name,
+              COALESCE(NULLIF(TRIM(family_label), ''), last_name) AS family_name
+         FROM dancers
+        WHERE recital_instance_id = ?`
+    )
       .bind(instanceId)
       .all(),
     env.DB.prepare(
@@ -56,8 +62,10 @@ export async function handleData(
 
   // Build dancer last-name lookup
   const dancerLastNameMap: Record<string, string> = {};
-  for (const r of dancerLastNames.results as any[]) {
+  const dancerFamilyMap: Record<string, string> = {};
+  for (const r of dancerMetaRows.results as any[]) {
     dancerLastNameMap[r.dancer_name] = r.last_name;
+    dancerFamilyMap[r.dancer_name] = r.family_name;
   }
 
   // Parse group show_order JSON
@@ -85,6 +93,7 @@ export async function handleData(
     shows: parsedShows,
     comboPairs: comboPairs.results,
     dancersByDance,
+    dancerFamilies: dancerFamilyMap,
     dancerLastNames: dancerLastNameMap,
     config: instance?.config ? JSON.parse(instance.config as string) : null,
   });

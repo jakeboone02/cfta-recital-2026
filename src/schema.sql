@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS dancers (
   dancer_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
+  family_label TEXT,
   is_teacher INTEGER CHECK (is_teacher IN (0, 1)) NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_dancers_instance ON dancers(recital_instance_id);

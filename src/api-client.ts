@@ -53,6 +53,7 @@ export interface InstanceData {
   shows: ShowRow[];
   comboPairs: ComboPair[];
   dancersByDance: Record<number, string[]>;
+  dancerFamilies: Record<string, string>;
   dancerLastNames: Record<string, string>;
   config: any | null;
 }
