@@ -82,8 +82,9 @@ export async function handleData(
     show_time: r.show_time,
   }));
 
-  // Get instance config
-  const instance = await env.DB.prepare('SELECT config FROM recital_instances WHERE id = ?')
+  const instance = await env.DB.prepare(
+    'SELECT config, placeholder_dances FROM recital_instances WHERE id = ?'
+  )
     .bind(instanceId)
     .first();
 
@@ -96,5 +97,8 @@ export async function handleData(
     dancerFamilies: dancerFamilyMap,
     dancerLastNames: dancerLastNameMap,
     config: instance?.config ? JSON.parse(instance.config as string) : null,
+    placeholderDances: instance?.placeholder_dances
+      ? JSON.parse(instance.placeholder_dances as string)
+      : null,
   });
 }

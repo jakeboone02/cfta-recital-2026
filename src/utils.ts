@@ -146,7 +146,8 @@ export const computeShowOrder = (
   groups: GroupOrders,
   danceMap: DanceMap,
   dancerLookup: Record<number, string[]>,
-  showStructure: ShowStructureEntry[]
+  showStructure: ShowStructureEntry[],
+  placeholderDances?: number[] | null
 ): ShowData[] => {
   const makeDance = (id: number | null, group: string, showId: number, part: number): ShowDance => {
     const d = id != null ? danceMap[id] : null;
@@ -166,13 +167,22 @@ export const computeShowOrder = (
     };
   };
 
+  let preIdx = 0;
+
   return showStructure.map(show => {
     const dances: ShowDance[] = [
       makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.show_id, 0),
       ...show.parts.flatMap((g, partIdx) =>
-        (groups[g] ?? []).map(id =>
-          makeDance(id === 'PRE' ? null : id, g, show.show_id, partIdx + 1)
-        )
+        (groups[g] ?? []).map(id => {
+          if (id === 'PRE') {
+            const actualId =
+              placeholderDances && preIdx < placeholderDances.length
+                ? placeholderDances[preIdx++]
+                : null;
+            return makeDance(actualId, g, show.show_id, partIdx + 1);
+          }
+          return makeDance(id, g, show.show_id, partIdx + 1);
+        })
       ),
       makeDance(HIPHOP_ID, 'Hip Hop', show.show_id, show.parts.length),
       makeDance(FINALE_ID, 'Finale', show.show_id, show.parts.length),

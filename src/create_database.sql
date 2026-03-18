@@ -41,6 +41,10 @@ CREATE TABLE class_dances (
 
 CREATE UNIQUE INDEX class_dance ON class_dances (class_id, dance_id);
 
+CREATE TABLE placeholder_dances (
+  dance_order text not null -- JSON array of dance IDs in show-order sequence for PRE slots
+);
+
 CREATE TABLE recital_groups (
   recital_group text check (recital_group IN ('A', 'B', 'C')) not null,
   show_order text not null
@@ -69,13 +73,15 @@ SELECT r.show_id,
 CREATE VIEW IF NOT EXISTS group_dance_order AS
 SELECT recital_group,
        ROW_NUMBER() OVER (PARTITION BY recital_group ORDER BY json_each.key) AS order_in_group,
-       json_each.value AS dance_id
+       CASE WHEN json_each.value = 'PRE' THEN NULL ELSE CAST(json_each.value AS INTEGER) END AS dance_id,
+       CASE WHEN json_each.value = 'PRE' THEN 1 ELSE 0 END AS is_placeholder
   FROM recital_groups, json_each(show_order);
 
 CREATE VIEW IF NOT EXISTS recital_group_dances AS
 SELECT gdo.recital_group,
        gdo.order_in_group,
        gdo.dance_id,
+       gdo.is_placeholder,
        COALESCE(d.dance_style, 'PREDANCE') AS dance_style,
        COALESCE(d.dance_name, 'PREDANCE') AS dance_name,
        COALESCE(d.choreography, '???') AS choreography,
@@ -86,24 +92,49 @@ SELECT gdo.recital_group,
  ORDER BY gdo.recital_group, order_in_group;
 
 CREATE VIEW IF NOT EXISTS show_order_view AS
-SELECT ROW_NUMBER() OVER (ORDER BY base.show_id, base.show_part, base.order_in_group) AS overall_show_order,
-       base.*
-  FROM (SELECT sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, song, artist
-          FROM show_group_order sgo INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
-        UNION ALL
-        SELECT show_id, 1 show_part, dance_name AS recital_group, 0 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'SpecTAPular'
-        UNION ALL
-        SELECT show_id, 2 show_part, dance_name AS recital_group, 98 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'Hip Hop'
-        UNION ALL
-        SELECT show_id, 2 show_part, dance_name AS recital_group, 99 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'Finale'
-       ) base
- ORDER BY base.show_id, base.show_part, base.order_in_group;
+WITH raw_order AS (
+  SELECT ROW_NUMBER() OVER (ORDER BY base.show_id, base.show_part, base.order_in_group) AS overall_show_order,
+         base.*
+    FROM (SELECT sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.is_placeholder, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, rgd.song, rgd.artist
+            FROM show_group_order sgo INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
+          UNION ALL
+          SELECT show_id, 1 show_part, dance_name AS recital_group, 0 order_in_group, 0 is_placeholder, dance_id, dance_style, dance_name, choreography, song, artist
+            FROM dances INNER JOIN shows r
+           WHERE dance_name = 'SpecTAPular'
+          UNION ALL
+          SELECT show_id, 2 show_part, dance_name AS recital_group, 98 order_in_group, 0 is_placeholder, dance_id, dance_style, dance_name, choreography, song, artist
+            FROM dances INNER JOIN shows r
+           WHERE dance_name = 'Hip Hop'
+          UNION ALL
+          SELECT show_id, 2 show_part, dance_name AS recital_group, 99 order_in_group, 0 is_placeholder, dance_id, dance_style, dance_name, choreography, song, artist
+            FROM dances INNER JOIN shows r
+           WHERE dance_name = 'Finale'
+         ) base
+),
+pre_indexed AS (
+  SELECT *,
+         CASE WHEN is_placeholder
+              THEN SUM(is_placeholder) OVER (ORDER BY overall_show_order) - 1
+              ELSE NULL END AS pre_idx
+    FROM raw_order
+)
+SELECT pi.overall_show_order,
+       pi.show_id,
+       pi.show_part,
+       pi.recital_group,
+       pi.order_in_group,
+       COALESCE(pd_dance.dance_id, pi.dance_id) AS dance_id,
+       COALESCE(pd_dance.dance_style, pi.dance_style) AS dance_style,
+       COALESCE(pd_dance.dance_name, pi.dance_name) AS dance_name,
+       COALESCE(pd_dance.choreography, pi.choreography) AS choreography,
+       COALESCE(pd_dance.song, pi.song) AS song,
+       COALESCE(pd_dance.artist, pi.artist) AS artist
+  FROM pre_indexed pi
+  LEFT JOIN placeholder_dances pd ON 1=1
+  LEFT JOIN dances pd_dance
+    ON pi.pre_idx IS NOT NULL
+   AND pd_dance.dance_id = CAST(json_extract(pd.dance_order, '$[' || pi.pre_idx || ']') AS INTEGER)
+ ORDER BY pi.overall_show_order;
 
 CREATE VIEW IF NOT EXISTS consecutive_dances_tracker AS
 SELECT
@@ -148,7 +179,8 @@ SELECT d.*, p.*
      INNER JOIN classes c ON cd.class_id = c.class_id
      INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
      INNER JOIN dancers p ON dc.dancer_name = p.dancer_name
- ORDER BY d.dance_name, last_name, first_name;
+ WHERE NOT (d.dance_name = 'SpecTAPular' AND p.is_teacher = 1)
+ ORDER BY d.dance_name, UPPER(last_name), UPPER(first_name);
 
 CREATE VIEW IF NOT EXISTS teacher_checklist AS
 SELECT c.teacher AS "Teacher",
@@ -208,3 +240,14 @@ CREATE VIEW IF NOT EXISTS busy_dancers AS
    HAVING count(*) > 2
  ORDER BY 2 DESC,
           last_name;
+
+-- All show data, in show order, with a list of dancers for each dance.
+-- Suitable for generating the program.
+CREATE VIEW IF NOT EXISTS complete_program AS
+WITH dd as (
+  SELECT dance_id, group_concat(dancer_name, ', ') dancers
+    FROM dance_dancers
+   GROUP BY dance_id
+   ORDER BY last_name, first_name)
+SELECT sov.*, dd.dancers
+  FROM show_order_view sov INNER JOIN dd ON sov.dance_id = dd.dance_id;

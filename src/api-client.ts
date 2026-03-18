@@ -56,6 +56,7 @@ export interface InstanceData {
   dancerFamilies: Record<string, string>;
   dancerLastNames: Record<string, string>;
   config: any | null;
+  placeholderDances: number[] | null;
 }
 
 export const getInstanceData = (id: number) => apiFetch<InstanceData>(`/instances/${id}/data`);

@@ -431,17 +431,30 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const deleteBookmarkMutation = useDeleteBookmark(instanceId);
   const renameBookmarkMutation = useRenameBookmark(instanceId);
 
+  const placeholderDances = data?.placeholderDances ?? null;
+
   const shows = useMemo(
-    () => (groups && data ? computeShowOrder(groups, danceMap, dancersByDance, showStructure) : []),
-    [groups, danceMap, dancersByDance, showStructure, data]
+    () =>
+      groups && data
+        ? computeShowOrder(groups, danceMap, dancersByDance, showStructure, placeholderDances)
+        : [],
+    [groups, danceMap, dancersByDance, showStructure, placeholderDances, data]
   );
 
   const compareData = useMemo(() => {
     if (!compareBookmark || !data) return null;
     const bm = bookmarks.find(b => b.name === compareBookmark);
     if (!bm) return null;
-    return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure);
-  }, [compareBookmark, bookmarks, danceMap, dancersByDance, showStructure, data]);
+    return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure, placeholderDances);
+  }, [
+    compareBookmark,
+    bookmarks,
+    danceMap,
+    dancersByDance,
+    showStructure,
+    placeholderDances,
+    data,
+  ]);
 
   const handleGroupChange = (newGroups: GroupOrders) => {
     if (groups) pushUndo(groups);
@@ -616,7 +629,13 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const bookmarkStats = (b: Bookmark): string => {
     if (!data) return '';
-    const showOrders = computeShowOrder(b.groups, danceMap, dancersByDance, showStructure);
+    const showOrders = computeShowOrder(
+      b.groups,
+      danceMap,
+      dancersByDance,
+      showStructure,
+      placeholderDances
+    );
     return (
       'Families: ' +
       showOrders

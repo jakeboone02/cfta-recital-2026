@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS recital_instances (
   year INTEGER NOT NULL,
   is_archived INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
-  config TEXT -- JSON: every-show dances, group structure, show descriptions
+  config TEXT, -- JSON: every-show dances, group structure, show descriptions
+  placeholder_dances TEXT -- JSON array of dance IDs in show-order sequence for PRE slots
 );
 
 --------------------------------------------------------------------------------
