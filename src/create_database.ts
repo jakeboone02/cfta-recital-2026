@@ -22,6 +22,7 @@ const csvTables = [
   'shows',
   'recital_groups',
   'placeholder_dances',
+  'guest_list_2025',
 ];
 
 for (const table of csvTables) {
