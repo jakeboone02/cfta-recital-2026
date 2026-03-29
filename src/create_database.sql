@@ -15,7 +15,6 @@ CREATE TABLE dancers (
   family_label text,
   is_teacher int check (is_teacher IN (0, 1)) not null
 );
-
 CREATE UNIQUE INDEX dancers_name ON dancers (dancer_name);
 
 CREATE TABLE classes (
@@ -31,14 +30,12 @@ CREATE TABLE dancer_classes (
   class_id int not null,
   dancer_name text not null
 );
-
 CREATE UNIQUE INDEX dancer_class ON dancer_classes (dancer_name, class_id);
 
 CREATE TABLE class_dances (
   class_id int not null,
   dance_id int not null
 );
-
 CREATE UNIQUE INDEX class_dance ON class_dances (class_id, dance_id);
 
 CREATE TABLE placeholder_dances (
@@ -56,6 +53,19 @@ CREATE TABLE shows (
   show_description text not null,
   show_time text not null
 );
+
+CREATE TABLE dressing_rooms (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE UNIQUE INDEX dressing_room ON dressing_rooms (name);
+
+CREATE TABLE show_class_dressing_rooms (
+  show_id INTEGER NOT NULL,
+  class_id INTEGER NOT NULL,
+  dressing_room_id INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX show_class_dressing_room ON show_class_dressing_rooms(show_id, class_id);
 
 CREATE TABLE guest_list_2025 (
   order_number TEXT,
