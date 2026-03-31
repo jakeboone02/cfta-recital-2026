@@ -1,11 +1,12 @@
 CREATE TABLE dances (
   dance_id int PRIMARY KEY,
-  -- recital_group text check (recital_group IN ('SpecTAPular', 'A', 'B', 'C', 'PREDANCE', 'Hip Hop', 'Finale')) null,
   dance_style text check (dance_style IN ('All', 'Ballet', 'Hip Hop', 'Jazz', 'Modern/Lyrical', 'Musical Theater', 'Tap')) not null,
   dance_name text,
   choreography text,
   song text,
-  artist text
+  artist text,
+  skip_overlap_checks int check (skip_overlap_checks IN (0, 1)) not null default 0,
+  exclude_teachers int check (exclude_teachers IN (0, 1)) not null default 0
 );
 
 CREATE TABLE dancers (
@@ -41,13 +42,14 @@ CREATE TABLE class_dances (
 CREATE UNIQUE INDEX class_dance ON class_dances (class_id, dance_id);
 
 CREATE TABLE recital_groups (
-  recital_group text check (recital_group IN ('A', 'B', 'C')) not null,
-  show_order text not null
+  recital_group text not null,
+  show_order text not null,
+  has_fixed_order int check (has_fixed_order IN (0, 1)) not null default 0
 );
 
 CREATE TABLE shows (
-  show_id int PRIMARY KEY check (show_id IN (1, 2, 3)),
-  group_order text not null, -- JSON array of group names, e.g. '["A","B"]'
+  show_id int PRIMARY KEY,
+  group_order text not null, -- JSON array of group names, e.g. '["OPENER","A","B","CLOSER"]'
   show_description text not null,
   show_time text not null
 );
@@ -75,8 +77,8 @@ CREATE VIEW IF NOT EXISTS recital_group_dances AS
 SELECT gdo.recital_group,
        gdo.order_in_group,
        gdo.dance_id,
-       COALESCE(d.dance_style, 'PREDANCE') AS dance_style,
-       COALESCE(d.dance_name, 'PREDANCE') AS dance_name,
+       COALESCE(d.dance_style, 'PLACEHOLDER') AS dance_style,
+       COALESCE(d.dance_name, 'PLACEHOLDER') AS dance_name,
        COALESCE(d.choreography, '???') AS choreography,
        COALESCE(d.song, '???') AS song,
        COALESCE(d.artist, '???') AS artist
@@ -85,24 +87,11 @@ SELECT gdo.recital_group,
  ORDER BY gdo.recital_group, order_in_group;
 
 CREATE VIEW IF NOT EXISTS show_order_view AS
-SELECT ROW_NUMBER() OVER (ORDER BY base.show_id, base.show_part, base.order_in_group) AS overall_show_order,
-       base.*
-  FROM (SELECT sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, song, artist
-          FROM show_group_order sgo INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
-        UNION ALL
-        SELECT show_id, 1 show_part, dance_name AS recital_group, 0 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'SpecTAPular'
-        UNION ALL
-        SELECT show_id, 2 show_part, dance_name AS recital_group, 98 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'Hip Hop'
-        UNION ALL
-        SELECT show_id, 2 show_part, dance_name AS recital_group, 99 order_in_group, dance_id, dance_style, dance_name, choreography, song, artist
-          FROM dances INNER JOIN shows r
-        WHERE dance_name = 'Finale'
-       ) base
- ORDER BY base.show_id, base.show_part, base.order_in_group;
+SELECT ROW_NUMBER() OVER (ORDER BY sgo.show_id, sgo.show_part, rgd.order_in_group) AS overall_show_order,
+       sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, rgd.song, rgd.artist
+  FROM show_group_order sgo
+       INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
+ ORDER BY sgo.show_id, sgo.show_part, rgd.order_in_group;
 
 CREATE VIEW IF NOT EXISTS consecutive_dances_tracker AS
 SELECT
@@ -125,6 +114,7 @@ SELECT d.dance_id,
        gdo.recital_group,
        d.dance_style,
        d.dance_name,
+       d.skip_overlap_checks,
        c.class_name,
        c.class_time,
        d.choreography,
@@ -137,7 +127,7 @@ SELECT d.dance_id,
        INNER JOIN classes c ON cd.class_id = c.class_id
        INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
        INNER JOIN dancers p ON dc.dancer_name = p.dancer_name
- WHERE NOT (gdo.recital_group = 'SpecTAPular' AND p.is_teacher = 1)
+ WHERE NOT (d.exclude_teachers = 1 AND p.is_teacher = 1)
  ORDER BY dance_name, last_name, first_name;
 
 CREATE VIEW IF NOT EXISTS dance_dancers AS
@@ -177,7 +167,7 @@ WITH parents AS (
   SELECT dancer_name, last_name, GROUP_CONCAT(recital_group, ', ') AS groups, GROUP_CONCAT(dance_name, ', ') AS dances
     FROM participants
    WHERE class_name LIKE '%Adult%'
-     AND dance_name <> 'SpecTAPular'
+     AND skip_overlap_checks = 0
      AND last_name <> 'Boone'
      AND last_name <> 'Wells'
    GROUP BY dancer_name, last_name
@@ -185,7 +175,7 @@ WITH parents AS (
   SELECT dancer_name, last_name, GROUP_CONCAT(recital_group, ', ') AS groups, GROUP_CONCAT(dance_name, ', ') AS dances
     FROM participants
    WHERE class_name NOT LIKE '%Adult%'
-     AND dance_name <> 'SpecTAPular'
+     AND skip_overlap_checks = 0
    GROUP BY dancer_name, last_name
 )
 SELECT parents.dancer_name parent,

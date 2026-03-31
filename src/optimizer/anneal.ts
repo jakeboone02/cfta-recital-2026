@@ -1,33 +1,26 @@
 import type { ScoringContext } from './score';
 import { scoreSolution } from './score';
 import type { AnnealConfig, Solution } from './types';
-import { COMBO_PAIRS, FIXED, FIXED_GROUP } from './types';
+import { FIXED_GROUP } from './types';
 
 /** Deep-clone a solution */
 const cloneSolution = (s: Solution, groupNames: string[]): Solution => {
   const out: Solution = {};
-  for (const g of groupNames) out[g] = [...s[g]];
+  for (const g of groupNames) out[g] = [...(s[g] ?? [])];
   return out;
 };
 
 /** Set of dance IDs that are fixed to a specific group */
 const fixedDanceIds = new Set(Object.keys(FIXED_GROUP).map(Number));
 
-/** Map from combo dance → its sibling */
-const comboSiblingMap = new Map<number, number>();
-for (const [a, b] of COMBO_PAIRS) {
-  comboSiblingMap.set(a, b);
-  comboSiblingMap.set(b, a);
-}
-
 /** Check if moving a dance out of its group would violate hard constraints */
-const canLeaveGroup = (danceId: number | 'PRE'): boolean => {
-  if (danceId === 'PRE') return false; // PRE placeholders stay in their group
+const canLeaveGroup = (danceId: number | 'PLACEHOLDER'): boolean => {
+  if (danceId === 'PLACEHOLDER') return false; // PLACEHOLDER stays in their group
   return !fixedDanceIds.has(danceId);
 };
 
 /** Get the fixed group for a dance ID, if any */
-const getFixedGroup = (id: number | 'PRE'): string | undefined =>
+const getFixedGroup = (id: number | 'PLACEHOLDER'): string | undefined =>
   typeof id === 'number' ? FIXED_GROUP[id] : undefined;
 
 /** Pick a random int in [0, max) */
@@ -38,6 +31,7 @@ const randPick = <T>(arr: T[]): T => arr[randInt(arr.length)];
 
 /**
  * Generate a neighbor solution via random perturbation.
+ * Only mutates editable (non-fixed-order) groups.
  * Moves:
  * 1. Swap two dances within the same group (most common)
  * 2. Swap dances between two groups (maintains group sizes)
@@ -45,8 +39,10 @@ const randPick = <T>(arr: T[]): T => arr[randInt(arr.length)];
  * 4. Insert: remove and reinsert within same group
  */
 const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
-  const GROUPS = ctx.groupNames;
-  const next = cloneSolution(current, GROUPS);
+  const ALL_GROUPS = ctx.groupNames;
+  const GROUPS = ctx.editableGroupNames;
+  if (GROUPS.length === 0) return cloneSolution(current, ALL_GROUPS);
+  const next = cloneSolution(current, ALL_GROUPS);
   const moveType = Math.random();
 
   if (moveType < 0.55) {
@@ -62,11 +58,12 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
     // Cross-group swap (1-for-1) to maintain group sizes
     const g1 = randPick(GROUPS);
     const remaining = GROUPS.filter(g => g !== g1);
+    if (remaining.length === 0) return next;
     const g2 = randPick(remaining);
     const arr1 = next[g1];
     const arr2 = next[g2];
 
-    // Pick movable dances from each group (not PRE, not fixed to this group)
+    // Pick movable dances from each group (not PLACEHOLDER, not fixed to this group)
     const movable1 = arr1
       .map((id, idx) => ({ id, idx }))
       .filter(
@@ -87,13 +84,12 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
       );
 
     // Filter: can move to the other group (check fixed group constraints)
-    const canMoveTo = (id: number | 'PRE', targetGroup: string): boolean => {
-      if (id === 'PRE') return false;
+    const canMoveTo = (id: number | 'PLACEHOLDER', targetGroup: string): boolean => {
+      if (id === 'PLACEHOLDER') return false;
       if (typeof id === 'number' && FIXED_GROUP[id] && FIXED_GROUP[id] !== targetGroup)
         return false;
-      const sib = comboSiblingMap.get(id);
+      const sib = ctx.comboSiblings.get(id);
       if (sib != null && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
-      if (sib !== undefined && FIXED_GROUP[sib] && FIXED_GROUP[sib] !== targetGroup) return false;
       return true;
     };
 
@@ -111,7 +107,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
 
     // Handle combo siblings: if either dance has a sibling, move it too
     if (typeof pick1.id === 'number') {
-      const sib = comboSiblingMap.get(pick1.id);
+      const sib = ctx.comboSiblings.get(pick1.id);
       if (sib !== undefined) {
         const sibIdx = arr1.indexOf(sib);
         if (sibIdx !== -1) {
@@ -120,7 +116,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
             .map((id, idx) => ({ id, idx }))
             .filter(
               ({ id, idx }) =>
-                idx !== pick2.idx && canMoveTo(id, g1) && !comboSiblingMap.has(id as number)
+                idx !== pick2.idx && canMoveTo(id, g1) && !ctx.comboSiblings.has(id as number)
             );
           if (swapCandidates.length > 0) {
             const swap2 = randPick(swapCandidates);
@@ -131,7 +127,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
       }
     }
     if (typeof pick2.id === 'number') {
-      const sib = comboSiblingMap.get(pick2.id);
+      const sib = ctx.comboSiblings.get(pick2.id);
       if (sib !== undefined) {
         const sibIdx = arr2.indexOf(sib);
         if (sibIdx !== -1) {
@@ -139,7 +135,7 @@ const generateNeighbor = (current: Solution, ctx: ScoringContext): Solution => {
             .map((id, idx) => ({ id, idx }))
             .filter(
               ({ id, idx }) =>
-                idx !== pick1.idx && canMoveTo(id, g2) && !comboSiblingMap.has(id as number)
+                idx !== pick1.idx && canMoveTo(id, g2) && !ctx.comboSiblings.has(id as number)
             );
           if (swapCandidates.length > 0) {
             const swap1 = randPick(swapCandidates);
@@ -184,31 +180,44 @@ const shuffle = <T>(arr: T[]): T[] => {
 
 /**
  * Generate a fully randomized solution that respects hard constraints:
+ * - Fixed-order groups are copied unchanged
  * - FIXED_GROUP dances go to their required group
  * - Combo pairs stay together
- * - Each group gets the same number of PRE placeholders as the original
+ * - Each group gets the same number of PLACEHOLDER entries as the original
  * - Group sizes match the original distribution
  */
-const randomizeSolution = (original: Solution, groupNames: string[]): Solution => {
-  const groupSizes: Record<string, number> = {};
-  const preCounts: Record<string, number> = {};
-  for (const g of groupNames) {
-    groupSizes[g] = original[g].length;
-    preCounts[g] = original[g].filter(id => id === 'PRE').length;
+const randomizeSolution = (original: Solution, ctx: ScoringContext): Solution => {
+  const allGroupNames = ctx.groupNames;
+  const editableGroupNames = ctx.editableGroupNames;
+
+  // Start with fixed-order groups copied unchanged
+  const result: Solution = {};
+  for (const g of allGroupNames) {
+    if (!editableGroupNames.includes(g)) {
+      result[g] = [...(original[g] ?? [])];
+    }
   }
 
-  // Collect all non-PRE dance IDs
+  const groupSizes: Record<string, number> = {};
+  const placeholderCounts: Record<string, number> = {};
+  for (const g of editableGroupNames) {
+    const order = original[g] ?? [];
+    groupSizes[g] = order.length;
+    placeholderCounts[g] = order.filter(id => id === 'PLACEHOLDER').length;
+  }
+
+  // Collect all non-PLACEHOLDER dance IDs from editable groups
   const allDances: number[] = [];
-  for (const g of groupNames) {
-    for (const id of original[g]) {
-      if (id !== 'PRE') allDances.push(id);
+  for (const g of editableGroupNames) {
+    for (const id of original[g] ?? []) {
+      if (id !== 'PLACEHOLDER') allDances.push(id);
     }
   }
 
   // Group combo pairs as units; track which dances are part of a pair
   const pairedDances = new Set<number>();
   const comboUnits: [number, number][] = [];
-  for (const [a, b] of COMBO_PAIRS) {
+  for (const [a, b] of ctx.comboPairs) {
     if (allDances.includes(a) && allDances.includes(b)) {
       comboUnits.push([a, b]);
       pairedDances.add(a);
@@ -229,11 +238,10 @@ const randomizeSolution = (original: Solution, groupNames: string[]): Solution =
     }
   }
 
-  // Start building groups with PREs and fixed dances
-  const result: Solution = {};
-  for (const g of groupNames) result[g] = [];
-  for (const g of groupNames) {
-    for (let i = 0; i < preCounts[g]; i++) result[g].push('PRE');
+  // Start building groups with PLACEHOLDERs and fixed dances
+  for (const g of editableGroupNames) result[g] = [];
+  for (const g of editableGroupNames) {
+    for (let i = 0; i < placeholderCounts[g]; i++) result[g].push('PLACEHOLDER');
   }
   for (const { id, group } of fixedDances) {
     result[group].push(id);
@@ -241,7 +249,7 @@ const randomizeSolution = (original: Solution, groupNames: string[]): Solution =
 
   // Remaining capacity per group
   const capacity: Record<string, number> = {};
-  for (const g of groupNames) capacity[g] = groupSizes[g] - result[g].length;
+  for (const g of editableGroupNames) capacity[g] = groupSizes[g] - result[g].length;
 
   // Place combo units randomly (need 2 slots in same group)
   shuffle(comboUnits);
@@ -250,11 +258,16 @@ const randomizeSolution = (original: Solution, groupNames: string[]): Solution =
     const fgA = FIXED_GROUP[a];
     const fgB = FIXED_GROUP[b];
     const forced = fgA ?? fgB;
-    const candidates = forced ? [forced] : shuffle([...groupNames]).filter(g => capacity[g] >= 2);
+    const candidates = forced
+      ? [forced]
+      : shuffle([...editableGroupNames]).filter(g => capacity[g] >= 2);
     if (candidates.length === 0) {
       // Fallback: put in group with most capacity
       candidates.push(
-        groupNames.reduce((best, g) => (capacity[g] > capacity[best] ? g : best), groupNames[0])
+        editableGroupNames.reduce(
+          (best, g) => (capacity[g] > capacity[best] ? g : best),
+          editableGroupNames[0]
+        )
       );
     }
     const g = candidates[0];
@@ -265,12 +278,12 @@ const randomizeSolution = (original: Solution, groupNames: string[]): Solution =
   // Distribute remaining free dances randomly across groups with capacity
   shuffle(freeDances);
   for (const id of freeDances) {
-    const candidates = groupNames.filter(g => capacity[g] > 0);
+    const candidates = editableGroupNames.filter(g => capacity[g] > 0);
     if (candidates.length === 0) {
       // Overflow: pick group with most capacity (shouldn't happen with correct sizes)
-      const g = groupNames.reduce(
+      const g = editableGroupNames.reduce(
         (best, g) => (capacity[g] > capacity[best] ? g : best),
-        groupNames[0]
+        editableGroupNames[0]
       );
       result[g].push(id);
       capacity[g]--;
@@ -281,8 +294,8 @@ const randomizeSolution = (original: Solution, groupNames: string[]): Solution =
     }
   }
 
-  // Shuffle the order within each group
-  for (const g of groupNames) shuffle(result[g]);
+  // Shuffle the order within each editable group
+  for (const g of editableGroupNames) shuffle(result[g]);
 
   return result;
 };
@@ -306,7 +319,7 @@ export const anneal = (
 ): { topSolutions: RankedSolution[]; history: number[] } => {
   const groupNames = ctx.groupNames;
   // Start from a fully randomized solution for diversity
-  let current = randomizeSolution(initial, groupNames);
+  let current = randomizeSolution(initial, ctx);
   let currentScore = scoreSolution(current, ctx).total;
   let best = cloneSolution(current, groupNames);
   let bestScore = currentScore;
@@ -342,7 +355,7 @@ export const anneal = (
 
     if (restart > 0) {
       // Each restart gets a fresh random solution for maximum diversity
-      current = randomizeSolution(initial, groupNames);
+      current = randomizeSolution(initial, ctx);
       currentScore = scoreSolution(current, ctx).total;
       best = cloneSolution(current, groupNames);
       bestScore = currentScore;

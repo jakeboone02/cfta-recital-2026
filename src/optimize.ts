@@ -10,50 +10,72 @@ const db = new Database(`${import.meta.dir}/../build/database.db`, { readonly: t
 const loadDances = (): DanceData[] =>
   db
     .query<
-      { dance_id: number; dance_name: string; dance_style: string; choreography: string },
+      {
+        dance_id: number;
+        dance_name: string;
+        dance_style: string;
+        choreography: string;
+        skip_overlap_checks: number;
+        exclude_teachers: number;
+      },
       SQLQueryBindings[]
-    >('SELECT dance_id, dance_name, dance_style, choreography FROM dances')
+    >(
+      'SELECT dance_id, dance_name, dance_style, choreography, skip_overlap_checks, exclude_teachers FROM dances'
+    )
     .all()
     .map(r => ({
       danceId: r.dance_id,
       danceName: r.dance_name,
       danceStyle: r.dance_style,
       choreography: r.choreography,
+      skipOverlapChecks: r.skip_overlap_checks,
+      excludeTeachers: r.exclude_teachers,
     }));
 
-const loadDancersByDance = (): Map<number, string[]> => {
+const loadDancersByDance = (dances: DanceData[]): Map<number, string[]> => {
+  const excludeTeacherDanceIds = new Set(dances.filter(d => d.excludeTeachers).map(d => d.danceId));
+  const teacherNames = new Set(
+    db
+      .query<{ dancer_name: string }, SQLQueryBindings[]>(
+        'SELECT dancer_name FROM dancers WHERE is_teacher = 1'
+      )
+      .all()
+      .map(r => r.dancer_name)
+  );
+
   const rows = db
     .query<{ dance_id: number; dancer_name: string }, SQLQueryBindings[]>(
       `SELECT DISTINCT d.dance_id, dc.dancer_name
          FROM dances d
          INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
-         INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
-        WHERE NOT (d.dance_name = 'SpecTAPular' AND dc.dancer_name IN (
-          SELECT dancer_name FROM dancers WHERE is_teacher = 1
-        ))`
+         INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id`
     )
     .all();
 
   const map = new Map<number, string[]>();
   for (const r of rows) {
+    if (excludeTeacherDanceIds.has(r.dance_id) && teacherNames.has(r.dancer_name)) continue;
     if (!map.has(r.dance_id)) map.set(r.dance_id, []);
     map.get(r.dance_id)!.push(r.dancer_name);
   }
   return map;
 };
 
-const loadCurrentGroups = (): Solution => {
+const loadCurrentGroups = (): { solution: Solution; fixedOrderGroups: Set<string> } => {
   const rows = db
-    .query<{ recital_group: string; show_order: string }, SQLQueryBindings[]>(
-      'SELECT recital_group, show_order FROM recital_groups'
-    )
+    .query<
+      { recital_group: string; show_order: string; has_fixed_order: number },
+      SQLQueryBindings[]
+    >('SELECT recital_group, show_order, has_fixed_order FROM recital_groups')
     .all();
 
   const solution: Solution = {};
+  const fixedOrderGroups = new Set<string>();
   for (const r of rows) {
     solution[r.recital_group] = JSON.parse(r.show_order);
+    if (r.has_fixed_order) fixedOrderGroups.add(r.recital_group);
   }
-  return solution;
+  return { solution, fixedOrderGroups };
 };
 
 const loadShowParts = (): { groupNames: string[]; showParts: ShowPart[] } => {
@@ -72,13 +94,42 @@ const loadShowParts = (): { groupNames: string[]; showParts: ShowPart[] } => {
   return { groupNames, showParts };
 };
 
+// ── Load combo pairs ────────────────────────────────────────────────────
+
+const loadComboPairs = (fixedOrderGroups: Set<string>, solution: Solution): [number, number][] => {
+  const fixedDanceIds = new Set<number>();
+  for (const g of fixedOrderGroups) {
+    for (const id of solution[g] ?? []) {
+      if (typeof id === 'number') fixedDanceIds.add(id);
+    }
+  }
+  const rows = db
+    .query<{ dance_id_1: number; dance_id_2: number }, SQLQueryBindings[]>(
+      `SELECT a.dance_id AS dance_id_1, b.dance_id AS dance_id_2
+         FROM class_dances a
+         JOIN class_dances b ON a.class_id = b.class_id AND a.dance_id < b.dance_id`
+    )
+    .all();
+  return rows
+    .filter(r => !fixedDanceIds.has(r.dance_id_1) && !fixedDanceIds.has(r.dance_id_2))
+    .map(r => [r.dance_id_1, r.dance_id_2]);
+};
+
 // ── Main ─────────────────────────────────────────────────────────────────
 
 const dances = loadDances();
-const dancersByDance = loadDancersByDance();
-const currentSolution = loadCurrentGroups();
+const dancersByDance = loadDancersByDance(dances);
+const { solution: currentSolution, fixedOrderGroups } = loadCurrentGroups();
 const { groupNames, showParts } = loadShowParts();
-const ctx = buildScoringContext(dances, dancersByDance, groupNames, showParts);
+const comboPairs = loadComboPairs(fixedOrderGroups, currentSolution);
+const ctx = buildScoringContext(
+  dances,
+  dancersByDance,
+  groupNames,
+  showParts,
+  comboPairs,
+  fixedOrderGroups
+);
 
 db.close();
 
@@ -172,8 +223,8 @@ console.log('══════════════════════�
 for (const g of groupNames) {
   console.log(`── Group ${g} (${best[g].length} dances) ──`);
   best[g].forEach((id, idx) => {
-    if (id === 'PRE') {
-      console.log(`  ${(idx + 1).toString().padStart(2)}. [PREDANCE placeholder]`);
+    if (id === 'PLACEHOLDER') {
+      console.log(`  ${(idx + 1).toString().padStart(2)}. [PLACEHOLDER]`);
     } else {
       const d = danceMap.get(id);
       console.log(

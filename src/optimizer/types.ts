@@ -19,7 +19,7 @@ export interface ScoreBreakdown {
   babyAtGroupEnd: number;
   comboPairTooClose: number;
   familyImbalance: number;
-  preTooClose: number;
+  placeholderTooClose: number;
   styleImbalance: number;
 }
 
@@ -44,6 +44,8 @@ export interface DanceData {
   danceName: string;
   danceStyle: string;
   choreography: string;
+  skipOverlapChecks: number;
+  excludeTeachers: number;
 }
 
 /** Simulated annealing configuration */
@@ -55,26 +57,11 @@ export interface AnnealConfig {
   restarts: number;
 }
 
-/** Fixed dances that appear in every show */
-export const FIXED = {
-  SPECTAPULAR: 1,
-  HIPHOP: 2,
-  FINALE: 41,
-} as const;
-
 /** Hard group constraints: dance_id → required group */
 export const FIXED_GROUP: Partial<Record<number, string>> = {
   11: 'C', // Adult Tap 1
   17: 'B', // Adult Tap 2
 };
-
-/** Combo pairs: dances from the same class that must stay in the same group */
-export const COMBO_PAIRS: [number, number][] = [
-  [7, 8], // Combo Ballet/Tap Mon 4:15
-  [22, 23], // Combo Ballet/Tap Tue 5:15
-  [25, 26], // Combo Ballet/Tap Wed 11am
-  [12, 13], // Combo Ballet/Tap Wed 2:30
-];
 
 /** Min required gap between combo pair siblings within a group */
 export const COMBO_MIN_GAP = 2;

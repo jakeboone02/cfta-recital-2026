@@ -1,6 +1,52 @@
 import Papa from 'papaparse';
 import type { Env } from '../env';
 
+/** Normalize a loosely-formatted JSON array string into valid JSON.
+ * Accepts:
+ *   - Already valid JSON: '["A","B"]' → '["A","B"]'
+ *   - Unquoted values: '[OPENER,A,B,CLOSER]' → '["OPENER","A","B","CLOSER"]'
+ *   - Bare lists: 'OPENER,A,B,CLOSER' → '["OPENER","A","B","CLOSER"]'
+ *   - Mixed: '[1,PLACEHOLDER,2,3]' → '[1,"PLACEHOLDER",2,3]'
+ */
+export function normalizeJsonArray(value: string): string {
+  const trimmed = value.trim();
+
+  // Try parsing as-is first
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return JSON.stringify(parsed);
+  } catch {
+    // not valid JSON, continue normalization
+  }
+
+  // Strip outer brackets if present
+  let inner = trimmed;
+  if (inner.startsWith('[') && inner.endsWith(']')) {
+    inner = inner.slice(1, -1);
+  }
+
+  // Split on commas, trim each element
+  const elements = inner.split(',').map(s => s.trim());
+
+  // Parse each element: numbers stay as numbers, strings get quoted
+  const normalized = elements.map(el => {
+    // Already quoted string
+    if ((el.startsWith('"') && el.endsWith('"')) || (el.startsWith("'") && el.endsWith("'"))) {
+      return JSON.parse(el.replace(/'/g, '"'));
+    }
+    // Number
+    const num = Number(el);
+    if (!isNaN(num) && el !== '') return num;
+    // Bare string (group name, PLACEHOLDER, etc.)
+    return el;
+  });
+
+  return JSON.stringify(normalized);
+}
+
+/** Columns known to contain JSON arrays that should be normalized */
+const JSON_ARRAY_COLUMNS = new Set(['group_order', 'show_order']);
+
 interface CsvTable {
   name: string;
   requiredColumns: string[];
@@ -37,7 +83,7 @@ const CSV_TABLES: CsvTable[] = [
     requiredColumns: ['dance_id', 'dance_style', 'dance_name'],
     insert: async (env, instanceId, rows) => {
       const stmt = env.DB.prepare(
-        'INSERT INTO dances (recital_instance_id, csv_dance_id, dance_style, dance_name, choreography, song, artist) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO dances (recital_instance_id, csv_dance_id, dance_style, dance_name, choreography, song, artist, skip_overlap_checks, exclude_teachers) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       );
       await env.DB.batch(
         rows.map(r =>
@@ -48,7 +94,9 @@ const CSV_TABLES: CsvTable[] = [
             r.dance_name,
             r.choreography ?? null,
             r.song ?? null,
-            r.artist ?? null
+            r.artist ?? null,
+            r.skip_overlap_checks ?? 0,
+            r.exclude_teachers ?? 0
           )
         )
       );
@@ -118,9 +166,10 @@ const CSV_TABLES: CsvTable[] = [
         'INSERT INTO shows (recital_instance_id, csv_show_id, group_order, show_description, show_time) VALUES (?, ?, ?, ?, ?)'
       );
       await env.DB.batch(
-        rows.map(r =>
-          stmt.bind(instanceId, r.show_id, r.group_order ?? null, r.show_description, r.show_time)
-        )
+        rows.map(r => {
+          const groupOrder = r.group_order ? normalizeJsonArray(String(r.group_order)) : null;
+          return stmt.bind(instanceId, r.show_id, groupOrder, r.show_description, r.show_time);
+        })
       );
     },
   },
@@ -137,15 +186,21 @@ const CSV_TABLES: CsvTable[] = [
       const danceMap = new Map(dances.results.map((d: any) => [d.csv_dance_id, d.dance_id]));
 
       const stmt = env.DB.prepare(
-        'INSERT INTO recital_groups (recital_instance_id, recital_group, show_order) VALUES (?, ?, ?)'
+        'INSERT INTO recital_groups (recital_instance_id, recital_group, show_order, has_fixed_order) VALUES (?, ?, ?, ?)'
       );
       await env.DB.batch(
         rows.map(r => {
-          const order: (number | string)[] = JSON.parse(r.show_order);
+          const normalized = normalizeJsonArray(String(r.show_order));
+          const order: (number | string)[] = JSON.parse(normalized);
           const remapped = order.map(id =>
-            id === 'PRE' ? 'PRE' : (danceMap.get(id as number) ?? id)
+            id === 'PLACEHOLDER' ? 'PLACEHOLDER' : (danceMap.get(id as number) ?? id)
           );
-          return stmt.bind(instanceId, r.recital_group, JSON.stringify(remapped));
+          return stmt.bind(
+            instanceId,
+            r.recital_group,
+            JSON.stringify(remapped),
+            r.has_fixed_order ?? 0
+          );
         })
       );
     },

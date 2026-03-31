@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { WORKER_CODE } from './optimizer-worker-code.generated';
 import type { AnnealConfig } from './optimizer/types';
@@ -180,7 +179,7 @@ const CSV_TABLES = [
   {
     name: 'dances',
     label: 'Dances',
-    cols: 'dance_id, dance_style, dance_name, choreography, song, artist',
+    cols: 'dance_id, dance_style, dance_name, choreography, song, artist, skip_overlap_checks, exclude_teachers',
   },
   { name: 'class_dances', label: 'Class→Dance', cols: 'class_id, dance_id' },
   { name: 'dancer_classes', label: 'Dancer→Class', cols: 'class_id, dancer_name' },
@@ -189,7 +188,11 @@ const CSV_TABLES = [
     label: 'Shows',
     cols: 'show_id, group_order, show_description, show_time',
   },
-  { name: 'recital_groups', label: 'Recital Groups', cols: 'recital_group, show_order' },
+  {
+    name: 'recital_groups',
+    label: 'Recital Groups',
+    cols: 'recital_group, show_order, has_fixed_order',
+  },
 ];
 
 const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
@@ -369,7 +372,6 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     error: dataError,
   } = useInstanceData(instanceId);
   const { data: orderData, isLoading: orderLoading, error: orderError } = useOrder(instanceId);
-  const queryClient = useQueryClient();
 
   const [groups, setGroups] = useState<GroupOrders | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -408,6 +410,16 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const groupNames = useMemo(
     () => [...new Set(showStructure.flatMap(s => s.parts))].sort(),
     [showStructure]
+  );
+
+  // Groups that can be optimized (not fixed-order)
+  const fixedOrderGroupNames = useMemo(
+    () => new Set((data?.groups ?? []).filter(g => g.has_fixed_order).map(g => g.recital_group)),
+    [data]
+  );
+  const editableGroupNames = useMemo(
+    () => groupNames.filter(g => !fixedOrderGroupNames.has(g)),
+    [groupNames, fixedOrderGroupNames]
   );
 
   // Initialize groups from query data
@@ -552,8 +564,11 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
       config: OPTIMIZE_CONFIG,
       dances: data.dances,
       dancersByDance: data.dancersByDance,
-      groupNames,
+      groupNames: editableGroupNames,
+      allGroupNames: groupNames,
       showParts: showStructure.map(s => ({ showId: s.show_id, groups: s.parts })),
+      comboPairs: data.comboPairs,
+      fixedOrderGroups: [...fixedOrderGroupNames],
     });
   };
 

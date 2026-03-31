@@ -22,7 +22,16 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   dances: {
     pk: 'dance_id',
-    columns: ['csv_dance_id', 'dance_style', 'dance_name', 'choreography', 'song', 'artist'],
+    columns: [
+      'csv_dance_id',
+      'dance_style',
+      'dance_name',
+      'choreography',
+      'song',
+      'artist',
+      'skip_overlap_checks',
+      'exclude_teachers',
+    ],
     orderBy: 'dance_id',
   },
   dancer_classes: {
@@ -42,7 +51,7 @@ const TABLE_DEFS: Record<string, TableDef> = {
   },
   recital_groups: {
     pk: 'id',
-    columns: ['recital_group', 'show_order'],
+    columns: ['recital_group', 'show_order', 'has_fixed_order'],
     orderBy: 'recital_group',
   },
 };

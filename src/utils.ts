@@ -6,7 +6,6 @@ import type {
   ShowDanceInstance,
   ShowStructureEntry,
 } from './types';
-import { FINALE_ID, HIPHOP_ID, SPECTAPULAR_ID } from './types';
 
 export interface Bookmark {
   name: string;
@@ -115,6 +114,7 @@ export interface ShowDance {
   dancers: string[];
   common_with_next: string[];
   common_with_next2: string[];
+  skip_overlap_checks: boolean;
 }
 
 export interface ShowData {
@@ -134,8 +134,8 @@ export const computeShowOrder = (
     const d = id != null ? danceMap[id] : null;
     return {
       dance_id: id,
-      dance_name: d?.dance_name ?? 'PREDANCE',
-      dance_style: d?.dance_style ?? 'PREDANCE',
+      dance_name: d?.dance_name ?? 'PLACEHOLDER',
+      dance_style: d?.dance_style ?? 'PLACEHOLDER',
       choreography: d?.choreography ?? '???',
       song: d?.song ?? '???',
       artist: d?.artist ?? '???',
@@ -145,35 +145,31 @@ export const computeShowOrder = (
       dancers: id != null ? (dancerLookup[id] ?? []) : [],
       common_with_next: [],
       common_with_next2: [],
+      skip_overlap_checks: d?.skip_overlap_checks === 1,
     };
   };
 
   return showStructure.map(show => {
-    const dances: ShowDance[] = [
-      makeDance(SPECTAPULAR_ID, 'SpecTAPular', show.show_id, 0),
-      ...show.parts.flatMap((g, partIdx) =>
-        (groups[g] ?? []).map(id =>
-          makeDance(id === 'PRE' ? null : id, g, show.show_id, partIdx + 1)
-        )
-      ),
-      makeDance(HIPHOP_ID, 'Hip Hop', show.show_id, show.parts.length),
-      makeDance(FINALE_ID, 'Finale', show.show_id, show.parts.length),
-    ];
+    const dances: ShowDance[] = show.parts.flatMap((g, partIdx) =>
+      (groups[g] ?? []).map(id =>
+        makeDance(id === 'PLACEHOLDER' ? null : id, g, show.show_id, partIdx)
+      )
+    );
 
-    // Compute dancer overlap (Finale excluded from "next" calculations)
+    // Compute dancer overlap (skip dances flagged with skip_overlap_checks)
     for (let i = 0; i < dances.length; i++) {
       const curr = dances[i];
-      // Find next non-Finale dance
-      const next = dances[i + 1]?.dance_name !== 'Finale' ? dances[i + 1] : undefined;
+      // Find next dance that doesn't skip overlap checks
+      const next = dances[i + 1] && !dances[i + 1].skip_overlap_checks ? dances[i + 1] : undefined;
       const next2 = (() => {
         let idx = i + 2;
-        while (idx < dances.length && dances[idx]?.dance_name === 'Finale') idx++;
+        while (idx < dances.length && dances[idx]?.skip_overlap_checks) idx++;
         return idx < dances.length ? dances[idx] : undefined;
       })();
-      if (next) {
+      if (next && !curr.skip_overlap_checks) {
         curr.common_with_next = curr.dancers.filter(d => next.dancers.includes(d));
       }
-      if (next2) {
+      if (next2 && !curr.skip_overlap_checks) {
         curr.common_with_next2 = curr.dancers.filter(d => next2.dancers.includes(d));
       }
     }
@@ -229,7 +225,7 @@ export const parseGroupOrdersCSV = (csv: string): GroupOrders | null => {
       const g = row.recital_group?.trim();
       if (!g) continue;
       const arr = JSON.parse(row.show_order) as (number | string)[];
-      groups[g] = arr.map(v => (v === 'PRE' ? 'PRE' : Number(v)));
+      groups[g] = arr.map(v => (v === 'PLACEHOLDER' ? 'PLACEHOLDER' : Number(v)));
     }
     if (Object.keys(groups).length === 0) return null;
     return groups;
@@ -262,6 +258,7 @@ const STYLE_COLORS: Record<string, { bg: string; text: string }> = {
   'musical-theater': { bg: '#8854d0', text: '#fff' },
   tap: { bg: '#20bf6b', text: '#fff' },
   predance: { bg: '#999', text: '#fff' },
+  placeholder: { bg: '#999', text: '#fff' },
   all: { bg: '#667', text: '#fff' },
 };
 

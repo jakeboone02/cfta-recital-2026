@@ -18,13 +18,13 @@ const DanceCard = ({
   danceMap,
   flash,
 }: {
-  danceId: number | 'PRE';
+  danceId: number | 'PLACEHOLDER';
   danceMap: DanceMap;
   flash?: boolean;
 }) => {
-  const dance = danceId !== 'PRE' ? danceMap[danceId] : null;
-  const name = dance?.dance_name ?? 'PREDANCE';
-  const dStyle = dance?.dance_style ?? 'PREDANCE';
+  const dance = danceId !== 'PLACEHOLDER' ? danceMap[danceId] : null;
+  const name = dance?.dance_name ?? 'PLACEHOLDER';
+  const dStyle = dance?.dance_style ?? 'PLACEHOLDER';
   const slug = styleSlug(dStyle);
 
   return (
@@ -65,6 +65,17 @@ export const WorkingArea = ({
     return () => clearTimeout(timer);
   }, [flashIds]);
 
+  // Compute unassigned dances
+  const assignedIds = new Set<number>();
+  for (const g of groupNames) {
+    for (const id of groups[g] ?? []) {
+      if (typeof id === 'number') assignedIds.add(id);
+    }
+  }
+  const unassignedDances = Object.values(danceMap).filter(d => !assignedIds.has(d.dance_id));
+
+  const UNASSIGNED = '__unassigned__';
+
   const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
     if (!destination) return;
@@ -76,22 +87,30 @@ export const WorkingArea = ({
 
     if (srcGroup === dstGroup && srcIdx === dstIdx) return;
 
-    const movedDanceId = groups[srcGroup][srcIdx];
-
-    // PREDANCE cannot move between groups
-    if (srcGroup !== dstGroup && movedDanceId === 'PRE') return;
-
+    // Build mutable copy
     const newGroups: GroupOrders = Object.fromEntries(
       groupNames.map(g => [g, [...(groups[g] ?? [])]])
     );
 
-    if (srcGroup === dstGroup) {
-      // Within-group reorder — no combo logic
+    if (srcGroup === UNASSIGNED) {
+      // Dragging from unassigned pool into a group
+      const danceId = unassignedDances[srcIdx]?.dance_id;
+      if (danceId == null || dstGroup === UNASSIGNED) return;
+      newGroups[dstGroup].splice(dstIdx, 0, danceId);
+    } else if (dstGroup === UNASSIGNED) {
+      // Dragging from a group to unassigned (remove from group)
+      const movedDanceId = newGroups[srcGroup][srcIdx];
+      if (movedDanceId === 'PLACEHOLDER') return;
+      newGroups[srcGroup].splice(srcIdx, 1);
+    } else if (srcGroup === dstGroup) {
+      // Within-group reorder
       const arr = newGroups[srcGroup];
       const [moved] = arr.splice(srcIdx, 1);
       arr.splice(dstIdx, 0, moved);
     } else {
       // Cross-group move
+      const movedDanceId = newGroups[srcGroup][srcIdx];
+      if (movedDanceId === 'PLACEHOLDER') return;
       const srcArr = newGroups[srcGroup];
       const [moved] = srcArr.splice(srcIdx, 1);
       const dstArr = newGroups[dstGroup];
@@ -101,11 +120,9 @@ export const WorkingArea = ({
       if (typeof movedDanceId === 'number') {
         const siblingId = comboSiblingMap[movedDanceId];
         if (siblingId != null) {
-          // Find and remove sibling from its current group (which should be srcGroup)
           const sibIdx = srcArr.indexOf(siblingId);
           if (sibIdx !== -1) {
             srcArr.splice(sibIdx, 1);
-            // Insert sibling directly after the moved dance in destination
             const movedIdx = dstArr.indexOf(movedDanceId);
             dstArr.splice(movedIdx + 1, 0, siblingId);
             setFlashIds(new Set([movedDanceId, siblingId]));
@@ -175,6 +192,45 @@ export const WorkingArea = ({
             </div>
           );
         })}
+        {unassignedDances.length > 0 && (
+          <div className="group-section group-section--unassigned">
+            <div className="group-header" onClick={() => toggleCollapse(UNASSIGNED)}>
+              <span>
+                <span className={`collapse-icon ${collapsed[UNASSIGNED] ? 'collapsed' : ''}`}>
+                  ▼
+                </span>
+                Unassigned
+              </span>
+              <span className="group-count">{unassignedDances.length} dances</span>
+            </div>
+            <Droppable droppableId={UNASSIGNED}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`group-drop-zone ${snapshot.isDraggingOver ? 'drag-over' : ''} ${collapsed[UNASSIGNED] ? 'hidden' : ''}`}>
+                  {unassignedDances.map((dance, idx) => (
+                    <Draggable
+                      key={`unassigned-${dance.dance_id}`}
+                      draggableId={`unassigned-${dance.dance_id}`}
+                      index={idx}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`dance-card ${snapshot.isDragging ? 'dragging' : ''}`}>
+                          <DanceCard danceId={dance.dance_id} danceMap={danceMap} />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+        )}
       </DragDropContext>
     </div>
   );

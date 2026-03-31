@@ -40,30 +40,63 @@ const getShows = (): ShowRow[] =>
     .all()
     .map(r => ({ ...r, group_order: JSON.parse(r.group_order) }));
 
-const getComboPairs = () =>
-  db
+const getComboPairs = () => {
+  const fixedGroupDanceIds = new Set<number>();
+  for (const g of db
+    .query<{ show_order: string }, SQLQueryBindings[]>(
+      'SELECT show_order FROM recital_groups WHERE has_fixed_order = 1'
+    )
+    .all()) {
+    for (const id of JSON.parse(g.show_order)) {
+      if (typeof id === 'number') fixedGroupDanceIds.add(id);
+    }
+  }
+  return db
     .query<{ dance_id_1: number; dance_id_2: number }, SQLQueryBindings[]>(
       `SELECT a.dance_id AS dance_id_1, b.dance_id AS dance_id_2
          FROM class_dances a
-         JOIN class_dances b ON a.class_id = b.class_id AND a.dance_id < b.dance_id
-         JOIN classes c ON a.class_id = c.class_id
-        WHERE c.class_name LIKE '%Combo%'`
+         JOIN class_dances b ON a.class_id = b.class_id AND a.dance_id < b.dance_id`
     )
-    .all();
+    .all()
+    .filter(r => !fixedGroupDanceIds.has(r.dance_id_1) && !fixedGroupDanceIds.has(r.dance_id_2));
+};
 
 // Precompute optimizer scoring context (read-only, reused across requests)
 const optimizerDances: DanceData[] = db
   .query<
-    { dance_id: number; dance_name: string; dance_style: string; choreography: string },
+    {
+      dance_id: number;
+      dance_name: string;
+      dance_style: string;
+      choreography: string;
+      skip_overlap_checks: number;
+      exclude_teachers: number;
+    },
     SQLQueryBindings[]
-  >('SELECT dance_id, dance_name, dance_style, choreography FROM dances')
+  >(
+    'SELECT dance_id, dance_name, dance_style, choreography, skip_overlap_checks, exclude_teachers FROM dances'
+  )
   .all()
   .map(r => ({
     danceId: r.dance_id,
     danceName: r.dance_name,
     danceStyle: r.dance_style,
     choreography: r.choreography,
+    skipOverlapChecks: r.skip_overlap_checks,
+    excludeTeachers: r.exclude_teachers,
   }));
+
+const excludeTeacherDanceIds = new Set(
+  optimizerDances.filter(d => d.excludeTeachers).map(d => d.danceId)
+);
+const teacherNames = new Set(
+  db
+    .query<{ dancer_name: string }, SQLQueryBindings[]>(
+      'SELECT dancer_name FROM dancers WHERE is_teacher = 1'
+    )
+    .all()
+    .map(r => r.dancer_name)
+);
 
 const optimizerDancersByDance = new Map<number, string[]>();
 for (const r of db
@@ -71,12 +104,10 @@ for (const r of db
     `SELECT DISTINCT d.dance_id, dc.dancer_name
      FROM dances d
      INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
-     INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
-    WHERE NOT (d.dance_name = 'SpecTAPular' AND dc.dancer_name IN (
-      SELECT dancer_name FROM dancers WHERE is_teacher = 1
-    ))`
+     INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id`
   )
   .all()) {
+  if (excludeTeacherDanceIds.has(r.dance_id) && teacherNames.has(r.dancer_name)) continue;
   if (!optimizerDancersByDance.has(r.dance_id)) optimizerDancersByDance.set(r.dance_id, []);
   optimizerDancersByDance.get(r.dance_id)!.push(r.dancer_name);
 }
@@ -88,11 +119,25 @@ const optimizerShowParts: ShowPart[] = showRows.map(r => ({
 }));
 const optimizerGroupNames = [...new Set(optimizerShowParts.flatMap(s => s.groups))].sort();
 
+const fixedOrderGroupNames = new Set(
+  db
+    .query<{ recital_group: string }, SQLQueryBindings[]>(
+      'SELECT recital_group FROM recital_groups WHERE has_fixed_order = 1'
+    )
+    .all()
+    .map(r => r.recital_group)
+);
+
+const comboPairsData = getComboPairs();
+const comboPairsTuples: [number, number][] = comboPairsData.map(r => [r.dance_id_1, r.dance_id_2]);
+
 const scoringCtx = buildScoringContext(
   optimizerDances,
   optimizerDancersByDance,
   optimizerGroupNames,
-  optimizerShowParts
+  optimizerShowParts,
+  comboPairsTuples,
+  fixedOrderGroupNames
 );
 
 const OPTIMIZE_CONFIG: AnnealConfig = {

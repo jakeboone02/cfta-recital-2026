@@ -6,7 +6,7 @@ export type DanceStyle =
   | 'Modern/Lyrical'
   | 'Musical Theater'
   | 'Tap'
-  | 'PREDANCE';
+  | 'PLACEHOLDER';
 
 export interface DanceRow {
   dance_id: number;
@@ -15,11 +15,14 @@ export interface DanceRow {
   choreography: string;
   song: string;
   artist: string;
+  skip_overlap_checks: number;
+  exclude_teachers: number;
 }
 
 export interface RecitalGroupRow {
   recital_group: string;
-  show_order: (number | 'PRE')[];
+  show_order: (number | 'PLACEHOLDER')[];
+  has_fixed_order: number;
 }
 
 export interface ShowRow {
@@ -50,18 +53,13 @@ export interface ShowDanceInstance {
 
 export type DanceMap = Record<number, DanceRow>;
 
-export type GroupOrders = Record<string, (number | 'PRE')[]>;
+export type GroupOrders = Record<string, (number | 'PLACEHOLDER')[]>;
 
 export interface ShowStructureEntry {
   show_id: number;
   label: string;
   parts: string[];
 }
-
-// Fixed dance IDs
-export const SPECTAPULAR_ID = 1;
-export const HIPHOP_ID = 2;
-export const FINALE_ID = 41;
 
 export interface ComboPair {
   dance_id_1: number;

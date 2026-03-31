@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS dances (
   dance_name TEXT,
   choreography TEXT,
   song TEXT,
-  artist TEXT
+  artist TEXT,
+  skip_overlap_checks INTEGER CHECK (skip_overlap_checks IN (0, 1)) NOT NULL DEFAULT 0,
+  exclude_teachers INTEGER CHECK (exclude_teachers IN (0, 1)) NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_dances_instance ON dances(recital_instance_id);
 
@@ -73,7 +75,8 @@ CREATE TABLE IF NOT EXISTS recital_groups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   recital_instance_id INTEGER NOT NULL REFERENCES recital_instances(id),
   recital_group TEXT NOT NULL,
-  show_order TEXT NOT NULL -- JSON array of dance IDs / "PRE"
+  show_order TEXT NOT NULL, -- JSON array of dance IDs / "PLACEHOLDER"
+  has_fixed_order INTEGER CHECK (has_fixed_order IN (0, 1)) NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_recital_groups_instance ON recital_groups(recital_instance_id);
 
@@ -81,7 +84,7 @@ CREATE TABLE IF NOT EXISTS shows (
   show_id INTEGER PRIMARY KEY AUTOINCREMENT,
   recital_instance_id INTEGER NOT NULL REFERENCES recital_instances(id),
   csv_show_id INTEGER, -- original 1/2/3 from CSV
-  group_order TEXT, -- JSON array of group names, e.g. '["A","B"]'
+  group_order TEXT, -- JSON array of group names, e.g. '["OPENER","A","B","CLOSER"]'
   show_description TEXT NOT NULL,
   show_time TEXT NOT NULL
 );
