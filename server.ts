@@ -61,6 +61,15 @@ const getComboPairs = () => {
     .filter(r => !fixedGroupDanceIds.has(r.dance_id_1) && !fixedGroupDanceIds.has(r.dance_id_2));
 };
 
+const getPlaceholderDances = (): number[] | null => {
+  const row = db
+    .query<{ dance_order: string }, SQLQueryBindings[]>(
+      'SELECT dance_order FROM placeholder_dances LIMIT 1'
+    )
+    .get();
+  return row ? JSON.parse(row.dance_order) : null;
+};
+
 // Precompute optimizer scoring context (read-only, reused across requests)
 const optimizerDances: DanceData[] = db
   .query<
@@ -159,6 +168,7 @@ const server = Bun.serve({
     if (path === '/api/groups') return Response.json(getGroups());
     if (path === '/api/shows') return Response.json(getShows());
     if (path === '/api/combo-pairs') return Response.json(getComboPairs());
+    if (path === '/api/placeholder-dances') return Response.json(getPlaceholderDances());
 
     if (path === '/api/optimize' && req.method === 'POST') {
       const body = (await req.json()) as GroupOrders;

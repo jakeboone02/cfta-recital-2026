@@ -7,7 +7,7 @@ export async function handleData(
 ): Promise<Response> {
   if (request.method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
 
-  const [dances, groups, comboPairs, dancerRows, dancerLastNames, showRows] = await Promise.all([
+  const [dances, groups, comboPairs, dancerRows, dancerMetaRows, showRows] = await Promise.all([
     env.DB.prepare(
       'SELECT dance_id, dance_style, dance_name, choreography, song, artist, skip_overlap_checks, exclude_teachers FROM dances WHERE recital_instance_id = ?'
     )
@@ -37,7 +37,13 @@ export async function handleData(
     )
       .bind(instanceId)
       .all(),
-    env.DB.prepare(`SELECT dancer_name, last_name FROM dancers WHERE recital_instance_id = ?`)
+    env.DB.prepare(
+      `SELECT dancer_name,
+              last_name,
+              COALESCE(NULLIF(TRIM(family_label), ''), last_name) AS family_name
+         FROM dancers
+        WHERE recital_instance_id = ?`
+    )
       .bind(instanceId)
       .all(),
     env.DB.prepare(
@@ -50,9 +56,6 @@ export async function handleData(
   // Build dancers-by-dance lookup (excluding teachers from dances with exclude_teachers)
   const excludeTeacherDanceIds = new Set(
     (dances.results as any[]).filter(d => d.exclude_teachers === 1).map(d => d.dance_id)
-  );
-  const teacherNames = new Set(
-    (dancerLastNames.results as any[]).filter((_r: any) => false).map((r: any) => r.dancer_name)
   );
   // We need teacher names for filtering — fetch them
   const teacherRows = await env.DB.prepare(
@@ -71,8 +74,10 @@ export async function handleData(
 
   // Build dancer last-name lookup
   const dancerLastNameMap: Record<string, string> = {};
-  for (const r of dancerLastNames.results as any[]) {
+  const dancerFamilyMap: Record<string, string> = {};
+  for (const r of dancerMetaRows.results as any[]) {
     dancerLastNameMap[r.dancer_name] = r.last_name;
+    dancerFamilyMap[r.dancer_name] = r.family_name;
   }
 
   // Parse group show_order JSON
@@ -90,8 +95,9 @@ export async function handleData(
     show_time: r.show_time,
   }));
 
-  // Get instance config
-  const instance = await env.DB.prepare('SELECT config FROM recital_instances WHERE id = ?')
+  const instance = await env.DB.prepare(
+    'SELECT config, placeholder_dances FROM recital_instances WHERE id = ?'
+  )
     .bind(instanceId)
     .first();
 
@@ -114,7 +120,11 @@ export async function handleData(
     shows: parsedShows,
     comboPairs: filteredComboPairs,
     dancersByDance,
+    dancerFamilies: dancerFamilyMap,
     dancerLastNames: dancerLastNameMap,
     config: instance?.config ? JSON.parse(instance.config as string) : null,
+    placeholderDances: instance?.placeholder_dances
+      ? JSON.parse(instance.placeholder_dances as string)
+      : null,
   });
 }

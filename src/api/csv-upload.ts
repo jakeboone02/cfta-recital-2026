@@ -59,10 +59,18 @@ const CSV_TABLES: CsvTable[] = [
     requiredColumns: ['first_name', 'last_name', 'is_teacher'],
     insert: async (env, instanceId, rows) => {
       const stmt = env.DB.prepare(
-        'INSERT INTO dancers (recital_instance_id, first_name, last_name, is_teacher) VALUES (?, ?, ?, ?)'
+        'INSERT INTO dancers (recital_instance_id, first_name, last_name, family_label, is_teacher) VALUES (?, ?, ?, ?, ?)'
       );
       await env.DB.batch(
-        rows.map(r => stmt.bind(instanceId, r.first_name, r.last_name, r.is_teacher ?? 0))
+        rows.map(r =>
+          stmt.bind(
+            instanceId,
+            r.first_name,
+            r.last_name,
+            r.family_label?.trim() || null,
+            r.is_teacher ?? 0
+          )
+        )
       );
     },
   },

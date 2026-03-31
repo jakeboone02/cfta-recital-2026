@@ -6,7 +6,7 @@ interface Props {
   shows: ShowData[];
   groupNames: string[];
   actions?: React.ReactNode;
-  dancerLastNames: Record<string, string>;
+  dancerFamilies: Record<string, string>;
   compact?: boolean;
   label?: string;
 }
@@ -131,21 +131,21 @@ const ChoreoCount = ({ dances }: { dances: ShowDance[] }) => {
 
 const FamilyCount = ({
   dances,
-  dancerLastNames,
+  dancerFamilies,
 }: {
   dances: ShowDance[];
-  dancerLastNames: Record<string, string>;
+  dancerFamilies: Record<string, string>;
 }) => {
-  const lastNames = new Set<string>();
+  const familyNames = new Set<string>();
   for (const d of dances) {
     for (const dancer of d.dancers) {
-      const ln = dancerLastNames[dancer];
-      if (ln) lastNames.add(ln);
+      const family = dancerFamilies[dancer];
+      if (family) familyNames.add(family);
     }
   }
   return (
     <span>
-      <strong>{lastNames.size}</strong> families
+      <strong>{familyNames.size}</strong> families
     </span>
   );
 };
@@ -175,7 +175,7 @@ export const ReportArea = ({
   shows,
   groupNames,
   actions,
-  dancerLastNames,
+  dancerFamilies,
   compact,
   label,
 }: Props) => {
@@ -220,7 +220,7 @@ export const ReportArea = ({
                 Show {show.show_id}: {show.label}
               </h3>
               <div className="show-metrics">
-                <FamilyCount dances={show.dances} dancerLastNames={dancerLastNames} />
+                <FamilyCount dances={show.dances} dancerFamilies={dancerFamilies} />
                 <ChoreoCount dances={show.dances} />
                 <OverlapCount dances={show.dances} />
               </div>

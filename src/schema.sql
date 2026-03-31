@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS recital_instances (
   year INTEGER NOT NULL,
   is_archived INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
-  config TEXT -- JSON: every-show dances, group structure, show descriptions
+  config TEXT, -- JSON: every-show dances, group structure, show descriptions
+  placeholder_dances TEXT -- JSON array of dance IDs in show-order sequence for PRE slots
 );
 
 --------------------------------------------------------------------------------
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS dancers (
   dancer_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
+  family_label TEXT,
   is_teacher INTEGER CHECK (is_teacher IN (0, 1)) NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_dancers_instance ON dancers(recital_instance_id);

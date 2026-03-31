@@ -23,6 +23,7 @@ import {
   computeShowOrder,
   exportCSV,
   exportExcel,
+  exportFamilyReportExcel,
   exportGroupOrdersCSV,
   initUndoSession,
   parseGroupOrdersCSV,
@@ -174,7 +175,7 @@ const InstanceListPage = () => {
 import type { ColumnOverride } from './DataGrid';
 
 const CSV_TABLES = [
-  { name: 'dancers', label: 'Dancers', cols: 'first_name, last_name, is_teacher' },
+  { name: 'dancers', label: 'Dancers', cols: 'first_name, last_name, family_label, is_teacher' },
   { name: 'classes', label: 'Classes', cols: 'class_id, teacher, class_name, class_time' },
   {
     name: 'dances',
@@ -197,6 +198,7 @@ const CSV_TABLES = [
 
 const TABLE_COLUMN_OVERRIDES: Record<string, Record<string, ColumnOverride>> = {
   dancers: {
+    family_label: { header: 'Family Label' },
     is_teacher: { type: 'checkbox' },
   },
   dancer_classes: {
@@ -394,7 +396,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     [data]
   );
   const dancersByDance = data?.dancersByDance ?? {};
-  const dancerLastNames = data?.dancerLastNames ?? {};
+  const dancerFamilies = data?.dancerFamilies ?? {};
 
   // Derive show structure and group names from recitals data
   const showStructure: ShowStructureEntry[] = useMemo(
@@ -441,17 +443,30 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
   const deleteBookmarkMutation = useDeleteBookmark(instanceId);
   const renameBookmarkMutation = useRenameBookmark(instanceId);
 
+  const placeholderDances = data?.placeholderDances ?? null;
+
   const shows = useMemo(
-    () => (groups && data ? computeShowOrder(groups, danceMap, dancersByDance, showStructure) : []),
-    [groups, danceMap, dancersByDance, showStructure, data]
+    () =>
+      groups && data
+        ? computeShowOrder(groups, danceMap, dancersByDance, showStructure, placeholderDances)
+        : [],
+    [groups, danceMap, dancersByDance, showStructure, placeholderDances, data]
   );
 
   const compareData = useMemo(() => {
     if (!compareBookmark || !data) return null;
     const bm = bookmarks.find(b => b.name === compareBookmark);
     if (!bm) return null;
-    return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure);
-  }, [compareBookmark, bookmarks, danceMap, dancersByDance, showStructure, data]);
+    return computeShowOrder(bm.groups, danceMap, dancersByDance, showStructure, placeholderDances);
+  }, [
+    compareBookmark,
+    bookmarks,
+    danceMap,
+    dancersByDance,
+    showStructure,
+    placeholderDances,
+    data,
+  ]);
 
   const handleGroupChange = (newGroups: GroupOrders) => {
     if (groups) pushUndo(groups);
@@ -478,6 +493,17 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'recital-order.xls';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportFamilyReport = () => {
+    const html = exportFamilyReportExcel(shows, dancerFamilies);
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'family-show-order.xls';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -618,18 +644,24 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
 
   const bookmarkStats = (b: Bookmark): string => {
     if (!data) return '';
-    const showOrders = computeShowOrder(b.groups, danceMap, dancersByDance, showStructure);
+    const showOrders = computeShowOrder(
+      b.groups,
+      danceMap,
+      dancersByDance,
+      showStructure,
+      placeholderDances
+    );
     return (
       'Families: ' +
       showOrders
         .map(show => {
-          const lastNames = new Set<string>();
+          const familyNames = new Set<string>();
           for (const d of show.dances)
             for (const dancer of d.dancers) {
-              const ln = dancerLastNames[dancer];
-              if (ln) lastNames.add(ln);
+              const family = dancerFamilies[dancer];
+              if (family) familyNames.add(family);
             }
-          return lastNames.size;
+          return familyNames.size;
         })
         .join(' · ')
     );
@@ -708,7 +740,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
           <ReportArea
             shows={shows}
             groupNames={groupNames}
-            dancerLastNames={dancerLastNames}
+            dancerFamilies={dancerFamilies}
             compact={!!compareData}
             label="Current"
             actions={
@@ -721,6 +753,13 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
                   title="Download show order as formatted Excel file">
                   📊 Excel
                 </button>
+                {/*
+                <button
+                  onClick={handleExportFamilyReport}
+                  title="Download family-oriented show order report as formatted Excel file">
+                  👪 Family
+                </button>
+                */}
                 <button onClick={handleOpenImport} title="Import/export group orders as CSV">
                   📥 Import/Export
                 </button>
@@ -739,7 +778,7 @@ const PlannerPage = ({ instanceId }: { instanceId: number }) => {
             <ReportArea
               shows={compareData}
               groupNames={groupNames}
-              dancerLastNames={dancerLastNames}
+              dancerFamilies={dancerFamilies}
               compact
               label={compareBookmark ?? 'Bookmark'}
             />

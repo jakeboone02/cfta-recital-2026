@@ -13,7 +13,7 @@ dance_id,dance_style,choreography,dance_name,song,artist,skip_overlap_checks,exc
 12,Ballet,Ms. Angie,Combo Ballet (Wed 2:30),A Mother Like You,JJ Heller,0,0
 13,Tap,Ms. Angie,Combo Tap (Wed 2:30),Get Back Up Again,Anna Kendrick,0,0
 14,Tap,Ms. Angie,Tap 1,Don't Slack,TROLLS World Tour,0,0
-15,Tap,Ms. Angie,Tap 2B,I Feel Like Dancing,Jason Mraz,0,0
+15,Tap,Ms. Angie,Tap 2 (Ms. Angie),I Feel Like Dancing,Jason Mraz,0,0
 16,Tap,Ms. Angie,Tap 3,I Know Alone,HAIM,0,0
 17,Tap,Ms. Angie,Adult Tap 2,Intentions,Justin Beiber (feat. Quavo),0,0
 18,Modern/Lyrical,Ms. Angie,Modern/Lyrical 1,Overwhelmed,Royal & the Serpent,0,0
@@ -22,21 +22,21 @@ dance_id,dance_style,choreography,dance_name,song,artist,skip_overlap_checks,exc
 21,Musical Theater,Ms. Jillian,Musical Theater: HS,Footloose,Kenny Loggins,0,0
 22,Ballet,Ms. Marissa,Combo Ballet (Tue 5:15),Something Wild,Lindsey Stirling,0,0
 23,Tap,Ms. Marissa,Combo Tap (Tue 5:15),I'm Still Standing,First to Eleven,0,0
-24,Tap,Ms. Marissa,Tap 2A,Singin' in the Rain,Gene Kelly,0,0
+24,Tap,Ms. Marissa,Tap 2 (Ms. Marissa),Singin' in the Rain,Gene Kelly,0,0
 25,Ballet,Ms. Marissa,Combo Ballet (Wed 11am),Even When I'm Not,Maren Morris,0,0
 26,Tap,Ms. Marissa,Combo Tap (Wed 11am),Life is a Highway,Rascal Flatts,0,0
 27,Musical Theater,Ms. Marissa,Musical Theater 1,Work This Out,High School Musical 2,0,0
 28,Jazz,Ms. Marissa,Jazz 2,Black and Gold,Sam Sparro,0,0
-29,Ballet,Ms. Haley,Pre Ballet (Thu 11am),Try Everything,Shakira,0,0
-30,Tap,Ms. Haley,Pre Tap w/ Sweethearts (Thu 11am),Butterfly Kisses,Amanda Faith,0,0
-31,Ballet,Ms. Jillian,Pre Ballet w/ Sweethearts (Wed 10am Ms. Jillian),Sweet Child O' Mine,Brent Morgan,0,0
-32,Tap,Ms. Jillian,Pre Tap (Wed 10am Ms. Jillian),Boogie Woogie Bugle Boy,Pentatonix,0,0
-33,Ballet,Ms. Jillian,Pre Ballet w/ Sweethearts (Wed 11am),Sweet Child o' Mine,Brent Morgan,0,0
-34,Tap,Ms. Jillian,Pre Tap (Wed 11am),Boogie Woogie Bugle Boy,Pentatonix,0,0
-35,Ballet,Ms. Marissa,Pre Ballet (Wed 10am Ms. Marissa),Catch a Falling Star,JJ Heller,0,0
-36,Tap,Ms. Marissa,Pre Tap w/ Sweethearts (Wed 10am Ms. Marissa),You've Got a Friend In Me,Michael Bublé,0,0
-37,Ballet,Ms. Marissa,Pre Ballet (Wed 2:30),Happy Working Song,Amy Adams,0,0
-38,Tap,Ms. Marissa,Pre Tap w/ Sweethearts (Wed 2:30),You've Got a Friend In Me,Michael Bublé,0,0
-39,Ballet,Ms. Marissa,Pre Ballet (Wed 4:15),My Favorite Things,Julie Andrews,0,0
-40,Tap,Ms. Marissa,Pre Tap w/ Sweethearts (Wed 4:15),You've Got a Friend In Me,Michael Bublé,0,0
+29,Ballet,Ms. Haley,PreBallet (Thu 11am),Try Everything,Shakira,0,0
+30,Tap,Ms. Haley,PreTap w/ Sweethearts (Thu 11am),Butterfly Kisses,Amanda Faith,0,0
+31,Ballet,Ms. Jillian,PreBallet w/ Sweethearts (Wed 10am Ms. Jillian),Sweet Child O' Mine,Brent Morgan,0,0
+32,Tap,Ms. Jillian,PreTap (Wed 10am Ms. Jillian),Boogie Woogie Bugle Boy,Pentatonix,0,0
+33,Ballet,Ms. Jillian,PreBallet w/ Sweethearts (Wed 11am),Sweet Child o' Mine,Brent Morgan,0,0
+34,Tap,Ms. Jillian,PreTap (Wed 11am),Boogie Woogie Bugle Boy,Pentatonix,0,0
+35,Ballet,Ms. Marissa,PreBallet (Wed 10am Ms. Marissa),Catch a Falling Star,JJ Heller,0,0
+36,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 10am Ms. Marissa),You've Got a Friend In Me,Michael Bublé,0,0
+37,Ballet,Ms. Marissa,PreBallet (Wed 2:30),Happy Working Song,Amy Adams,0,0
+38,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 2:30),You've Got a Friend In Me,Michael Bublé,0,0
+39,Ballet,Ms. Marissa,PreBallet (Wed 4:15),My Favorite Things,Julie Andrews,0,0
+40,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 4:15),You've Got a Friend In Me,Michael Bublé,0,0
 41,All,All,Finale,The Saints,Andy Mineo (feat. Trip Lee & KB),1,1

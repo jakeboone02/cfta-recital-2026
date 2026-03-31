@@ -22,12 +22,12 @@ class_id,teacher,class_time,class_name
 21,Ms. Jillian,Tue 5:15pm,Musical Theater 2
 22,Ms. Angie,Mon 5:15pm,Musical Theater 3
 23,Ms. Jillian,Tue 6:15pm,Musical Theater High School
-24,Ms. Jillian,Wed 10:00am,Pre-dance A: Ballet & Tap (Jillian)
-25,Ms. Marissa,Wed 10:00am,Pre-dance A: Ballet & Tap (Marissa)
-26,Ms. Jillian,Wed 11:00am,Pre-dance B: Ballet & Tap
-27,Ms. Marissa,Wed 2:30pm,Pre-dance C: Ballet & Tap
-28,Ms. Marissa,Wed 4:15pm,Pre-dance D: Ballet & Tap
-29,Ms. Haley,Thu 11:00am,Pre-dance F: Ballet & Tap
+24,Ms. Jillian,Wed 10:00am,PreDance A: Ballet & Tap (Jillian)
+25,Ms. Marissa,Wed 10:00am,PreDance A: Ballet & Tap (Marissa)
+26,Ms. Jillian,Wed 11:00am,PreDance B: Ballet & Tap
+27,Ms. Marissa,Wed 2:30pm,PreDance C: Ballet & Tap
+28,Ms. Marissa,Wed 4:15pm,PreDance D: Ballet & Tap
+29,Ms. Haley,Thu 11:00am,PreDance F: Ballet & Tap
 30,Ms. Angie,Wed 4:15pm,Tap 1
 31,Ms. Marissa,Tue 7:15pm,Tap 2A
 32,Ms. Angie,Wed 5:15pm,Tap 2B

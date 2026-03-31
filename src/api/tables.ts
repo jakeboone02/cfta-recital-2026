@@ -11,8 +11,8 @@ interface TableDef {
 const TABLE_DEFS: Record<string, TableDef> = {
   dancers: {
     pk: 'id',
-    columns: ['first_name', 'last_name', 'is_teacher'],
-    selectColumns: ['id', 'first_name', 'last_name', 'dancer_name', 'is_teacher'],
+    columns: ['first_name', 'last_name', 'family_label', 'is_teacher'],
+    selectColumns: ['id', 'first_name', 'last_name', 'family_label', 'dancer_name', 'is_teacher'],
     orderBy: 'UPPER(last_name), UPPER(first_name)',
   },
   classes: {

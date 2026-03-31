@@ -123,12 +123,31 @@ export interface ShowData {
   dances: ShowDance[];
 }
 
+type FamilyCue = '' | 'performing' | 'beside-stage' | 'kitchen';
+
+interface FamilyReportRow {
+  showLabel: string;
+  order: number;
+  danceName: string;
+  songArtist: string;
+  familyDancers: string[];
+  cue: FamilyCue;
+  cueLabel: string;
+}
+
+interface FamilyReportSection {
+  family: string;
+  members: string[];
+  rows: FamilyReportRow[];
+}
+
 /** Compute the full show order from current group assignments */
 export const computeShowOrder = (
   groups: GroupOrders,
   danceMap: DanceMap,
   dancerLookup: Record<number, string[]>,
-  showStructure: ShowStructureEntry[]
+  showStructure: ShowStructureEntry[],
+  placeholderDances?: number[] | null
 ): ShowData[] => {
   const makeDance = (id: number | null, group: string, showId: number, part: number): ShowDance => {
     const d = id != null ? danceMap[id] : null;
@@ -149,11 +168,20 @@ export const computeShowOrder = (
     };
   };
 
+  let preIdx = 0;
+
   return showStructure.map(show => {
     const dances: ShowDance[] = show.parts.flatMap((g, partIdx) =>
-      (groups[g] ?? []).map(id =>
-        makeDance(id === 'PLACEHOLDER' ? null : id, g, show.show_id, partIdx)
-      )
+      (groups[g] ?? []).map(id => {
+        if (id === 'PLACEHOLDER') {
+          const actualId =
+            placeholderDances && preIdx < placeholderDances.length
+              ? placeholderDances[preIdx++]
+              : null;
+          return makeDance(actualId, g, show.show_id, partIdx);
+        }
+        return makeDance(id, g, show.show_id, partIdx);
+      })
     );
 
     // Compute dancer overlap (skip dances flagged with skip_overlap_checks)
@@ -249,6 +277,94 @@ export const exportSQL = (groups: GroupOrders): string => {
 export const styleSlug = (danceStyle: string): string =>
   danceStyle.toLowerCase().replace(/[/ ]+/g, '-');
 
+const compareText = (a: string, b: string): number =>
+  a.localeCompare(b, undefined, { sensitivity: 'base' });
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const formatSongArtist = (song: string, artist: string): string =>
+  [song, artist].filter(part => part && part !== '???').join(' — ');
+
+const getFamilyDancers = (dance: ShowDance, familyMembers: Set<string>): string[] =>
+  dance.dancers.filter(dancer => familyMembers.has(dancer));
+
+const buildFamilyReportSections = (
+  shows: ShowData[],
+  dancerFamilies: Record<string, string>
+): FamilyReportSection[] => {
+  const families = new Map<string, Set<string>>();
+
+  for (const show of shows) {
+    for (const dance of show.dances) {
+      for (const dancer of dance.dancers) {
+        const family = dancerFamilies[dancer];
+        if (!family) continue;
+        let members = families.get(family);
+        if (!members) {
+          members = new Set<string>();
+          families.set(family, members);
+        }
+        members.add(dancer);
+      }
+    }
+  }
+
+  return [...families.entries()]
+    .filter(([, members]) => members.size > 1)
+    .sort(([familyA], [familyB]) => compareText(familyA, familyB))
+    .map(([family, members]) => {
+      const familyMembers = new Set(members);
+      const rows = shows.flatMap(show =>
+        show.dances.map((dance, index) => {
+          const currentPerformers = getFamilyDancers(dance, familyMembers);
+          const nextPerformers =
+            index + 1 < show.dances.length
+              ? getFamilyDancers(show.dances[index + 1], familyMembers)
+              : [];
+          const next2Performers =
+            index + 2 < show.dances.length
+              ? getFamilyDancers(show.dances[index + 2], familyMembers)
+              : [];
+
+          let cue: FamilyCue = '';
+          let cueLabel = '';
+          let familyDancers: string[] = [];
+
+          if (currentPerformers.length > 0) {
+            cue = 'performing';
+            cueLabel = 'Performing';
+            familyDancers = currentPerformers;
+          } else if (nextPerformers.length > 0) {
+            cue = 'beside-stage';
+            cueLabel = 'Beside stage';
+            familyDancers = nextPerformers;
+          } else if (next2Performers.length > 0) {
+            cue = 'kitchen';
+            cueLabel = 'In the kitchen';
+            familyDancers = next2Performers;
+          }
+
+          return {
+            showLabel: show.label,
+            order: index + 1,
+            danceName: dance.dance_name,
+            songArtist: formatSongArtist(dance.song, dance.artist),
+            familyDancers,
+            cue,
+            cueLabel,
+          };
+        })
+      );
+
+      return {
+        family,
+        members: [...members].sort(compareText),
+        rows,
+      };
+    });
+};
+
 /** Map dance-style slugs to {bg, text} colours matching main.css */
 const STYLE_COLORS: Record<string, { bg: string; text: string }> = {
   ballet: { bg: '#e056a0', text: '#fff' },
@@ -264,7 +380,6 @@ const STYLE_COLORS: Record<string, { bg: string; text: string }> = {
 
 /** Export show order as a styled HTML table that Excel can open (.xls) */
 export const exportExcel = (shows: ShowData[]): string => {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const headers = [
     'Show',
     '#',
@@ -290,13 +405,13 @@ export const exportExcel = (shows: ShowData[]): string => {
   html +=
     '<tr>' +
     headers
-      .map(h => `<th style="background:#333;color:#fff;font-weight:bold">${esc(h)}</th>`)
+      .map(h => `<th style="background:#333;color:#fff;font-weight:bold">${escapeHtml(h)}</th>`)
       .join('') +
     '</tr>';
 
   for (const show of shows) {
     // show separator row
-    html += `<tr><td colspan="${headers.length}" style="background:#2d6a4f;color:#fff;font-weight:bold;font-size:13pt">${esc(show.label)}</td></tr>`;
+    html += `<tr><td colspan="${headers.length}" style="background:#2d6a4f;color:#fff;font-weight:bold;font-size:13pt">${escapeHtml(show.label)}</td></tr>`;
 
     show.dances.forEach((d, di) => {
       const slug = styleSlug(d.dance_style);
@@ -307,20 +422,109 @@ export const exportExcel = (shows: ShowData[]): string => {
       html +=
         '<tr>' +
         [
-          `<td style="${plainStyle}">${esc(show.label)}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(show.label)}</td>`,
           `<td style="${plainStyle}" align="center">${di + 1}</td>`,
-          `<td style="${plainStyle}">${esc(d.group)}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(d.group)}</td>`,
           `<td style="${plainStyle}" align="center">${d.part}</td>`,
-          `<td style="${cellStyle};font-weight:bold">${esc(d.dance_name)}</td>`,
-          `<td style="${cellStyle}">${esc(d.dance_style)}</td>`,
-          `<td style="${plainStyle}">${esc(d.choreography)}</td>`,
-          `<td style="${plainStyle}">${esc(d.song)}</td>`,
-          `<td style="${plainStyle}">${esc(d.artist)}</td>`,
+          `<td style="${cellStyle};font-weight:bold">${escapeHtml(d.dance_name)}</td>`,
+          `<td style="${cellStyle}">${escapeHtml(d.dance_style)}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(d.choreography)}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(d.song)}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(d.artist)}</td>`,
           `<td style="${plainStyle}" align="center">${d.dancers.length}</td>`,
-          `<td style="${plainStyle}">${esc(d.dancers.join(', '))}</td>`,
+          `<td style="${plainStyle}">${escapeHtml(d.dancers.join(', '))}</td>`,
         ].join('') +
         '</tr>';
     });
+  }
+
+  html += '</table></body></html>';
+  return html;
+};
+
+/** Export a family-oriented show-order report as styled HTML that Excel can open (.xls) */
+export const exportFamilyReportExcel = (
+  shows: ShowData[],
+  dancerFamilies: Record<string, string>
+): string => {
+  const headers = ['Show', '#', 'Dance Name', 'Song / Artist', 'Family Dancers', 'Cue'];
+  const sections = buildFamilyReportSections(shows, dancerFamilies);
+
+  let html =
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="utf-8"/></head><body>' +
+    '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:11pt">' +
+    '<col width="220"/><col width="50"/><col width="240"/><col width="260"/><col width="260"/><col width="140"/>';
+
+  html +=
+    `<tr><td colspan="${headers.length}" style="background:#264653;color:#fff;font-weight:bold;font-size:14pt">Family Show Order Report</td></tr>` +
+    `<tr><td colspan="${headers.length}" style="background:#f8f9fa;color:#555">Highlight legend: <strong style="color:#7a5c00">Performing</strong> &middot; <span style="color:#9c5700">Beside stage</span> &middot; <span style="color:#666">In the kitchen</span></td></tr>`;
+
+  if (sections.length === 0) {
+    html += `<tr><td colspan="${headers.length}" style="background:#fff;color:#444">No families with multiple dancers were found in the current show order.</td></tr>`;
+    html += '</table></body></html>';
+    return html;
+  }
+
+  for (const section of sections) {
+    html +=
+      `<tr><td colspan="${headers.length}" style="background:#1d3557;color:#fff;font-weight:bold;font-size:12pt">Family: ${escapeHtml(section.family)}</td></tr>` +
+      `<tr><td colspan="${headers.length}" style="background:#eef4ff;color:#1d3557">Dancers: ${escapeHtml(section.members.join(', '))}</td></tr>` +
+      '<tr>' +
+      headers
+        .map(
+          header =>
+            `<th style="background:#333;color:#fff;font-weight:bold">${escapeHtml(header)}</th>`
+        )
+        .join('') +
+      '</tr>';
+
+    section.rows.forEach((row, index) => {
+      const previousRow = index > 0 ? section.rows[index - 1] : null;
+      const showBreak = !previousRow || previousRow.showLabel !== row.showLabel;
+      const borderTop = showBreak ? 'border-top:2px solid #9aa0a6;' : '';
+      const rowBg =
+        row.cue === 'performing'
+          ? '#fff2cc'
+          : row.cue === 'beside-stage'
+            ? '#fce5cd'
+            : row.cue === 'kitchen'
+              ? '#f3f3f3'
+              : '#fff';
+      const rowColor = row.cue === 'kitchen' ? '#666' : '#222';
+      const baseStyle = `background:${rowBg};color:${rowColor};${borderTop}`;
+      const danceStyle = row.cue === 'performing' ? `${baseStyle}font-weight:bold;` : baseStyle;
+      const familyDancersStyle =
+        row.cue === 'performing'
+          ? `${baseStyle}font-weight:bold;color:#7a5c00;`
+          : row.cue === 'beside-stage'
+            ? `${baseStyle}color:#9c5700;`
+            : row.cue === 'kitchen'
+              ? `${baseStyle}color:#666;font-style:italic;`
+              : baseStyle;
+      const cueStyle =
+        row.cue === 'performing'
+          ? `${baseStyle}font-weight:bold;color:#7a5c00;`
+          : row.cue === 'beside-stage'
+            ? `${baseStyle}color:#9c5700;`
+            : row.cue === 'kitchen'
+              ? `${baseStyle}color:#666;font-style:italic;`
+              : baseStyle;
+
+      html +=
+        '<tr>' +
+        [
+          `<td style="${baseStyle}">${escapeHtml(row.showLabel)}</td>`,
+          `<td style="${baseStyle}" align="center">${row.order}</td>`,
+          `<td style="${danceStyle}">${escapeHtml(row.danceName)}</td>`,
+          `<td style="${baseStyle}">${escapeHtml(row.songArtist)}</td>`,
+          `<td style="${familyDancersStyle}">${escapeHtml(row.familyDancers.join(', '))}</td>`,
+          `<td style="${cueStyle}">${escapeHtml(row.cueLabel)}</td>`,
+        ].join('') +
+        '</tr>';
+    });
+
+    html += `<tr><td colspan="${headers.length}" style="border:none;height:12px;background:#fff"></td></tr>`;
   }
 
   html += '</table></body></html>';

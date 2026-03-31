@@ -13,9 +13,9 @@ CREATE TABLE dancers (
   dancer_name text GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,
   first_name text not null,
   last_name text not null,
+  family_label text,
   is_teacher int check (is_teacher IN (0, 1)) not null
 );
-
 CREATE UNIQUE INDEX dancers_name ON dancers (dancer_name);
 
 CREATE TABLE classes (
@@ -31,15 +31,17 @@ CREATE TABLE dancer_classes (
   class_id int not null,
   dancer_name text not null
 );
-
 CREATE UNIQUE INDEX dancer_class ON dancer_classes (dancer_name, class_id);
 
 CREATE TABLE class_dances (
   class_id int not null,
   dance_id int not null
 );
-
 CREATE UNIQUE INDEX class_dance ON class_dances (class_id, dance_id);
+
+CREATE TABLE placeholder_dances (
+  dance_order text not null -- JSON array of dance IDs in show-order sequence for PLACEHOLDER slots
+);
 
 CREATE TABLE recital_groups (
   recital_group text not null,
@@ -52,6 +54,31 @@ CREATE TABLE shows (
   group_order text not null, -- JSON array of group names, e.g. '["OPENER","A","B","CLOSER"]'
   show_description text not null,
   show_time text not null
+);
+
+CREATE TABLE dressing_rooms (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE UNIQUE INDEX dressing_room ON dressing_rooms (name);
+
+CREATE TABLE show_class_dressing_rooms (
+  show_id INTEGER NOT NULL,
+  class_id INTEGER NOT NULL,
+  dressing_room_id INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX show_class_dressing_room ON show_class_dressing_rooms(show_id, class_id);
+
+CREATE TABLE guest_list_2025 (
+  order_number TEXT,
+  order_date TEXT,
+  guest_first_name TEXT,
+  guest_last_name TEXT,
+  email TEXT,
+  ticket_type TEXT,
+  ticket_number TEXT,
+  checked_in TEXT,
+  dancer_names TEXT
 );
 
 --------------------------------------------------------------------------------
@@ -70,13 +97,15 @@ SELECT r.show_id,
 CREATE VIEW IF NOT EXISTS group_dance_order AS
 SELECT recital_group,
        ROW_NUMBER() OVER (PARTITION BY recital_group ORDER BY json_each.key) AS order_in_group,
-       json_each.value AS dance_id
+       CASE WHEN json_each.value = 'PLACEHOLDER' THEN NULL ELSE CAST(json_each.value AS INTEGER) END AS dance_id,
+       CASE WHEN json_each.value = 'PLACEHOLDER' THEN 1 ELSE 0 END AS is_placeholder
   FROM recital_groups, json_each(show_order);
 
 CREATE VIEW IF NOT EXISTS recital_group_dances AS
 SELECT gdo.recital_group,
        gdo.order_in_group,
        gdo.dance_id,
+       gdo.is_placeholder,
        COALESCE(d.dance_style, 'PLACEHOLDER') AS dance_style,
        COALESCE(d.dance_name, 'PLACEHOLDER') AS dance_name,
        COALESCE(d.choreography, '???') AS choreography,
@@ -88,7 +117,7 @@ SELECT gdo.recital_group,
 
 CREATE VIEW IF NOT EXISTS show_order_view AS
 SELECT ROW_NUMBER() OVER (ORDER BY sgo.show_id, sgo.show_part, rgd.order_in_group) AS overall_show_order,
-       sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, rgd.song, rgd.artist
+       sgo.show_id, sgo.show_part, rgd.recital_group, rgd.order_in_group, rgd.is_placeholder, rgd.dance_id, rgd.dance_style, rgd.dance_name, rgd.choreography, rgd.song, rgd.artist
   FROM show_group_order sgo
        INNER JOIN recital_group_dances rgd ON sgo.recital_group = rgd.recital_group
  ORDER BY sgo.show_id, sgo.show_part, rgd.order_in_group;
@@ -131,13 +160,14 @@ SELECT d.dance_id,
  ORDER BY dance_name, last_name, first_name;
 
 CREATE VIEW IF NOT EXISTS dance_dancers AS
-SELECT d.*, p.*
-  FROM dances d
-     INNER JOIN class_dances cd ON d.dance_id = cd.dance_id
+SELECT dances.*, dancers.*
+  FROM dances
+     INNER JOIN class_dances cd ON dances.dance_id = cd.dance_id
      INNER JOIN classes c ON cd.class_id = c.class_id
      INNER JOIN dancer_classes dc ON cd.class_id = dc.class_id
-     INNER JOIN dancers p ON dc.dancer_name = p.dancer_name
- ORDER BY d.dance_name, last_name, first_name;
+     INNER JOIN dancers ON dc.dancer_name = dancers.dancer_name
+ WHERE NOT (dances.exclude_teachers = 1 AND dancers.is_teacher = 1)
+ ORDER BY dances.dance_name, UPPER(last_name), UPPER(first_name);
 
 CREATE VIEW IF NOT EXISTS teacher_checklist AS
 SELECT c.teacher AS "Teacher",
@@ -187,3 +217,35 @@ SELECT parents.dancer_name parent,
   FROM children INNER JOIN parents ON parents.last_name = children.last_name
  WHERE parents.dancer_name <> children.dancer_name
  ORDER BY parent, child;
+
+CREATE VIEW IF NOT EXISTS busy_dancers AS
+   SELECT dancer_name,
+          COUNT(*) dance_count,
+          GROUP_CONCAT(dance_name, '; ') dance_names
+     FROM dance_dancers
+ GROUP BY dancer_name
+   HAVING count(*) > 2
+ ORDER BY 2 DESC,
+          last_name;
+
+-- All show data, in show order, with a list of dancers for each dance.
+-- Suitable for generating the program.
+CREATE VIEW IF NOT EXISTS complete_program AS
+WITH dd as (
+  SELECT dance_id, group_concat(dancer_name, ', ') dancers
+    FROM dance_dancers
+   GROUP BY dance_id
+   ORDER BY last_name, first_name)
+SELECT sov.*, dd.dancers
+  FROM show_order_view sov INNER JOIN dd ON sov.dance_id = dd.dance_id;
+
+CREATE VIEW IF NOT EXISTS family_counts AS
+WITH dance_families AS (
+  SELECT DISTINCT dd.dance_id,
+         CASE WHEN dd.dance_name LIKE 'Pre%' THEN 'PRE' ELSE 'OTHER' END AS pre_or_other,
+         COALESCE(NULLIF(TRIM(family_label), ''), last_name) AS family_name
+    FROM dance_dancers dd
+)
+SELECT sov.show_id, pre_or_other, COUNT(DISTINCT family_name) AS family_count
+  FROM show_order_view sov INNER JOIN dance_families ON sov.dance_id = dance_families.dance_id
+ GROUP BY sov.show_id, pre_or_other;
