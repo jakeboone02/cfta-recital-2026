@@ -1,6 +1,6 @@
 dance_id,dance_style,choreography,dance_name,song,artist
 1,Tap,Ms. Angie,SpecTAPular,You Play These Notes / Kaleidoscope,Hell's Kitchen: The Musical
-2,Hip Hop,Mr. Noble,Hip Hop,High Hopes / False Confidence / HOPE / I'm Tired / Something Just Like This,Panic! At The Disco / Noah Kahan / NF / Labrinth and Zendaya / The Chainsmokers & Coldplay
+2,Hip Hop,Mr. Noble,Hip Hop,"""Permission to Play""",High Hopes by Panic! At The Disco; False Confidence by Noah Kahan; HOPE by NF; I'm Tired by Labrinth and Zendaya; Something Just Like This by The Chainsmokers & Coldplay
 3,Ballet,Ms. Angie,Ballet (Ms. Angie),Downton Abbey — The Suite,The Chamber Orchestra of London
 4,Ballet,Ms. Jillian,Ballet (Ms. Jillian),Deliver Us,Ofra Haza & Eden Riegel
 5,Ballet,Ms. Marissa,Ballet (Ms. Marissa),Fix You (Instrumental),Brooklyn Duo & Dover Quartet
@@ -33,9 +33,9 @@ dance_id,dance_style,choreography,dance_name,song,artist
 32,Tap,Ms. Jillian,PreTap (Wed 10am Ms. Jillian),Boogie Woogie Bugle Boy,Pentatonix
 33,Ballet,Ms. Jillian,PreBallet w/ Sweethearts (Wed 11am),Sweet Child o' Mine,Brent Morgan
 34,Tap,Ms. Jillian,PreTap (Wed 11am),Boogie Woogie Bugle Boy,Pentatonix
-35,Ballet,Ms. Marissa,PreBallet (Wed 10am Ms. Marissa),Catch a Falling Star,JJ Heller
+35,Ballet,Ms. Marissa,PreBallet (Wed 10am Ms. Marissa),My Favorite Things,Julie Andrews
 36,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 10am Ms. Marissa),You've Got a Friend In Me,Michael Bublé
-37,Ballet,Ms. Marissa,PreBallet (Wed 2:30),Happy Working Song,Amy Adams
+37,Ballet,Ms. Marissa,PreBallet (Wed 2:30),My Favorite Things,Julie Andrews
 38,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 2:30),You've Got a Friend In Me,Michael Bublé
 39,Ballet,Ms. Marissa,PreBallet (Wed 4:15),My Favorite Things,Julie Andrews
 40,Tap,Ms. Marissa,PreTap w/ Sweethearts (Wed 4:15),You've Got a Friend In Me,Michael Bublé
